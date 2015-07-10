@@ -17,6 +17,7 @@
     "angularjs": "~1.4.1",
     "lumx": "~0.3.61",
     "firebase": "~2.2.7",
-    "angularfire": "~1.1.2"
+    "angularfire": "~1.1.2",
+    "masonry": "~3.3.1"
   }
 }
