@@ -1,6 +1,8 @@
+'use strict';
+
 /**
-*  Module
+*  Znote module : Main module
 *
-* Description
+*  This is the main application module that other dependencies are injected into
 */
-var app = angular.module('Znote', ['lumx']);
+angular.module('Znote', ['lumx', 'firebase', 'ui.bootstrap']);
