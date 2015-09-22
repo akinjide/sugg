@@ -3,17 +3,31 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "dependencies": {
+    "express": "^4.13.0",
+    "body-parser": "^1.13.1"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-html-prettify": "0.0.1",
+    "gulp-jade": "^1.1.0",
+    "gulp-jshint": "^1.11.2",
+    "gulp-prettify": "^0.3.0",
+    "gulp-sass": "^2.0.4",
+    "gulp-util": "^3.0.6",
+    "jshint-stylish": "^2.0.1"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  },  
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/andela-abankole/to-do-angular.git"
+    "url": "git+https://github.com/andela-abankole/to-do-angular.git"
   },
-  "author": "Akinjide Bankole",
+  "author": "",
   "license": "ISC",
-  "dependencies": {
-    "body-parser": "^1.13.1",
-    "express": "^4.13.0",
-  }
+  "bugs": {
+    "url": "https://github.com/andela-abankole/to-do-angular/issues"
+  },
+  "homepage": "https://github.com/andela-abankole/to-do-angular#readme"
 }
