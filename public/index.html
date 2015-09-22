@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="Znote">
+<html lang="en" ng-app="Znote" ng-strict-di>
   <head>
     <title>Znote | Welcome</title>
 
@@ -13,16 +13,16 @@
   </head>
   <body ng-controller="mainController">
     <div class="znote_navcontainer">
-      <nav class="bgc-orange-300">
+      <nav class="bgc" ng-cloak>
         <div>
           <img src="images/logo-znote.png">
           <div class="znote-sidebar">
-            <button class="btn btn--l btn--black btn--icon" lx-ripple>
+            <button class="btn btn--l btn--black btn--fab" lx-ripple>
               <i class="mdi mdi-refresh"></i>
             </button>
             <lx-dropdown position="right" from-top="true">
-              <button class="btn btn--l btn--black btn--icon" lx-ripple lx-dropdown-toggle>
-                  <i class="mdi mdi-dots-vertical"></i>
+              <button class="btn btn--l btn--black btn--fab" lx-ripple lx-dropdown-toggle>
+                  <i class="mdi mdi-menu"></i>
               </button>
               <lx-dropdown-menu>
               <ul>
@@ -53,51 +53,18 @@
       </nav>
     </div>
 
-    <div style="padding-top: 55px;">
-      <div class="card tc-black znote-input">
-        <input type="text" placeholder="Add note" ng-model="newlist"/>
-      </div>
-
-      <div style="width: 1040px; margin: 0 auto; padding-top: 45px;">
-        <div style="position: relative">
-          <div drag-Note class="tc-white-1 card znote-content-card">
-            <div>
-              <div class="p+ card bgc-white znote_content">
-                <ul class="list mt++  znote-list">
-                  <li class="list-row list-row--multi-line">
-                    <div class="list-row__content">
-                        <span class="display-block tc-black-1">Two-line item</span>
-                        <span class="display-block fs-body-1 tc-black-2">Secondary text Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Nam massa quam. Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</span>
-                    </div>
-
-                    <div class="list-row__secondary">
-                      <div class="mt">
-                        <!-- Down direction -->
-                        <div class="fab ml">
-                            <button class="fab__primary btn btn--l btn--teal btn--icon" lx-ripple lx-tooltip="options" tooltip-position="right">
-                                <i class="mdi mdi-chevron-down"></i>
-                                <i class="mdi mdi-plus"></i>
-                            </button>
-
-                            <div class="fab__actions fab__actions--down">
-                                <button class="btn btn--s btn--grey btn--icon" lx-ripple lx-tooltip="edit" tooltip-position="right"><i class="mdi mdi-pencil"></i></button>
-                                <button class="btn btn--s btn--red btn--icon" lx-ripple lx-tooltip="delete" tooltip-position="right"><i class="mdi mdi-close"></i></button>
-                            </div>
-                        </div>
-                      </div>
-                    </div>
-                    </li>
-                  </ul>
-              </div>
-            </div>
-          </div>
-          <div style="clear: both"></div>
+    <div style="padding-top: 80px;">
+      <a href="#" id="key">
+        <div class="add-note">
+          <p>
+            Add Note
+          </p>
         </div>
-      </div>
+      </a>
     </div>
 
     <div class="footer">
-      <p>Design by <a href="http://w3layouts.com/">W3layouts</a></p>
+      <p>Design by <a href="http://akinjidebankole.blogspot.com/">JideBhanks</a></p>
     </div>
     <!-- JQUERY, VELOCITY, MOMENT, ANGULAR JS AND LUMX -->
     <script type="text/javascript" src="libs/jquery/dist/jquery.js"></script>
@@ -112,12 +79,44 @@
     <!-- CONTROLLERS -->
     <script type="text/javascript" src="scripts/controllers/main.controller.js"></script>
 
-    <!--  -->
+    <!-- DIRECTIVES -->
     <script type="text/javascript" src="scripts/directives/dragnote.directive.js"></script>
 
     <!-- FIRE BASE -->
     <script type="text/javascript" src="libs/firebase/firebase.js"></script>
     <!-- ANGULAR FIRE -->
     <script type="text/javascript" src="libs/angularfire/dist/angularfire.min.js"></script>
+
+    <!-- -->
+    <script type="text/javascript" src="libs/masonry/dist/masonry.pkgd.min.js"></script>
+
+    <script type="text/javascript">
+      $(document).ready(function(){
+        $('.znote-notes-wrapper').masonry();
+      })
+    </script>
+    
+    <script type="text/javascript" src="libs/angular-bootstrap/ui-bootstrap.min.js"></script>
+    <script type="text/javascript" src="scripts/common/script.js"></script>
+
+    <script>
+      var myDataRef = new Firebase('https://znote.firebaseio.com/');
+      $('#key').click(function (e) {
+        var text = $('#texts').val();
+        var name = $('#names').val();
+        myDataRef.push({ name: name, text: text });
+        $('#texts').val('');
+      });
+
+      myDataRef.on('child_added', function(snapshot) {
+        var message  = snapshot.val();
+        displayChatMessage(message.name, message.text);
+      });
+
+      function displayChatMessage(name, text) {
+        $('<div/>').text(text).prepend($('<em/>').text(name+': ')).appendTo($('#messagesDiv'));
+        $('#messagesDiv')[0].scrollTop = $('#messagesDiv')[0].scrollHeight;
+      };
+    </script>
   </body>
 </html>
