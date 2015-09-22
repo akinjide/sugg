@@ -14,5 +14,6 @@ app.get('*', function(req, res) {
   res.sendFile(process.cwd() + '/public/index.html');
 });
 
-app.listen(port);
-console.log('now listening on port: ' + port)
+app.listen(port, function() {
+  console.log('Listening on port %s', port)
+});
