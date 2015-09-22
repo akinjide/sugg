@@ -8,15 +8,66 @@
     margin-top: $base-spacing-unit * 4;
     padding-bottom: $base-spacing-unit;
 
-    &:before {
+    &:before,
+    &:after {
         content: '';
+    }
+
+    &:before {
         @include position(absolute, null 0 $base-spacing-unit - 1 0);
         height: 1px;
         border-bottom: 1px solid $black-4;
     }
 
+    &:after {
+        @include position(absolute, null 0 $base-spacing-unit - 2 0);
+        height: 2px;
+        @include transform(scale(0));
+        @include transition-property(transform);
+        @include transition-duration(0.6s);
+        @include transition-timing-function($ease-out-quint);
+    }
+
     .dropdown {
         display: block;
+    }
+}
+
+.lx-select--is-disabled {
+    pointer-events: none;
+
+    &:before {
+        border-bottom-style: dashed;
+    }
+
+    .lx-select__floating-label {
+        color: $black-3;
+    }
+
+    .lx-select__selected {
+        color: $black-3;
+    }
+}
+
+.lx-select--has-error {
+    &:after {
+        background-color: $red-500;
+        @include transform(scale(1));
+    }
+
+    .lx-select__floating-label {
+        color: $red-500;
+    }
+}
+
+.lx-select--is-valid {
+    &:after {
+        background-color: $green-500;
+        @include transform(scale(1));
+    }
+
+    .lx-select__floating-label {
+        color: $green-500;
     }
 }
 
@@ -73,9 +124,9 @@
     // Select close
     .lx-select__close {
         display: block;
-        @include position(absolute, $base-spacing-unit $base-spacing-unit * 3 null null);
+        @include position(absolute, 0 $base-spacing-unit * 3 null null);
         opacity: 0;
-        line-height: $base-spacing-unit * 4;
+        line-height: 32px;
         @include transition-property(opacity, color);
         @include transition-duration(0.2s);
 

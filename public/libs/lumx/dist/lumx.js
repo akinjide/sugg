@@ -1,5 +1,5 @@
 /*
- LumX v0.3.61
+ LumX v0.3.74
  (c) 2014-2015 LumApps http://ui.lumapps.com
  License: MIT
 */
@@ -152,7 +152,8 @@ angular.module('lumx.date-picker', [])
             activeLocale,
             $datePicker,
             $datePickerFilter,
-            $datePickerContainer;
+            $datePickerContainer,
+            $computedWindow;
 
         $scope.ctrlData = {
             isOpen: false
@@ -162,6 +163,7 @@ angular.module('lumx.date-picker', [])
         {
             $datePicker = element.find('.lx-date-picker');
             $datePickerContainer = element;
+            $computedWindow = angular.element($window);
 
             self.build(locale, false);
         };
@@ -266,7 +268,7 @@ angular.module('lumx.date-picker', [])
 
                 $datePickerFilter
                     .appendTo('body')
-                    .bind('click', function()
+                    .on('click', function()
                     {
                         $scope.closePicker();
                     });
@@ -293,6 +295,8 @@ angular.module('lumx.date-picker', [])
             $datePickerFilter.removeClass('lx-date-filter--is-shown');
             $datePicker.removeClass('lx-date-picker--is-shown');
 
+            $computedWindow.off('resize');
+
             $timeout(function()
             {
                 $datePickerFilter.remove();
@@ -307,17 +311,12 @@ angular.module('lumx.date-picker', [])
 
         $scope.displayYearSelection = function()
         {
-            var calendarHeight = angular.element('.lx-date-picker__calendar').outerHeight(),
-                $yearSelector = angular.element('.lx-date-picker__year-selector');
-
-            $yearSelector.css({ height: calendarHeight });
-
             $scope.yearSelection = true;
 
             $timeout(function()
             {
-                var $activeYear = angular.element('.lx-date-picker__year--is-active');
-
+                var $yearSelector = $datePicker.find('.lx-date-picker__year-selector');
+                var $activeYear = $yearSelector.find('.lx-date-picker__year--is-active');
                 $yearSelector.scrollTop($yearSelector.scrollTop() + $activeYear.position().top - $yearSelector.height()/2 + $activeYear.height()/2);
             });
         };
@@ -418,8 +417,15 @@ angular.module('lumx.dialog', [])
             dialogInterval,
             dialogFilter,
             dialogHeight,
+            windowHeight,
             activeDialogId,
-            scopeMap = {};
+            scopeMap = {},
+            dialog,
+            dialogHeader,
+            dialogContent,
+            dialogActions,
+            dialogScrollable,
+            resizeDebounce;
 
         this.registerScope = function(dialogId, dialogScope)
         {
@@ -441,24 +447,24 @@ angular.module('lumx.dialog', [])
 
             dialogFilter.appendTo('body');
 
-            if (angular.isUndefined(scopeMap[dialogId].autoClose) || scopeMap[dialogId].autoClose === 'true')
+            if (angular.isUndefined(scopeMap[dialogId].lxDialogAutoClose) || scopeMap[dialogId].lxDialogAutoClose === 'true')
             {
-                dialogFilter.bind('click', function()
+                dialogFilter.on('click', function()
                 {
                     self.close(dialogId);
                 });
             }
 
-            scopeMap[dialogId].element
+            scopeMap[dialogId].lxDialogElement
                 .appendTo('body')
                 .show();
 
             $timeout(function()
             {
-                scopeMap[dialogId].isOpened = true;
+                scopeMap[dialogId].lxDialogIsOpened = true;
 
                 dialogFilter.addClass('dialog-filter--is-shown');
-                scopeMap[dialogId].element.addClass('dialog--is-shown');
+                scopeMap[dialogId].lxDialogElement.addClass('dialog--is-shown');
 
                 $timeout(function()
                 {
@@ -468,11 +474,7 @@ angular.module('lumx.dialog', [])
 
             dialogInterval = $interval(function()
             {
-                if (scopeMap[dialogId].element.outerHeight() !== dialogHeight)
-                {
-                    checkDialogHeight(dialogId);
-                    dialogHeight = scopeMap[dialogId].element.outerHeight();
-                }
+                checkDialogHeight(dialogId);
             }, 500);
         };
 
@@ -480,15 +482,19 @@ angular.module('lumx.dialog', [])
         {
             activeDialogId = undefined;
             $rootScope.$broadcast('lx-dialog__close-start', dialogId);
+            if (resizeDebounce)
+            {
+                $timeout.cancel(resizeDebounce);
+            }
 
             $interval.cancel(dialogInterval);
 
             dialogFilter.removeClass('dialog-filter--is-shown');
-            scopeMap[dialogId].element.removeClass('dialog--is-shown');
+            scopeMap[dialogId].lxDialogElement.removeClass('dialog--is-shown');
 
-            if (scopeMap[dialogId].onclose)
+            if (scopeMap[dialogId].lxDialogOnclose)
             {
-                scopeMap[dialogId].onclose();
+                scopeMap[dialogId].lxDialogOnclose();
             }
 
             $timeout(function()
@@ -499,12 +505,18 @@ angular.module('lumx.dialog', [])
 
                 dialogFilter.remove();
 
-                scopeMap[dialogId].element
+                dialog = undefined;
+                dialogHeader = undefined;
+                dialogContent = undefined;
+                dialogActions = undefined;
+                dialogScrollable = undefined;
+
+                scopeMap[dialogId].lxDialogElement
                     .hide()
                     .removeClass('dialog--is-fixed')
-                    .appendTo(scopeMap[dialogId].parent);
+                    .appendTo(scopeMap[dialogId].lxDialogParent);
 
-                scopeMap[dialogId].isOpened = false;
+                scopeMap[dialogId].lxDialogIsOpened = false;
                 dialogHeight = undefined;
                 $rootScope.$broadcast('lx-dialog__close-end', dialogId);
             }, 600);
@@ -512,23 +524,40 @@ angular.module('lumx.dialog', [])
 
         function checkDialogHeight(dialogId)
         {
-            var dialogMargin = 60,
-                dialog = scopeMap[dialogId].element,
-                dialogHeader = dialog.find('.dialog__header'),
-                dialogContent = dialog.find('.dialog__content'),
-                dialogActions = dialog.find('.dialog__actions'),
-                dialogScrollable = angular.element('<div/>', { class: 'dialog__scrollable' }),
-                HeightToCheck = dialogMargin + dialogHeader.outerHeight() + dialogContent.outerHeight() + dialogActions.outerHeight();
+            if (angular.isUndefined(dialogHeader))
+            {
+                dialog = scopeMap[dialogId].lxDialogElement;
+                dialogHeader = dialog.find('.dialog__header');
+                dialogContent = dialog.find('.dialog__content');
+                dialogActions = dialog.find('.dialog__actions');
 
-            if (HeightToCheck >= $window.innerHeight)
+                if (angular.isUndefined(dialogHeader))
+                {
+                    return;
+                }
+            }
+
+            var dialogMargin = 60;
+            var heightToCheck = dialogMargin + dialogHeader.outerHeight() + dialogContent.outerHeight() + dialogActions.outerHeight();
+
+            if (dialogHeight === heightToCheck && windowHeight === $window.innerHeight)
+            {
+                return;
+            }
+
+            dialogHeight = heightToCheck;
+            windowHeight = $window.innerHeight;
+
+            if (heightToCheck >= $window.innerHeight)
             {
                 dialog.addClass('dialog--is-fixed');
 
                 if (dialog.find('.dialog__scrollable').length === 0)
                 {
+                    var dialogScrollable = angular.element('<div/>', { class: 'dialog__scrollable' });
                     dialogScrollable
                         .css({ top: dialogHeader.outerHeight(), bottom: dialogActions.outerHeight() })
-                        .bind('scroll', checkScrollEnd);
+                        .on('scroll', checkScrollEnd);
 
                     dialogContent.wrap(dialogScrollable);
                 }
@@ -546,29 +575,45 @@ angular.module('lumx.dialog', [])
 
         function checkScrollEnd()
         {
-            var dialogScrollable = angular.element('.dialog__scrollable');
+            if (angular.isUndefined(dialogScrollable))
+            {
+                dialogScrollable = angular.element('.dialog__scrollable');
 
-            if (angular.isDefined(scopeMap[activeDialogId].onscrollend))
+                if (angular.isUndefined(dialogScrollable))
+                {
+                    return;
+                }
+            }
+
+            if (angular.isDefined(scopeMap[activeDialogId].lxDialogOnscrollend))
             {
                 if (dialogScrollable.scrollTop() + dialogScrollable.innerHeight() >= dialogScrollable[0].scrollHeight)
                 {
-                    scopeMap[activeDialogId].onscrollend();
+                    scopeMap[activeDialogId].lxDialogOnscrollend();
 
-                    dialogScrollable.unbind('scroll', checkScrollEnd);
+                    dialogScrollable.off('scroll', checkScrollEnd);
 
                     $timeout(function()
                     {
-                        dialogScrollable.bind('scroll', checkScrollEnd);
+                        dialogScrollable.on('scroll', checkScrollEnd);
                     }, 500);
                 }
             }
         }
 
-        angular.element($window).bind('resize', function()
+        angular.element($window).on('resize', function()
         {
             if (angular.isDefined(activeDialogId))
             {
-                checkDialogHeight(activeDialogId);
+                if (resizeDebounce)
+                {
+                    $timeout.cancel(resizeDebounce);
+                }
+
+                resizeDebounce = $timeout(function()
+                {
+                    checkDialogHeight(activeDialogId);
+                }, 200);
             }
         });
     }])
@@ -576,9 +621,9 @@ angular.module('lumx.dialog', [])
     {
         this.init = function(element, id)
         {
-            $scope.isOpened = false;
-            $scope.element = element;
-            $scope.parent = element.parent();
+            $scope.lxDialogIsOpened = false;
+            $scope.lxDialogElement = element;
+            $scope.lxDialogParent = element.parent();
 
             LxDialogService.registerScope(id, $scope);
         };
@@ -589,7 +634,7 @@ angular.module('lumx.dialog', [])
             restrict: 'E',
             controller: 'LxDialogController',
             scope: true,
-            template: '<div><div ng-if="isOpened" ng-transclude="child"></div></div>',
+            template: '<div><div ng-if="lxDialogIsOpened" ng-transclude="child"></div></div>',
             replace: true,
             transclude: true,
             link: function(scope, element, attrs, ctrl)
@@ -604,12 +649,12 @@ angular.module('lumx.dialog', [])
 
                 attrs.$observe('autoClose', function(newValue)
                 {
-                    scope.autoClose = newValue;
+                    scope.lxDialogAutoClose = newValue;
                 });
 
                 attrs.$observe('onclose', function(newValue)
                 {
-                    scope.onclose = function()
+                    scope.lxDialogOnclose = function()
                     {
                         return scope.$eval(newValue);
                     };
@@ -617,7 +662,7 @@ angular.module('lumx.dialog', [])
 
                 attrs.$observe('onscrollend', function(newValue)
                 {
-                    scope.onscrollend = function()
+                    scope.lxDialogOnscrollend = function()
                     {
                         return scope.$eval(newValue);
                     };
@@ -631,7 +676,7 @@ angular.module('lumx.dialog', [])
             restrict: 'A',
             link: function(scope, element)
             {
-                element.bind('click', function()
+                element.on('click', function()
                 {
                     LxDialogService.close(element.parents('.dialog').attr('id'));
                 });
@@ -652,12 +697,12 @@ angular.module('lumx.dropdown', [])
         {
             if (!openScope)
             {
-                $document.bind('click', closeDropdown);
+                $document.on('click', closeDropdown);
             }
 
             if (openScope && openScope !== dropdownScope)
             {
-                openScope.isOpened = false;
+                openScope.lxDropdownIsOpened = false;
             }
 
             openScope = dropdownScope;
@@ -668,7 +713,7 @@ angular.module('lumx.dropdown', [])
             if (openScope === dropdownScope)
             {
                 openScope = null;
-                $document.unbind('click', closeDropdown);
+                $document.off('click', closeDropdown);
             }
         }
 
@@ -678,7 +723,7 @@ angular.module('lumx.dropdown', [])
 
             openScope.$apply(function()
             {
-                openScope.isOpened = false;
+                openScope.lxDropdownIsOpened = false;
             });
         }
 
@@ -692,15 +737,17 @@ angular.module('lumx.dropdown', [])
         var dropdown,
             dropdownMenu;
         var dropdownMenuHeight;
+        var direction;
+        var cssOptions;
 
-        $scope.isOpened = false;
-        $scope.isDropped = false;
+        $scope.lxDropdownIsOpened = false;
+        $scope.lxDropdownIsDropped = false;
 
         this.registerDropdown = function(element)
         {
             dropdown = element;
 
-            $scope.position = angular.isDefined($scope.position) ? $scope.position : 'left';
+            $scope.lxDropdownPosition = angular.isDefined($scope.lxDropdownPosition) ? $scope.lxDropdownPosition : 'left';
         };
 
         this.registerDropdownMenu = function(element)
@@ -710,19 +757,19 @@ angular.module('lumx.dropdown', [])
 
         this.toggle = function()
         {
-            $scope.isOpened = !$scope.isOpened;
+            $scope.lxDropdownIsOpened = !$scope.lxDropdownIsOpened;
         };
 
         function linkList()
         {
-            $scope.isDropped = false;
+            $scope.lxDropdownIsDropped = false;
 
             closeDropdownMenu();
         }
 
         function unlinkList()
         {
-            $scope.isDropped = true;
+            $scope.lxDropdownIsDropped = true;
 
             dropdownMenu.appendTo('body');
 
@@ -735,12 +782,12 @@ angular.module('lumx.dropdown', [])
 
         function fromTop(toTop)
         {
-            if (angular.isUndefined($scope.overToggle) && angular.isDefined($scope.fromTop))
+            if (angular.isUndefined($scope.lxDropdownOverToggle) && angular.isDefined($scope.lxDropdownFromTop))
             {
-                return $scope.fromTop === 'true';
+                return $scope.lxDropdownFromTop === 'true';
             }
 
-            if ($scope.overToggle === 'true')
+            if ($scope.lxDropdownOverToggle === 'true')
             {
                 return !toTop;
             }
@@ -748,6 +795,50 @@ angular.module('lumx.dropdown', [])
             {
                 return toTop;
             }
+        }
+
+        function findDirectionAndOriginY()
+        {
+            var windowScrollTop = angular.element($window).scrollTop();
+            var topLeftCorner = dropdown.offset().top - windowScrollTop;
+            var buttonHeight = dropdown.outerHeight();
+            var menuHeight = dropdownMenu.outerHeight();
+
+            var originY = topLeftCorner;
+            var direction = "to_bottom";
+
+            if ($scope.lxDropdownOverToggle === 'true')
+            {
+                if (topLeftCorner + menuHeight >= $window.innerHeight &&
+                    $window.innerHeight - topLeftCorner + (buttonHeight / 2) < $window.innerHeight / 2)
+                {
+                    direction = "to_top";
+                    originY = $window.innerHeight - (originY + buttonHeight);
+                }
+            }
+            else if (angular.isDefined($scope.lxDropdownOverToggle) || $scope.lxDropdownFromTop !== 'true')
+            {
+                if (topLeftCorner + buttonHeight + menuHeight < $window.innerHeight ||
+                    $window.innerHeight - topLeftCorner + (buttonHeight / 2) >= $window.innerHeight / 2)
+                {
+                    originY += buttonHeight;
+                }
+                else
+                {
+                    direction = "to_top";
+                    originY = $window.innerHeight - originY;
+                }
+            }
+            else if (angular.isUndefined($scope.lxDropdownOverToggle) && $scope.lxDropdownFromTop === 'true')
+            {
+                if (topLeftCorner + menuHeight >= $window.innerHeight &&
+                    $window.innerHeight - topLeftCorner < $window.innerHeight / 2)
+                {
+                    direction = "to_top";
+                }
+            }
+
+            return { direction: direction, originY: originY + windowScrollTop };
         }
 
         function setDropdownMenuCss()
@@ -758,99 +849,84 @@ angular.module('lumx.dropdown', [])
                 opacity: 1
             });
 
-            var windowScrollTop = angular.element($window).scrollTop();
+            // Deternmine orientation only at open, just manage resize if it's already opened.
             var dropdownMenuWidth = dropdownMenu.outerWidth();
-            dropdownMenuHeight = dropdownMenu.outerHeight();
-            var origin = {
-                x: dropdown.offset().left,
-                y: (dropdown.offset().top - windowScrollTop) + dropdown.outerHeight() // dropdown is the button at the moment
-            };
-            var width = dropdownMenuWidth;
-            var height, bottomOffset, topOffset;
+            var dropdownMenuHeight = dropdownMenu.outerHeight();
+            var windowScrollTop = angular.element($window).scrollTop();
+            var offset = 0;
+            var topLeftCorner = dropdown.offset().top - windowScrollTop;
+            var directionAndOriginY = findDirectionAndOriginY();
 
-            if (angular.isDefined($scope.width))
-            {
-                if ($scope.width === 'full')
+            if (!direction)
+            { // Manage orientation
+                var width = dropdownMenuWidth;
+
+                if (angular.isDefined($scope.lxDropdownWidth))
                 {
-                    width = dropdown.outerWidth();
-                }
-                else
-                {
-                    width = dropdown.outerWidth() + parseInt($scope.width);
-                }
-            }
-
-            if ($scope.position === 'right')
-            {
-                origin.x = $window.innerWidth - (dropdown.offset().left + dropdown.outerWidth());
-            }
-            else if ($scope.position === 'center')
-            {
-                origin.x = dropdown.offset().left + (dropdown.outerWidth() - width) / 2;
-            }
-
-            if (origin.y + dropdownMenuHeight >= $window.innerHeight && origin.y - dropdownMenuHeight > 0)
-            { // To top
-                bottomOffset = fromTop(true) ? dropdown.outerHeight() : 0;
-
-                if (bottomOffset && origin.y - bottomOffset - dropdownMenuHeight <= 0)
-                {
-                    height = origin.y - bottomOffset - 8;
+                    if ($scope.lxDropdownWidth === 'full')
+                    {
+                        width = dropdown.outerWidth();
+                    }
+                    else
+                    {
+                        width = dropdown.outerWidth() + parseInt($scope.lxDropdownWidth);
+                    }
                 }
 
-                dropdownMenu.css({
-                    left: $scope.position !== 'right' ? origin.x : undefined,
-                    right: $scope.position === 'right' ? origin.x : undefined,
-                    bottom: $window.innerHeight - origin.y + bottomOffset - windowScrollTop,
-                    width: width,
-                    height: height
-                });
-            }
-            else if (origin.y + (fromTop(false) ? -dropdown.outerHeight() : 0) + dropdownMenuHeight < $window.innerHeight)
-            { // To bottom
-                topOffset = fromTop(false) ? -dropdown.outerHeight() : 0;
-
-                dropdownMenu.css({
-                    left: $scope.position !== 'right' ? origin.x : undefined,
-                    right: $scope.position === 'right' ? origin.x : undefined,
-                    top: origin.y + topOffset + windowScrollTop,
+                cssOptions = {
+                    left: $scope.lxDropdownPosition !== 'right' ? dropdown.offset().left : undefined,
+                    right: $scope.lxDropdownPosition === 'right' ? $window.innerWidth - dropdown.offset().left - dropdown.outerWidth() : undefined,
                     width: width
-                });
-            }
-            else // Dropdown too big, check the biggest space between up or down and use it with a padding
-            {
-                if (origin.y > $window.innerHeight / 2) // Middle of the screen
-                { // To top
-                    bottomOffset = fromTop(true) ? dropdown.outerHeight() : 0;
-                    height = origin.y - (fromTop(true) ? dropdown.outerHeight() : 0) - 8;
+                };
 
-                    dropdownMenu.css({
-                        left: $scope.position !== 'right' ? origin.x : undefined,
-                        right: $scope.position === 'right' ? origin.x : undefined,
-                        bottom: $window.innerHeight - origin.y + bottomOffset - windowScrollTop,
-                        width: width,
-                        height: height - bottomOffset
-                    });
+                direction = directionAndOriginY.direction;
+
+                if (direction === 'to_bottom')
+                {
+                    cssOptions.top = directionAndOriginY.originY;
                 }
                 else
-                { // To bottom
-                    topOffset = fromTop(false) ?  -dropdown.outerHeight() : 0;
-                    height = $window.innerHeight - (fromTop(false) ? dropdown.outerHeight() : 0) - origin.y - 8;
+                {
+                    cssOptions.bottom = directionAndOriginY.originY;
+                }
+            }
 
-                    dropdownMenu.css({
-                        left: $scope.position !== 'right' ? origin.x : undefined,
-                        right: $scope.position === 'right' ? origin.x : undefined,
-                        top: origin.y + topOffset + windowScrollTop,
-                        width: width,
-                        height: height - 2*topOffset
-                    });
+            var css = angular.copy(cssOptions);
+            if (direction === "to_bottom" && topLeftCorner + dropdownMenuHeight > $window.innerHeight - 8)
+            {
+                css.overflow = "auto";
+
+                css.height = $window.innerHeight - 8 - topLeftCorner;
+                if ($scope.lxDropdownOverToggle !== 'true' && (angular.isDefined($scope.lxDropdownOverToggle) || $scope.lxDropdownFromTop !== 'true'))
+                {
+                    css.height -= dropdown.outerHeight();
                 }
 
                 dropdownMenu.scrollTop(scrollTop);
-                dropdownMenu.css({
-                    overflow: 'auto'
-                });
             }
+            else if (direction === 'to_top')
+            {
+                css.bottom = $window.innerHeight - (topLeftCorner + windowScrollTop);
+                if ($scope.lxDropdownOverToggle === 'true')
+                {
+                    css.bottom -= dropdown.outerHeight();
+                }
+
+                if ((topLeftCorner + windowScrollTop) - dropdownMenuHeight < 8)
+                {
+                    css.overflow = "auto";
+
+                    css.height = topLeftCorner - 8;
+                    if ($scope.lxDropdownOverToggle === 'true')
+                    {
+                        css.height += dropdown.outerHeight();
+                    }
+
+                    dropdownMenu.scrollTop(scrollTop);
+                }
+            }
+
+            dropdownMenu.css(css);
         }
 
         function openDropdownMenu()
@@ -894,7 +970,7 @@ angular.module('lumx.dropdown', [])
                         dropdownMenu.css({ overflow: 'auto' });
                     }
 
-                    if (!angular.isDefined($scope.width))
+                    if (!angular.isDefined($scope.lxDropdownWidth))
                     {
                         dropdownMenu.css({ width: 'auto' });
                     }
@@ -921,21 +997,22 @@ angular.module('lumx.dropdown', [])
                         .removeAttr('style');
 
                     dropdown.removeClass('dropdown--is-active');
+                    direction = undefined;
                 }
             });
         }
 
         function updatePositionAndSize()
         {
-            if ($scope.isDropped)
+            if ($scope.lxDropdownIsDropped)
             {
                 setDropdownMenuCss();
             }
         }
 
-        $scope.$watch('isOpened', function(isOpened)
+        $scope.$watch('lxDropdownIsOpened', function(lxDropdownIsOpened)
         {
-            if (isOpened)
+            if (lxDropdownIsOpened)
             {
                 unlinkList();
                 LxDropdownService.open($scope);
@@ -951,7 +1028,7 @@ angular.module('lumx.dropdown', [])
 
         $scope.$on('$locationChangeSuccess', function()
         {
-            $scope.isOpened = false;
+            $scope.lxDropdownIsOpened = false;
         });
 
         $scope.$on('$destroy', function()
@@ -977,22 +1054,22 @@ angular.module('lumx.dropdown', [])
 
                 attrs.$observe('position', function(newValue)
                 {
-                    scope.position = newValue;
+                    scope.lxDropdownPosition = newValue;
                 });
 
                 attrs.$observe('width', function(newValue)
                 {
-                    scope.width = newValue;
+                    scope.lxDropdownWidth = newValue;
                 });
 
                 attrs.$observe('fromTop', function(newValue)
                 {
-                    scope.fromTop = newValue;
+                    scope.lxDropdownFromTop = newValue;
                 });
 
                 attrs.$observe('overToggle', function(newValue)
                 {
-                    scope.overToggle = newValue;
+                    scope.lxDropdownOverToggle = newValue;
                 });
             }
         };
@@ -1007,7 +1084,7 @@ angular.module('lumx.dropdown', [])
             transclude: true,
             link: function(scope, element, attrs, ctrl)
             {
-                element.bind('click', function(event)
+                element.on('click', function(event)
                 {
                     event.stopPropagation();
 
@@ -1063,7 +1140,7 @@ angular.module('lumx.dropdown', [])
             restrict: 'A',
             link: function(scope, element)
             {
-                element.bind('click', function(event)
+                element.on('click', function(event)
                 {
                     event.stopPropagation();
                 });
@@ -2064,7 +2141,7 @@ angular.module('lumx.select', [])
             newSelection = true,
             newScope;
 
-        $scope.data = {
+        $scope.lxSelectData = {
             filter: '',
             selected: [],
             loading: false
@@ -2086,7 +2163,7 @@ angular.module('lumx.select', [])
         // Link methods
         this.registerTransclude = function(transclude)
         {
-            $scope.data.selectedTransclude = transclude;
+            $scope.lxSelectData.selectedTransclude = transclude;
         };
 
         this.getScope = function()
@@ -2098,47 +2175,47 @@ angular.module('lumx.select', [])
         function select(choice)
         {
             newSelection = false;
-            if ($scope.multiple)
+            if ($scope.lxSelectMultiple)
             {
-                if (arrayObjectIndexOf($scope.data.selected, choice) === -1)
+                if (arrayObjectIndexOf($scope.lxSelectData.selected, choice) === -1)
                 {
-                    $scope.data.selected.push(choice);
+                    $scope.lxSelectData.selected.push(choice);
                 }
             }
             else
             {
-                $scope.data.selected = [choice];
+                $scope.lxSelectData.selected = [choice];
             }
         }
 
         function unselect(element, event, stopEvent)
         {
             newSelection = false;
-            if (!$scope.allowClear && !$scope.multiple)
+            if (!$scope.lxSelectAllowClear && !$scope.lxSelectMultiple)
             {
                 return;
             }
 
-            if (angular.isDefined(event) && (!$scope.multiple || stopEvent))
+            if (angular.isDefined(event) && (!$scope.lxSelectMultiple || stopEvent))
             {
                 event.stopPropagation();
             }
 
-            var index = arrayObjectIndexOf($scope.data.selected, element);
+            var index = arrayObjectIndexOf($scope.lxSelectData.selected, element);
             if (index !== -1)
             {
-                $scope.data.selected.splice(index, 1);
+                $scope.lxSelectData.selected.splice(index, 1);
             }
         }
 
         function toggle(choice, event)
         {
-            if (angular.isDefined(event) && $scope.multiple)
+            if (angular.isDefined(event) && $scope.lxSelectMultiple)
             {
                 event.stopPropagation();
             }
 
-            if ($scope.multiple && isSelected(choice))
+            if ($scope.lxSelectMultiple && isSelected(choice))
             {
                 unselect(choice);
             }
@@ -2151,32 +2228,32 @@ angular.module('lumx.select', [])
         // Getters
         function isSelected(choice)
         {
-            return angular.isDefined($scope.data.selected) && arrayObjectIndexOf($scope.data.selected, choice) !== -1;
+            return angular.isDefined($scope.lxSelectData.selected) && arrayObjectIndexOf($scope.lxSelectData.selected, choice) !== -1;
         }
 
         function hasNoResults()
         {
-            return angular.isUndefined($scope.choices()) || $filter('filterChoices')($scope.choices(), $scope.filter, $scope.data.filter).length === 0;
+            return angular.isUndefined($scope.lxSelectChoices()) || $filter('filterChoices')($scope.lxSelectChoices(), $scope.lxSelectFilter, $scope.lxSelectData.filter).length === 0;
         }
 
         function filterNeeded()
         {
-            return angular.isDefined($scope.minLength) && angular.isDefined($scope.data.filter) && $scope.data.filter.length < $scope.minLength;
+            return angular.isDefined($scope.lxSelectMinLength) && angular.isDefined($scope.lxSelectData.filter) && $scope.lxSelectData.filter.length < $scope.lxSelectMinLength;
         }
 
         function isHelperVisible()
         {
-            return $scope.loading !== 'true' && (filterNeeded() || (hasNoResults() && !filterNeeded()));
+            return $scope.lxSelectLoading !== 'true' && (filterNeeded() || (hasNoResults() && !filterNeeded()));
         }
 
         function isChoicesVisible()
         {
-            return $scope.loading !== 'true' && !hasNoResults() && !filterNeeded();
+            return $scope.lxSelectLoading !== 'true' && !hasNoResults() && !filterNeeded();
         }
 
         function isChoicesArray()
         {
-            return angular.isArray($scope.choices());
+            return angular.isArray($scope.lxSelectChoices());
         }
 
         function trust(data)
@@ -2190,22 +2267,22 @@ angular.module('lumx.select', [])
          */
         function getSelectedElements()
         {
-            return angular.isDefined($scope.data.selected) ? $scope.data.selected : [];
+            return angular.isDefined($scope.lxSelectData.selected) ? $scope.lxSelectData.selected : [];
         }
 
         function convertValue(newValue, conversion, callback)
         {
-            var convertedData = $scope.multiple ? [] : undefined;
+            var convertedData = $scope.lxSelectMultiple ? [] : undefined;
             var loading = [];
 
-            if (!newValue || ($scope.multiple && newValue.length === 0))
+            if (!newValue || ($scope.lxSelectMultiple && newValue.length === 0))
             {
                 callback(convertedData);
                 return;
             }
 
-            $scope.data.loading = true;
-            if ($scope.multiple)
+            $scope.lxSelectData.loading = true;
+            if ($scope.lxSelectMultiple)
             {
                 if (angular.isDefined(conversion))
                 {
@@ -2228,7 +2305,7 @@ angular.module('lumx.select', [])
                                 if (loading.length === 0 && !callbackCalled)
                                 {
                                     callbackCalled = true;
-                                    $scope.data.loading = false;
+                                    $scope.lxSelectData.loading = false;
                                     callback(convertedData);
                                 }
                             });
@@ -2252,10 +2329,10 @@ angular.module('lumx.select', [])
             {
                 if (angular.isDefined(conversion))
                 {
-                    $scope.data.loading = true;
+                    $scope.lxSelectData.loading = true;
                     conversion(newValue, function(data)
                     {
-                        $scope.data.loading = false;
+                        $scope.lxSelectData.loading = false;
                         callback(data);
                     });
                 }
@@ -2267,7 +2344,7 @@ angular.module('lumx.select', [])
         }
 
         // Watchers
-        $scope.$watch('ngModel.$modelValue', function(newValue)
+        $scope.$watch('lxSelectNgModel.$modelValue', function(newValue)
         {
             if (newModel)
             {
@@ -2276,25 +2353,25 @@ angular.module('lumx.select', [])
             }
 
             convertValue(newValue,
-                         $scope.modelToSelection,
+                         $scope.lxSelectModelToSelection,
                          function(newConvertedValue)
             {
                 newSelection = true;
 
                 var value = newConvertedValue !== undefined ? angular.copy(newConvertedValue) : [];
-                if (!$scope.multiple)
+                if (!$scope.lxSelectMultiple)
                 {
                     value = newConvertedValue !== undefined ? [angular.copy(newConvertedValue)] : [];
                 }
 
-                $scope.data.selected = value;
-                $scope.$selected = !$scope.multiple && $scope.getSelectedElements().length === 1 ? $scope.getSelectedElements()[0] : undefined;
+                $scope.lxSelectData.selected = value;
+                $scope.$selected = !$scope.lxSelectMultiple && $scope.lxSelectGetSelectedElements().length === 1 ? $scope.lxSelectGetSelectedElements()[0] : undefined;
             });
         });
 
-        $scope.$watch('data.selected', function(newValue)
+        $scope.$watch('lxSelectData.selected', function(newValue)
         {
-            if (angular.isDefined(newValue) && angular.isDefined($scope.data.selectedTransclude))
+            if (angular.isDefined(newValue) && angular.isDefined($scope.lxSelectData.selectedTransclude))
             {
                 if (newScope)
                 {
@@ -2302,36 +2379,36 @@ angular.module('lumx.select', [])
                 }
 
                 newScope = $scope.$new();
-                $scope.data.selectedTemplate = { html: '', selected: {} };
+                $scope.lxSelectData.selectedTemplate = { html: '', selected: {} };
 
                 angular.forEach(newValue, function(selectedElement, key)
                 {
                     newScope.$selected = selectedElement;
-                    $scope.data.selectedTemplate.selected[key] = selectedElement;
+                    $scope.lxSelectData.selectedTemplate.selected[key] = selectedElement;
 
-                    $scope.data.selectedTransclude(newScope, function(clone)
+                    $scope.lxSelectData.selectedTransclude(newScope, function(clone)
                     {
                         var div = angular.element('<div/>');
                         var content = $interpolate(clone.html())(newScope);
                         clone.html(content);
 
-                        if ($scope.multiple)
+                        if ($scope.lxSelectMultiple)
                         {
-                            if ($scope.allowClear || newValue.length > 1)
+                            if ($scope.lxSelectAllowClear || newValue.length > 1)
                             {
-                                var deleteButton = angular.element('<i class="lx-select__delete-button" ng-click="unselect(transcludeSelected[' + key + '], $event, true)"></i>');
+                                var deleteButton = angular.element('<i class="lx-select__delete-button" ng-click="lxSelectUnselect(lxSelectTranscludeSelected[' + key + '], $event, true)"></i>');
                                 clone.append(deleteButton);
                             }
                         }
 
                         div.append(clone);
 
-                        if ($scope.multiple)
+                        if ($scope.lxSelectMultiple)
                         {
                             div.find('span').addClass('lx-select__tag');
                         }
 
-                        $scope.data.selectedTemplate.html += div.html();
+                        $scope.lxSelectData.selectedTemplate.html += div.html();
                     });
                 });
             }
@@ -2343,7 +2420,7 @@ angular.module('lumx.select', [])
             }
 
             var data = newValue;
-            if(!$scope.multiple)
+            if(!$scope.lxSelectMultiple)
             {
                 if (newValue)
                 {
@@ -2356,43 +2433,43 @@ angular.module('lumx.select', [])
             }
 
             convertValue(data,
-                         $scope.selectionToModel,
+                         $scope.lxSelectSelectionToModel,
                          function(newConvertedValue)
             {
                 newModel = true;
 
-                if ($scope.change)
+                if ($scope.lxSelectChange)
                 {
-                    $scope.change({ newValue: angular.copy(newConvertedValue), oldValue: angular.copy($scope.ngModel.$modelValue) });
+                    $scope.lxSelectChange({ newValue: angular.copy(newConvertedValue), oldValue: angular.copy($scope.lxSelectNgModel.$modelValue) });
                 }
-                $scope.ngModel.$setViewValue(angular.copy(newConvertedValue));
-                $scope.$selected = !$scope.multiple && $scope.getSelectedElements().length === 1 ? $scope.getSelectedElements()[0] : undefined;
+                $scope.lxSelectNgModel.$setViewValue(angular.copy(newConvertedValue));
+                $scope.$selected = !$scope.lxSelectMultiple && $scope.lxSelectGetSelectedElements().length === 1 ? $scope.lxSelectGetSelectedElements()[0] : undefined;
             });
         }, true);
 
-        $scope.$watch('data.filter', function(newValue, oldValue)
+        $scope.$watch('lxSelectData.filter', function(newValue, oldValue)
         {
-            if(angular.isUndefined($scope.minLength) || (newValue && $scope.minLength <= newValue.length))
+            if(angular.isUndefined($scope.lxSelectMinLength) || (newValue && $scope.lxSelectMinLength <= newValue.length))
             {
-                if ($scope.filter)
+                if ($scope.lxSelectFilter)
                 {
-                    $scope.filter(newValue, oldValue);
+                    $scope.lxSelectFilter(newValue, oldValue);
                 }
             }
         });
 
         // Public API
-        $scope.select = select;
-        $scope.unselect = unselect;
-        $scope.toggle = toggle;
-        $scope.isChoicesVisible = isChoicesVisible;
-        $scope.isHelperVisible = isHelperVisible;
-        $scope.isSelected = isSelected;
-        $scope.filterNeeded = filterNeeded;
-        $scope.getSelectedElements = getSelectedElements;
-        $scope.hasNoResults = hasNoResults;
-        $scope.isChoicesArray = isChoicesArray;
-        $scope.trust = trust;
+        $scope.lxSelectSelect = select;
+        $scope.lxSelectUnselect = unselect;
+        $scope.lxSelectToggle = toggle;
+        $scope.lxSelectIsChoicesVisible = isChoicesVisible;
+        $scope.lxSelectIsHelperVisible = isHelperVisible;
+        $scope.lxSelectIsSelected = isSelected;
+        $scope.lxSelectFilterNeeded = filterNeeded;
+        $scope.lxSelectGetSelectedElements = getSelectedElements;
+        $scope.lxSelectHasNoResults = hasNoResults;
+        $scope.lxSelectIsChoicesArray = isChoicesArray;
+        $scope.lxSelectTrust = trust;
     }])
     .directive('lxSelect', function()
     {
@@ -2406,45 +2483,72 @@ angular.module('lumx.select', [])
             replace: true,
             link: function(scope, element, attrs, ngModel)
             {
-                scope.multiple = angular.isDefined(attrs.multiple);
-                scope.floatingLabel = angular.isDefined(attrs.floatingLabel);
-                scope.tree = angular.isDefined(attrs.tree);
-                scope.ngModel = ngModel;
+                scope.lxSelectMultiple = angular.isDefined(attrs.multiple);
+                scope.lxSelectFloatingLabel = angular.isDefined(attrs.floatingLabel);
+                scope.lxSelectTree = angular.isDefined(attrs.tree);
+                scope.lxSelectNgModel = ngModel;
 
                 // Default values
-                scope.placeholder = '';
-                scope.loading = '';
-                scope.minLength = undefined;
-                scope.allowClear = '';
-                scope.choices = function() { return []; };
-                scope.change = undefined;
-                scope.filter = undefined;
-                scope.selectionToModel = undefined;
-                scope.modelToSelection = undefined;
+                scope.lxSelectPlaceholder = '';
+                scope.lxSelectLoading = '';
+                scope.lxSelectMinLength = undefined;
+                scope.lxSelectAllowClear = '';
+                scope.lxSelectChoices = function() { return []; };
+                scope.lxSelectDisabled = undefined;
+                scope.lxSelectError = undefined;
+                scope.lxSelectValid = undefined;
+                scope.lxSelectChange = undefined;
+                scope.lxSelectFilter = undefined;
+                scope.lxSelectSelectionToModel = undefined;
+                scope.lxSelectModelToSelection = undefined;
 
                 attrs.$observe('placeholder', function(newValue)
                 {
-                    scope.placeholder = newValue;
+                    scope.lxSelectPlaceholder = newValue;
                 });
 
                 attrs.$observe('loading', function(newValue)
                 {
-                    scope.loading = newValue;
+                    scope.lxSelectLoading = newValue;
                 });
 
                 attrs.$observe('minLength', function(newValue)
                 {
-                    scope.minLength = newValue;
+                    scope.lxSelectMinLength = newValue;
                 });
 
                 attrs.$observe('allowClear', function(newValue)
                 {
-                    scope.allowClear = newValue;
+                    scope.lxSelectAllowClear = newValue;
+                });
+
+                attrs.$observe('disabled', function(newValue)
+                {
+                    scope.lxSelectDisabled = function()
+                    {
+                        return scope.$eval(newValue);
+                    };
+                });
+
+                attrs.$observe('error', function(newValue)
+                {
+                    scope.lxSelectError = function()
+                    {
+                        return scope.$eval(newValue);
+                    };
+                });
+
+                attrs.$observe('valid', function(newValue)
+                {
+                    scope.lxSelectValid = function()
+                    {
+                        return scope.$eval(newValue);
+                    };
                 });
 
                 attrs.$observe('choices', function(newValue)
                 {
-                    scope.choices = function()
+                    scope.lxSelectChoices = function()
                     {
                         return scope.$eval(newValue);
                     };
@@ -2452,7 +2556,7 @@ angular.module('lumx.select', [])
 
                 attrs.$observe('change', function(newValue)
                 {
-                    scope.change = function(newData, oldData)
+                    scope.lxSelectChange = function(newData, oldData)
                     {
                         return scope.$eval(newValue, { newValue: newData, oldValue: oldData });
                     };
@@ -2460,7 +2564,7 @@ angular.module('lumx.select', [])
 
                 attrs.$observe('filter', function(newValue)
                 {
-                    scope.filter = function(newFilter, oldFilter)
+                    scope.lxSelectFilter = function(newFilter, oldFilter)
                     {
                         return scope.$eval(newValue, { newValue: newFilter, oldValue: oldFilter });
                     };
@@ -2468,7 +2572,7 @@ angular.module('lumx.select', [])
 
                 var selectionToModel = function(newValue)
                 {
-                    scope.selectionToModel = function(selection, callback)
+                    scope.lxSelectSelectionToModel = function(selection, callback)
                     {
                         return scope.$eval(newValue, { data: selection, callback: callback });
                     };
@@ -2483,7 +2587,7 @@ angular.module('lumx.select', [])
 
                 var modelToSelection = function(newValue)
                 {
-                    scope.modelToSelection = function(model, callback)
+                    scope.lxSelectModelToSelection = function(model, callback)
                     {
                         return scope.$eval(newValue, { data: model, callback: callback });
                     };
@@ -2530,7 +2634,7 @@ angular.module('lumx.select', [])
                 {
                     var data = scope.$eval(attrs.content);
 
-                    scope.transcludeSelected = data.selected;
+                    scope.lxSelectTranscludeSelected = data.selected;
 
                     element.html(data.html);
                     $compile(element.contents())(scope);
@@ -2552,8 +2656,6 @@ angular.module('lumx.tabs', [])
             tabTags,
             indicator,
             paginationTranslation = 0;
-
-        $scope.activeTab = angular.isUndefined($scope.activeTab) ? 0 : $scope.activeTab;
 
         this.init = function(element)
         {
@@ -2588,23 +2690,23 @@ angular.module('lumx.tabs', [])
             {
                 for (var tabIdx = idx + 1; tabIdx < tabs.length; ++tabIdx)
                 {
-                    --tabs[tabIdx].index;
+                    --tabs[tabIdx].lxTabIndex;
                 }
 
                 tabs.splice(idx, 1);
 
-                if (idx === $scope.activeTab)
+                if (idx === $scope.lxTabsActiveTab)
                 {
-                    $scope.activeTab = 0;
+                    $scope.lxTabsActiveTab = 0;
                     $timeout(function()
                     {
                         setIndicatorPosition(idx);
                     });
                 }
-                else if(idx < $scope.activeTab)
+                else if(idx < $scope.lxTabsActiveTab)
                 {
-                    var old = $scope.activeTab;
-                    $scope.activeTab = old - 1;
+                    var old = $scope.lxTabsActiveTab;
+                    $scope.lxTabsActiveTab = old - 1;
 
                     $timeout(function()
                     {
@@ -2788,21 +2890,21 @@ angular.module('lumx.tabs', [])
         {
             $timeout(function()
             {
-                $scope.activeTab = index;
+                $scope.lxTabsActiveTab = index;
             });
         }
 
         function setLinksColor(newTab)
         {
-            tabTags.removeClass('tc-' + $scope.indicator);
-            tabTags.eq(newTab).addClass('tc-' + $scope.indicator);
+            tabTags.removeClass('tc-' + $scope.lxTabsIndicator);
+            tabTags.eq(newTab).addClass('tc-' + $scope.lxTabsIndicator);
         }
 
         function setIndicatorPosition(oldTab)
         {
             var direction;
 
-            if ($scope.activeTab > oldTab)
+            if ($scope.lxTabsActiveTab > oldTab)
             {
                 direction = 'right';
             }
@@ -2812,7 +2914,7 @@ angular.module('lumx.tabs', [])
             }
 
             var tabsVisibleWidth = links.parent('.tabs').outerWidth(),
-                activeTab = links.find('.tabs-link').eq($scope.activeTab),
+                activeTab = links.find('.tabs-link').eq($scope.lxTabsActiveTab),
                 activeTabWidth = activeTab.outerWidth(),
                 indicatorLeft = activeTab.position().left,
                 indicatorRight = tabsVisibleWidth - (indicatorLeft + activeTabWidth);
@@ -2854,7 +2956,7 @@ angular.module('lumx.tabs', [])
             }
         }
 
-        $scope.$watch('activeTab', function(newIndex, oldIndex)
+        $scope.$watch('lxTabsActiveTab', function(newIndex, oldIndex)
         {
             if (newIndex !== oldIndex)
             {
@@ -2869,7 +2971,6 @@ angular.module('lumx.tabs', [])
         // Watch tabs and go to previous page if there is no more tabs currently displayed
         $scope.$watchCollection(function() { return tabs; }, function ()
         {
-
             $timeout(function ()
             {
                 tabTags = links.find('.tabs-link');
@@ -2886,7 +2987,7 @@ angular.module('lumx.tabs', [])
             }
         });
 
-        angular.element($window).bind('resize', function()
+        angular.element($window).on('resize', function()
         {
             setIndicatorPosition();
 
@@ -2897,15 +2998,15 @@ angular.module('lumx.tabs', [])
         });
 
         // Public API
-        $scope.getTabs = getTabs;
-        $scope.setActiveTab = setActiveTab;
-        $scope.isPaginationActive = isPaginationActive;
-        $scope.isPaginationLeftDisabled = isPaginationLeftDisabled;
-        $scope.isPaginationRightDisabled = isPaginationRightDisabled;
-        $scope.showNextPage = showNextPage;
-        $scope.showPrevPage = showPrevPage;
+        $scope.lxTabsGetTabs = getTabs;
+        $scope.lxTabsSetActiveTab = setActiveTab;
+        $scope.lxTabsIsPaginationActive = isPaginationActive;
+        $scope.lxTabsIsPaginationLeftDisabled = isPaginationLeftDisabled;
+        $scope.lxTabsIsPaginationRightDisabled = isPaginationRightDisabled;
+        $scope.lxTabsShowNextPage = showNextPage;
+        $scope.lxTabsShowPrevPage = showPrevPage;
     }])
-    .directive('lxTabs', function()
+    .directive('lxTabs', ['$parse', function($parse)
     {
         return {
             restrict: 'E',
@@ -2917,56 +3018,77 @@ angular.module('lumx.tabs', [])
             link: function(scope, element, attrs, ctrl)
             {
                 ctrl.init(element);
-                scope.activeTab = 'activeTab' in attrs ? scope.$parent.$eval(attrs.activeTab) : 0;
-                scope.linksTc = 'dark';
-                scope.linksBgc = 'white';
-                scope.indicator = 'blue-500';
-                scope.zDepth = '0';
-                scope.layout = 'full';
-                scope.iconPrefix = 'mdi mdi-';
+                scope.lxTabsActiveTab = 0;
+                scope.lxTabsLinksTc = 'dark';
+                scope.lxTabsLinksBgc = 'white';
+                scope.lxTabsIndicator = 'blue-500';
+                scope.lxTabsZDepth = '0';
+                scope.lxTabsLayout = 'full';
+                scope.lxTabsIconPrefix = 'mdi mdi-';
+
+                scope.$watch(function()
+                {
+                    return 'activeTab' in attrs ? scope.$parent.$eval(attrs.activeTab) : 0;
+                }, function(newValue)
+                {
+                    scope.lxTabsActiveTab = angular.isDefined(newValue) ? newValue : 0;
+                });
+
+                if ('activeTab' in attrs)
+                {
+                    var activeTabModel = $parse(attrs.activeTab);
+
+                    scope.$watch('lxTabsActiveTab', function(newActiveTab)
+                    {
+                        if (activeTabModel.assign)
+                        {
+                            activeTabModel.assign(scope, newActiveTab);
+                        }
+                    });
+                }
 
                 attrs.$observe('linksTc', function(newValue)
                 {
-                    scope.linksTc = newValue || 'dark';
+                    scope.lxTabsLinksTc = newValue || 'dark';
                 });
 
                 attrs.$observe('linksBgc', function(newValue)
                 {
-                    scope.linksBgc = newValue || 'white';
+                    scope.lxTabsLinksBgc = newValue || 'white';
                 });
 
                 attrs.$observe('indicator', function(newValue)
                 {
-                    scope.indicator = newValue || 'blue-500';
+                    scope.lxTabsIndicator = newValue || 'blue-500';
                 });
 
                 attrs.$observe('noDivider', function(newValue)
                 {
-                    scope.noDivider = newValue;
+                    scope.lxTabsNoDivider = newValue;
                 });
 
                 attrs.$observe('zDepth', function(newValue)
                 {
-                    scope.zDepth = newValue || '0';
+                    scope.lxTabsZDepth = newValue || '0';
                 });
 
                 attrs.$observe('layout', function(newValue)
                 {
-                    scope.layout = newValue || 'full';
+                    scope.lxTabsLayout = newValue || 'full';
                 });
 
                 attrs.$observe('showIconAndHeading', function(newValue)
                 {
-                    scope.showIconAndHeading = newValue;
+                    scope.lxTabsShowIconAndHeading = newValue;
                 });
 
                 attrs.$observe('iconPrefix', function(newValue)
                 {
-                    scope.iconPrefix = newValue || 'mdi mdi-';
+                    scope.lxTabsIconPrefix = newValue || 'mdi mdi-';
                 });
             }
         };
-    })
+    }])
     .directive('lxTab', function()
     {
         return {
@@ -2978,17 +3100,17 @@ angular.module('lumx.tabs', [])
             replace: true,
             link: function(scope, element, attrs, ctrl)
             {
-                scope.data = ctrl.getScope();
-                scope.index = ctrl.addTab(scope);
+                scope.lxTabData = ctrl.getScope();
+                scope.lxTabIndex = ctrl.addTab(scope);
 
                 attrs.$observe('heading', function(newValue)
                 {
-                    scope.heading = newValue;
+                    scope.lxTabHeading = newValue;
                 });
 
                 attrs.$observe('icon', function(newValue)
                 {
-                    scope.icon = newValue;
+                    scope.lxTabIcon = newValue;
                 });
 
                 scope.$on('$destroy', function(scope)
@@ -2998,36 +3120,39 @@ angular.module('lumx.tabs', [])
             }
         };
     })
-    .directive('lxTabLink', function()
+    .directive('lxTabLink', ['$timeout', function($timeout)
     {
         return {
             require: '^lxTabs',
             restrict: 'A',
             link: function(scope, element)
             {
-                if (scope.activeTab === element.parent().index())
+                if (scope.lxTabsActiveTab === element.parent().index())
                 {
-                    element.addClass('tc-' + scope.indicator);
+                    $timeout(function()
+                    {
+                        element.addClass('tc-' + scope.lxTabsIndicator);
+                    });
                 }
 
                 element
                     .on('mouseenter', function()
                     {
-                        if (scope.activeTab !== element.parent().index())
+                        if (scope.lxTabsActiveTab !== element.parent().index())
                         {
-                            element.addClass('tc-' + scope.indicator);
+                            element.addClass('tc-' + scope.lxTabsIndicator);
                         }
                     })
                     .on('mouseleave', function()
                     {
-                        if (scope.activeTab !== element.parent().index())
+                        if (scope.lxTabsActiveTab !== element.parent().index())
                         {
-                            element.removeClass('tc-' + scope.indicator);
+                            element.removeClass('tc-' + scope.lxTabsIndicator);
                         }
                     });
             }
         };
-    });
+    }]);
 
 /* global angular */
 'use strict'; // jshint ignore:line
@@ -3096,9 +3221,12 @@ angular.module('lumx.text-field', [])
                 {
                     $timeout(function()
                     {
-                        $field
-                            .removeAttr('style')
-                            .css({ height: $field[0].scrollHeight + 'px' });
+                        var tmpTextArea = angular.element('<textarea class="text-field__input" style="width: ' + $field.width() + 'px;">' + $field.val() + '</textarea>');
+                        tmpTextArea.appendTo('body');
+
+                        $field.css({ height: tmpTextArea[0].scrollHeight + 'px' });
+
+                        tmpTextArea.remove();
                     });
                 }
 
@@ -3375,8 +3503,8 @@ angular.module("lumx.dropdown").run(['$templateCache', function(a) { a.put('drop
     '');
 	a.put('dropdown-toggle.html', '<div ng-transclude="child"></div>\n' +
     '');
-	a.put('dropdown-menu.html', '<div class="dropdown-menu dropdown-menu--{{ position }}" ng-class="{ \'dropdown__menu--is-dropped\': isDropped }">\n' +
-    '    <div class="dropdown-menu__content" ng-transclude="child" ng-if="isDropped"></div>\n' +
+	a.put('dropdown-menu.html', '<div class="dropdown-menu dropdown-menu--{{ lxDropdownPosition }}" ng-class="{ \'dropdown__menu--is-dropped\': lxDropdownIsDropped }">\n' +
+    '    <div class="dropdown-menu__content" ng-transclude="child" ng-if="lxDropdownIsDropped"></div>\n' +
     '</div>\n' +
     '');
 	 }]);
@@ -3417,30 +3545,33 @@ angular.module("lumx.search-filter").run(['$templateCache', function(a) { a.put(
     '</div>');
 	 }]);
 angular.module("lumx.select").run(['$templateCache', function(a) { a.put('select.html', '<div class="lx-select"\n' +
-    '     ng-class="{ \'lx-select--is-unique\': !multiple,\n' +
-    '                 \'lx-select--is-multiple\': multiple }">\n' +
+    '     ng-class="{ \'lx-select--is-unique\': !lxSelectMultiple,\n' +
+    '                 \'lx-select--is-multiple\': lxSelectMultiple,\n' +
+    '                 \'lx-select--is-valid\': lxSelectValid(),\n' +
+    '                 \'lx-select--has-error\': lxSelectError(),\n' +
+    '                 \'lx-select--is-disabled\': lxSelectDisabled() }">\n' +
     '    <lx-dropdown width="32" over-toggle="true">\n' +
     '        <div ng-transclude="child"></div>\n' +
     '    </lx-dropdown>\n' +
     '</div>\n' +
     '');
 	a.put('select-selected.html', '<div lx-dropdown-toggle>\n' +
-    '    <span class="lx-select__floating-label" ng-if="getSelectedElements().length !== 0 && floatingLabel" ng-bind-html="trust(placeholder)"></span>\n' +
+    '    <span class="lx-select__floating-label" ng-if="lxSelectGetSelectedElements().length !== 0 && lxSelectFloatingLabel" ng-bind-html="lxSelectTrust(lxSelectPlaceholder)"></span>\n' +
     '\n' +
     '    <div class="lx-select__selected"\n' +
-    '         ng-class="{ \'lx-select__selected--is-unique\': !multiple,\n' +
-    '                     \'lx-select__selected--is-multiple\': multiple && getSelectedElements().length > 0,\n' +
-    '                     \'lx-select__selected--placeholder\': getSelectedElements().length === 0 }"\n' +
+    '         ng-class="{ \'lx-select__selected--is-unique\': !lxSelectMultiple,\n' +
+    '                     \'lx-select__selected--is-multiple\': lxSelectMultiple && lxSelectGetSelectedElements().length > 0,\n' +
+    '                     \'lx-select__selected--placeholder\': lxSelectGetSelectedElements().length === 0 }"\n' +
     '         lx-ripple>\n' +
-    '        <span ng-if="getSelectedElements().length === 0" ng-bind-html="trust(placeholder)"></span>\n' +
+    '        <span ng-if="lxSelectGetSelectedElements().length === 0" ng-bind-html="lxSelectTrust(lxSelectPlaceholder)"></span>\n' +
     '\n' +
-    '        <div ng-if="!multiple && getSelectedElements().length === 1">\n' +
-    '            <i class="lx-select__close mdi mdi-close-circle" ng-click="unselect($selected, $event)" ng-if="allowClear"></i>\n' +
+    '        <div ng-if="!lxSelectMultiple && lxSelectGetSelectedElements().length === 1">\n' +
+    '            <i class="lx-select__close mdi mdi-close-circle" ng-click="lxSelectUnselect($selected, $event)" ng-if="lxSelectAllowClear"></i>\n' +
     '            <span ng-transclude="child"></span>\n' +
     '        </div>\n' +
     '\n' +
-    '        <div ng-if="multiple">\n' +
-    '            <div class="lx-select__tag" ng-repeat="$selected in getSelectedElements()">\n' +
+    '        <div ng-if="lxSelectMultiple">\n' +
+    '            <div class="lx-select__tag" ng-repeat="$selected in lxSelectGetSelectedElements()">\n' +
     '                <span ng-transclude="child"></span>\n' +
     '            </div>\n' +
     '        </div>\n' +
@@ -3448,93 +3579,93 @@ angular.module("lumx.select").run(['$templateCache', function(a) { a.put('select
     '</div>\n' +
     '');
 	a.put('select-choices.html', '<lx-dropdown-menu class="lx-select__choices">\n' +
-    '    <ul ng-if="!tree">\n' +
-    '        <li ng-if="getSelectedElements().length > 0">\n' +
+    '    <ul ng-if="!lxSelectTree">\n' +
+    '        <li ng-if="lxSelectGetSelectedElements().length > 0">\n' +
     '            <lx-select-choices-selected class="lx-select__chosen"\n' +
-    '                                        ng-class="{ \'lx-select__chosen--is-multiple\': multiple,\n' +
-    '                                                    \'lx-select__chosen--is-deletable\': multiple && (getSelectedElements().length > 1 || allowClear), }"\n' +
-    '                                        content="data.selectedTemplate"></lx-select-choices-selected>\n' +
+    '                                        ng-class="{ \'lx-select__chosen--is-multiple\': lxSelectMultiple,\n' +
+    '                                                    \'lx-select__chosen--is-deletable\': lxSelectMultiple && (lxSelectGetSelectedElements().length > 1 || lxSelectAllowClear), }"\n' +
+    '                                        content="lxSelectData.selectedTemplate"></lx-select-choices-selected>\n' +
     '        </li>\n' +
     '\n' +
     '        <li>\n' +
     '            <div class="lx-select__filter dropdown-filter">\n' +
-    '                <lx-search-filter model="data.filter" filter-width="100%" lx-dropdown-filter></lx-search-filter>\n' +
+    '                <lx-search-filter model="lxSelectData.filter" filter-width="100%" lx-dropdown-filter></lx-search-filter>\n' +
     '            </div>\n' +
     '        </li>\n' +
     '\n' +
-    '        <li class="lx-select__help" ng-if="isHelperVisible()">\n' +
-    '            <span ng-if="filterNeeded()">Type minimum {{ minLength }} to search</span>\n' +
-    '            <span ng-if="hasNoResults() && !filterNeeded()">No results!</span>\n' +
+    '        <li class="lx-select__help" ng-if="lxSelectIsHelperVisible()">\n' +
+    '            <span ng-if="lxSelectFilterNeeded()">Type minimum {{ lxSelectMinLength }} to search</span>\n' +
+    '            <span ng-if="lxSelectHasNoResults() && !lxSelectFilterNeeded()">No results!</span>\n' +
     '        </li>\n' +
     '\n' +
-    '        <div ng-if="isChoicesVisible() && isChoicesArray()">\n' +
-    '            <li ng-repeat="$choice in choices() | filterChoices:filter:data.filter | limitTo:100 track by $index">\n' +
+    '        <div ng-if="lxSelectIsChoicesVisible() && lxSelectIsChoicesArray()">\n' +
+    '            <li ng-repeat="$choice in lxSelectChoices() | filterChoices:filter:lxSelectData.filter | limitTo:100 track by $index">\n' +
     '                <a class="lx-select__choice dropdown-link"\n' +
-    '                   ng-class="{ \'lx-select__choice--is-multiple\': multiple,\n' +
-    '                               \'lx-select__choice--is-selected\': isSelected($choice) }"\n' +
-    '                   ng-click="toggle($choice, $event)"\n' +
+    '                   ng-class="{ \'lx-select__choice--is-multiple\': lxSelectMultiple,\n' +
+    '                               \'lx-select__choice--is-selected\': lxSelectIsSelected($choice) }"\n' +
+    '                   ng-click="lxSelectToggle($choice, $event)"\n' +
     '                   ng-transclude="child"></a>\n' +
     '            </li>\n' +
     '        </div>\n' +
     '\n' +
-    '        <div ng-if="isChoicesVisible() && !isChoicesArray()">\n' +
-    '            <li ng-repeat-start="($subheader, children) in choices()">\n' +
-    '                <span class="dropdown-link dropdown-link--is-header" ng-bind-html="trust($subheader)"></span>\n' +
+    '        <div ng-if="lxSelectIsChoicesVisible() && !lxSelectIsChoicesArray()">\n' +
+    '            <li ng-repeat-start="($subheader, children) in lxSelectChoices()">\n' +
+    '                <span class="dropdown-link dropdown-link--is-header" ng-bind-html="lxSelectTrust($subheader)"></span>\n' +
     '            </li>\n' +
     '\n' +
-    '            <li ng-repeat-end ng-repeat="$choice in children | filterChoices:filter:data.filter | limitTo:100 track by $index">\n' +
+    '            <li ng-repeat-end ng-repeat="$choice in children | filterChoices:filter:lxSelectData.filter | limitTo:100 track by $index">\n' +
     '                <a class="lx-select__choice dropdown-link"\n' +
-    '                   ng-class="{ \'lx-select__choice--is-multiple\': multiple,\n' +
-    '                               \'lx-select__choice--is-selected\': isSelected($choice) }"\n' +
-    '                   ng-click="toggle($choice, $event)"\n' +
+    '                   ng-class="{ \'lx-select__choice--is-multiple\': lxSelectMultiple,\n' +
+    '                               \'lx-select__choice--is-selected\': lxSelectIsSelected($choice) }"\n' +
+    '                   ng-click="lxSelectToggle($choice, $event)"\n' +
     '                   ng-transclude="child"></a>\n' +
     '            </li>\n' +
     '        </div>\n' +
     '\n' +
-    '        <li class="lx-select__loader" ng-if="loading === \'true\'">\n' +
+    '        <li class="lx-select__loader" ng-if="lxSelectLoading === \'true\'">\n' +
     '            <i class="mdi mdi-reload"></i>\n' +
     '        </li>\n' +
     '    </ul>\n' +
     '</lx-dropdown-menu>\n' +
     '');
 	 }]);
-angular.module("lumx.tabs").run(['$templateCache', function(a) { a.put('tabs.html', '<div class="tabs tabs--theme-{{ linksTc }} tabs--layout-{{ layout }}"\n' +
-    '     ng-class="{ \'tabs--no-divider\': noDivider }">\n' +
+angular.module("lumx.tabs").run(['$templateCache', function(a) { a.put('tabs.html', '<div class="tabs tabs--theme-{{ lxTabsLinksTc }} tabs--layout-{{ lxTabsLayout }}"\n' +
+    '     ng-class="{ \'tabs--no-divider\': lsTabsNoDivider }">\n' +
     '\n' +
-    '    <button class="tabs__pagination-left btn btn--m bgc-{{ linksBgc }}"\n' +
-    '            ng-click="showPrevPage()"\n' +
-    '            ng-if="isPaginationActive()"\n' +
-    '            ng-disabled="isPaginationLeftDisabled()">\n' +
+    '    <button class="tabs__pagination-left btn btn--m bgc-{{ lxTabsLinksBgc }}"\n' +
+    '            ng-click="lxTabsShowPrevPage()"\n' +
+    '            ng-if="lxTabsIsPaginationActive()"\n' +
+    '            ng-disabled="lxTabsIsPaginationLeftDisabled()">\n' +
     '      <i class="mdi mdi-chevron-left"></i>\n' +
     '    </button>\n' +
     '\n' +
-    '    <ul class="tabs__links bgc-{{ linksBgc }} z-depth{{ zDepth }}"\n' +
-    '        ng-class="{\'tabs__pagination-padding\': isPaginationActive()}">\n' +
-    '        <li ng-repeat="tab in getTabs()">\n' +
+    '    <ul class="tabs__links bgc-{{ lxTabsLinksBgc }} z-depth{{ lxTabsZDepth }}"\n' +
+    '        ng-class="{\'tabs__pagination-padding\': lxTabsIsPaginationActive()}">\n' +
+    '        <li ng-repeat="tab in lxTabsGetTabs() track by $index">\n' +
     '            <a lx-tab-link\n' +
     '               class="tabs-link"\n' +
-    '               ng-class="{ \'tabs-link--is-active\': $index === activeTab }"\n' +
-    '               ng-click="setActiveTab($index)"\n' +
-    '               lx-ripple="{{ indicator }}">\n' +
-    '               <span ng-if="tab.icon !== undefined"><i class="{{iconPrefix}}{{ tab.icon }}"></i></span>\n' +
-    '               <span ng-if="tab.icon === undefined || showIconAndHeading">{{ tab.heading }}</i></span>\n' +
+    '               ng-class="{ \'tabs-link--is-active\': $index === lxTabsActiveTab }"\n' +
+    '               ng-click="lxTabsSetActiveTab($index)"\n' +
+    '               lx-ripple="{{ lxTabsIndicator }}">\n' +
+    '               <span ng-if="tab.lxTabIcon !== undefined"><i class="{{ lxTabsIconPrefix }}{{ tab.lxTabIcon }}"></i></span>\n' +
+    '               <span ng-if="tab.lxTabIcon === undefined || lxTabsShowIconAndHeading">{{ tab.lxTabHeading }}</i></span>\n' +
     '            </a>\n' +
     '        </li>\n' +
     '    </ul>\n' +
     '\n' +
-    '    <button class="tabs__pagination-right btn btn--m bgc-{{ linksBgc }}"\n' +
-    '            ng-click="showNextPage()"\n' +
-    '            ng-if="isPaginationActive()"\n' +
-    '            ng-disabled="isPaginationRightDisabled()">\n' +
+    '    <button class="tabs__pagination-right btn btn--m bgc-{{ lxTabsLinksBgc }}"\n' +
+    '            ng-click="lxTabsShowNextPage()"\n' +
+    '            ng-if="lxTabsIsPaginationActive()"\n' +
+    '            ng-disabled="lxTabsIsPaginationRightDisabled()">\n' +
     '      <i class="mdi mdi-chevron-right"></i>\n' +
     '    </button>\n' +
     '\n' +
     '    <div class="tabs__panes" ng-transclude="child"></div>\n' +
     '\n' +
-    '    <div class="tabs__indicator bgc-{{ indicator }}"></div>\n' +
+    '    <div class="tabs__indicator bgc-{{ lxTabsIndicator }}"></div>\n' +
     '</div>\n' +
     '');
-	a.put('tab.html', '<div class="tabs-pane" ng-if="index === data.activeTab" ng-transclude="child"></div>\n' +
+	a.put('tab.html', '<div class="tabs-pane" ng-if="lxTabIndex === lxTabData.lxTabsActiveTab" ng-transclude="child"></div>\n' +
     '');
 	 }]);
 angular.module("lumx.date-picker").run(['$templateCache', function(a) { a.put('date-picker.html', '<div class="lx-date" ng-class="{ \'lx-date--fixed-label\': fixedLabel(),\n' +
@@ -3558,61 +3689,65 @@ angular.module("lumx.date-picker").run(['$templateCache', function(a) { a.put('d
     '    <!-- Date picker -->\n' +
     '    <div class="lx-date-picker">\n' +
     '        <div ng-if="ctrlData.isOpen">\n' +
-    '            <!-- Current day of week -->\n' +
-    '            <div class="lx-date-picker__current-day-of-week">\n' +
-    '                <span>{{ moment(selected.date).format(\'dddd\') }}</span>\n' +
-    '            </div>\n' +
-    '\n' +
-    '            <!-- Current date -->\n' +
-    '            <div class="lx-date-picker__current-date">\n' +
-    '                <span ng-class="{ \'tc-white-1\': !yearSelection, \'tc-white-3\': yearSelection }">{{ moment(selected.date).format(\'MMM\') }}</span>\n' +
-    '                <strong ng-class="{ \'tc-white-1\': !yearSelection, \'tc-white-3\': yearSelection }">{{ moment(selected.date).format(\'DD\') }}</strong>\n' +
-    '                <a ng-class="{ \'tc-white-3\': !yearSelection, \'tc-white-1\': yearSelection }" ng-click="displayYearSelection()">{{ moment(selected.date).format(\'YYYY\') }}</a>\n' +
-    '            </div>\n' +
-    '\n' +
-    '            <!-- Calendar -->\n' +
-    '            <div class="lx-date-picker__calendar" ng-if="!yearSelection">\n' +
-    '                <div class="lx-date-picker__nav">\n' +
-    '                    <button class="btn btn--xs btn--teal btn--icon" lx-ripple ng-click="previousMonth()">\n' +
-    '                        <i class="mdi mdi-chevron-left"></i>\n' +
-    '                    </button>\n' +
-    '\n' +
-    '                    <span>{{ activeDate.format(\'MMMM YYYY\') }}</span>\n' +
-    '\n' +
-    '                    <button class="btn btn--xs btn--teal btn--icon" lx-ripple ng-click="nextMonth()">\n' +
-    '                        <i class="mdi mdi-chevron-right"></i>\n' +
-    '                    </button>\n' +
+    '            <div class="lx-date-picker__header">\n' +
+    '                <!-- Current day of week -->\n' +
+    '                <div class="lx-date-picker__current-day-of-week">\n' +
+    '                    <span>{{ moment(selected.date).format(\'dddd\') }}</span>\n' +
     '                </div>\n' +
     '\n' +
-    '                <div class="lx-date-picker__days-of-week">\n' +
-    '                    <span ng-repeat="day in daysOfWeek">{{ day }}</span>\n' +
-    '                </div>\n' +
-    '\n' +
-    '                <div class="lx-date-picker__days">\n' +
-    '                    <span class="lx-date-picker__day lx-date-picker__day--is-empty"\n' +
-    '                          ng-repeat="x in emptyFirstDays">&nbsp;</span><!--\n' +
-    '\n' +
-    '                 --><div class="lx-date-picker__day"\n' +
-    '                         ng-class="{ \'lx-date-picker__day--is-selected\': day.selected,\n' +
-    '                                     \'lx-date-picker__day--is-today\': day.today }"\n' +
-    '                         ng-repeat="day in days">\n' +
-    '                        <a ng-click="select(day)">{{ day ? day.format(\'D\') : \'\' }}</a>\n' +
-    '                    </div><!--\n' +
-    '\n' +
-    '                 --><span class="lx-date-picker__day lx-date-picker__day--is-empty"\n' +
-    '                          ng-repeat="x in emptyLastDays">&nbsp;</span>\n' +
+    '                <!-- Current date -->\n' +
+    '                <div class="lx-date-picker__current-date">\n' +
+    '                    <span ng-class="{ \'tc-white-1\': !yearSelection, \'tc-white-3\': yearSelection }">{{ moment(selected.date).format(\'MMM\') }}</span>\n' +
+    '                    <strong ng-class="{ \'tc-white-1\': !yearSelection, \'tc-white-3\': yearSelection }">{{ moment(selected.date).format(\'DD\') }}</strong>\n' +
+    '                    <a ng-class="{ \'tc-white-3\': !yearSelection, \'tc-white-1\': yearSelection }" ng-click="displayYearSelection()">{{ moment(selected.date).format(\'YYYY\') }}</a>\n' +
     '                </div>\n' +
     '            </div>\n' +
     '\n' +
-    '            <!-- Year selection -->\n' +
-    '            <div class="lx-date-picker__year-selector" ng-if="yearSelection">\n' +
-    '                <a class="lx-date-picker__year"\n' +
-    '                     ng-class="{ \'lx-date-picker__year--is-active\': year == activeDate.format(\'YYYY\') }"\n' +
-    '                     ng-repeat="year in years"\n' +
-    '                     ng-click="selectYear(year)"\n' +
-    '                     ng-if="yearSelection">\n' +
-    '                    <span>{{ year }}</span>\n' +
-    '                </a>\n' +
+    '            <div class="lx-date-picker__content">\n' +
+    '                <!-- Calendar -->\n' +
+    '                <div class="lx-date-picker__calendar" ng-if="!yearSelection">\n' +
+    '                    <div class="lx-date-picker__nav">\n' +
+    '                        <button class="btn btn--xs btn--teal btn--icon" lx-ripple ng-click="previousMonth()">\n' +
+    '                            <i class="mdi mdi-chevron-left"></i>\n' +
+    '                        </button>\n' +
+    '\n' +
+    '                        <span>{{ activeDate.format(\'MMMM YYYY\') }}</span>\n' +
+    '\n' +
+    '                        <button class="btn btn--xs btn--teal btn--icon" lx-ripple ng-click="nextMonth()">\n' +
+    '                            <i class="mdi mdi-chevron-right"></i>\n' +
+    '                        </button>\n' +
+    '                    </div>\n' +
+    '\n' +
+    '                    <div class="lx-date-picker__days-of-week">\n' +
+    '                        <span ng-repeat="day in daysOfWeek">{{ day }}</span>\n' +
+    '                    </div>\n' +
+    '\n' +
+    '                    <div class="lx-date-picker__days">\n' +
+    '                        <span class="lx-date-picker__day lx-date-picker__day--is-empty"\n' +
+    '                              ng-repeat="x in emptyFirstDays">&nbsp;</span><!--\n' +
+    '\n' +
+    '                     --><div class="lx-date-picker__day"\n' +
+    '                             ng-class="{ \'lx-date-picker__day--is-selected\': day.selected,\n' +
+    '                                         \'lx-date-picker__day--is-today\': day.today }"\n' +
+    '                             ng-repeat="day in days">\n' +
+    '                            <a ng-click="select(day)">{{ day ? day.format(\'D\') : \'\' }}</a>\n' +
+    '                        </div><!--\n' +
+    '\n' +
+    '                     --><span class="lx-date-picker__day lx-date-picker__day--is-empty"\n' +
+    '                              ng-repeat="x in emptyLastDays">&nbsp;</span>\n' +
+    '                    </div>\n' +
+    '                </div>\n' +
+    '\n' +
+    '                <!-- Year selection -->\n' +
+    '                <div class="lx-date-picker__year-selector" ng-if="yearSelection">\n' +
+    '                    <a class="lx-date-picker__year"\n' +
+    '                         ng-class="{ \'lx-date-picker__year--is-active\': year == activeDate.format(\'YYYY\') }"\n' +
+    '                         ng-repeat="year in years"\n' +
+    '                         ng-click="selectYear(year)"\n' +
+    '                         ng-if="yearSelection">\n' +
+    '                        <span>{{ year }}</span>\n' +
+    '                    </a>\n' +
+    '                </div>\n' +
     '            </div>\n' +
     '\n' +
     '            <!-- Actions -->\n' +
