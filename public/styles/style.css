@@ -127,6 +127,7 @@ body {
   border-radius: 100%;
   box-shadow: 0 2px 5px rgba(0,0,0,.1); 
   margin: 0 auto;
+  right: 0;
   cursor: pointer;
   pointer-events: none;
   transition: background-color 0.218s,border 0.218s,box-shadow 0.218s;
