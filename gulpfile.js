@@ -1,62 +1,47 @@
-/*File: gulpfile.js*/
+/* File: gulpfile.js */
 
-// Gulp Packages
-var gulp        = require('gulp')
-  , gutil       = require('gulp-util')
-  , jade        = require('gulp-jade')
-  , jshint      = require('gulp-jshint')
-  , nodemon     = require('gulp-nodemon')
-  , prettify    = require('gulp-prettify')
-  , sass        = require('gulp-sass');
+var gulp    = require('gulp'),
+    gutil   = require('gulp-util'),
+    jshint  = require('gulp-jshint'),
+    nodemon  = require('gulp-nodemon'),
+    prettify = require('gulp-prettify'), 
+    sass    = require('gulp-sass');
 
-
-// Nodemon
-gulp.task('start', function () {
+gulp.task('nodemon', function () {
   nodemon({
-    script: 'index.js'
-  , ext: 'js css html'
-  , env: { 'NODE_ENV': 'development' }
+    script: 'index.js', 
+    ext: 'js css html', 
+    env: { 'NODE_ENV': 'development' }
   })
-    .on('start', function () {
-      console.log('nodemon started')
-    })
-    .on('restart', function () {
-      console.log('>> node restart');
-    })
-    .on('crash', function () {
-      console.log('script crashed for some reason');
-    })
+  .on('start', function () {
+    console.log('nodemon started')
+  })
+  .on('restart', function () {
+    console.log('>> node restart');
+  })
+  .on('crash', function () {
+    console.log('script crashed for some reason');
+  })
 });
 
-// Jade 
-gulp.task('jade', function() {
-  gulp.src('./source/**/*.jade')
-    .pipe(jade())
-    .pipe(gulp.dest('./public/'))
-})
+gulp.task('sass', function() {
+  gulp.src('./source/**/*.scss')
+    .pipe(sass())
+    .pipe(gulp.dest('./public/styles/'))
+});
 
-// Prettify
-gulp.task('prettify', function() {
-  gulp.src('./public/views/*.html')
-    .pipe(prettify({indent_size: 2}))
-    .pipe(gulp.dest('./public/views/'))
-})
-
-// JShint
 gulp.task('jshint', function(){
   return gulp.src(['public/scripts/**/*.js', './index.js'])
     .pipe(jshint())
     .pipe(jshint.reporter('jshint-stylish'));
 });
 
-// Watch 
 gulp.task('watch', function(){
   gulp.watch('public/scripts/**/*.js', ['jshint']);
-  gulp.watch('./source/**/*.jade', ['jade']);
-  gulp.watch('./source/**/*.jade', ['prettify']);
+  gulp.watch('./source/**/*.scss', ['sass']);
 });
 
-// Default task message
-gulp.task('default', ['start', 'jade', 'prettify', 'watch'], function(){
+gulp.task('build', ['nodemon', 'sass', 'prettify'])
+gulp.task('default', ['build', 'watch'], function(){
   return gutil.log('Gulp is running!!');
 });
