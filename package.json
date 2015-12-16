@@ -9,11 +9,8 @@
   },
   "devDependencies": {
     "gulp": "^3.9.0",
-    "gulp-html-prettify": "0.0.1",
-    "gulp-jade": "^1.1.0",
     "gulp-jshint": "^1.11.2",
-    "gulp-prettify": "^0.3.0",
-    "gulp-sass": "^2.0.4",
+    "gulp-sass": "^2.1.0",
     "gulp-util": "^3.0.6",
     "jshint-stylish": "^2.0.1"
   },
