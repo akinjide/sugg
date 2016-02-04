@@ -1,17 +1,6 @@
 {
-  "name": "to-do-chrome-extension",
-  "version": "1.0.0",
-  "authors": [
+  "author": [
     "andela-abankole <akinjide.bankole@andela.co>"
-  ],
-  "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "public/libs",
-    "test",
-    "tests"
   ],
   "dependencies": {
     "angularjs": "~1.4.1",
@@ -21,6 +10,7 @@
     "masonry": "~3.3.1",
     "marked": "~0.3.5",
     "angular-spinkit": "~0.3.3",
-    "mdi": "~1.2.65"
+    "mdi": "~1.2.65",
+    "typed.js": "~1.1.1"
   }
 }
