@@ -3,6 +3,10 @@
 
 # Dependency directory
 node_modules
+npm-debug.log
 
 # sass
 .sass-cache
+.idea
+
+client/public/**
