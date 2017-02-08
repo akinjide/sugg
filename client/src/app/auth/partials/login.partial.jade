@@ -1,0 +1,27 @@
+.login-wrap
+  video(poster="../images/background.jpg" autoplay loop)
+    - var link = "../videos/background"
+    each media_type in ['mp4', 'webm', 'ogv']
+      source(src=link + ".#{media_type}" type="video/#{media_type}")
+  .overlay
+    a(href="/")
+      h1 Znote
+    h4
+      | Simpe. Create. Love it.
+    div(class="mt++ znote__about" flex-container="row" flex-gutter="24")
+      div(flex-item="1")
+      div(id="about__section" flex-item="6")
+        p#about
+      div(class="znote__login__divider" flex-item="1")
+      div(class="login-social-link" flex-item="4")
+        h4.signin
+          | you can sign up via your social network
+        ul
+          each social_network in ['facebook', 'twitter', 'google']
+            li
+              button(class="btn btn--m btn--blue btn--raised #{social_network}" lx-ripple ng-click="loginVm.Login('#{social_network}')")
+                span.icon
+                  i.fa.fa-facebook
+                  p #{social_network.charAt().toUpperCase() + social_network.slice(1)}
+
+script(type='text/javascript' src='scripts/common/about.js')

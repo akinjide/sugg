@@ -1,0 +1,47 @@
+div(style={'padding-top': '80px'})
+  a#key(href="#")
+    div.add-note
+      p
+        | Add Note
+
+input#texts(style={color: 'black'} type="text")
+input#names(style={color: 'black'} type="text")
+#messagesDiv
+
+div(ng-repeat="note in notes")
+  | {{ note.$id }} - {{ note.name }} - {{ note.text }}
+
+#test(style={width: '1040px', margin: '0 auto', 'padding-top': '20px'})
+  .znote-notes-wrapper(style={position: 'relative'})
+    double-bounce-spinner
+    div(ng-include="'partials/add.partial.html'")
+
+    .tc-white-1.card.znote-content-card
+      div
+        div(class="p+ card bgc-white znote_content")
+          .znote-icons-contain
+            .znote-checkbox
+              input(type="checkbox")
+            .list-row__secondary
+              .mt
+                // Right direction
+                .fab.ml
+                  button.fab__primary.btn.btn--l.btn--teal.btn--icon(lx-ripple lx-tooltip="options" tooltip-position="top")
+                    i.mdi.mdi-chevron-right
+                    i.mdi.mdi-plus
+                  .fab__actions.fab__actions--right
+                    button.btn.btn--s.btn--grey.btn--icon(lx-ripple lx-tooltip="lock" tooltip-position="top")
+                      i.mdi.mdi-lock
+                    button.btn.btn--s.btn--blue.btn--icon(lx-ripple lx-tooltip="edit" tooltip-position="top")
+                      i.mdi.mdi-pencil
+                    button.btn.btn--s.btn--red.btn--icon(lx-ripple lx-tooltip="delete" tooltip-position="top")
+                      i.mdi.mdi-close
+          ul(class="list mt++ znote-list")
+            li.list-row.list-row--multi-line
+              .list-row__content
+                span.display-block.tc-black-1
+                  | Two-line item
+                span.display-block.fs-body-1.tc-black-2
+                  | Secondary text Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Nam massa quam. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptate tempora ut qui hic quisquam vero voluptates, aliquid vel saepe delectus odio rerum illum soluta sint iste. Possimus vero ea, sapiente?
+
+    div(style={clear: 'both'})

@@ -1,0 +1,28 @@
+.znote_navcontainer
+  nav.bgc(ng-cloak)
+    div
+      img(src="images/logo-znote.png")
+      .znote-sidebar
+        button.btn.btn--l.btn--black.btn--fab(lx-ripple)
+          i.mdi.mdi-refresh
+        lx-dropdown(position="right" from-top="true")
+          button.btn.btn--l.btn--black.btn--fab(lx-ripple lx-dropdown-toggle)
+            i.mdi.mdi-menu
+          lx-dropdown-menu
+            ul
+            - var classes = ['dropdown-link', 'dropdown-link--is-large']
+              li
+                a(class=classes)
+                  i.mdi.mdi-eye
+                  span Preview
+              li
+                a(class=classes)
+                  i.mdi.mdi-account-plus
+                  span Search
+              li.dropdown-divider
+              li
+                a(class=classes)
+                  i.mdi.mdi-delete
+                  span Clear All
+
+div(ui-view="theView")
