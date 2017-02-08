@@ -1,10 +1,10 @@
 var async    = require('async'),
     Firebase = require('firebase');
 
-module.exports = function(app, rootRef) {
+module.exports = function(router, rootRef) {
   var userRef = rootRef.child('users');
 
-  app.get('/v1/users', function(req, res) {
+  router.get('/users', function(req, res) {
     userRef.once('value', function(snap) {
       console.log(snap.val())
       var users = snap.val(),
@@ -37,7 +37,9 @@ module.exports = function(app, rootRef) {
     });
   });
 
-  app.get('/v1/users/:id', function(req, res) {
+  router.get('/users/:id', function(req, res) {
 
   });
+
+  return router;
 };
