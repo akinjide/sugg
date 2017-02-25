@@ -2,8 +2,8 @@
 
 angular
   .module('znote.services')
-  .factory('User', ['Refs', '$cookies', '$firebaseArray', '$firebaseObject',
-    function(Refs, $cookies, $firebaseArray, $firebaseObject) {
+  .factory('User', ['Refs', '$cookies', '$firebaseArray', '$firebaseObject', '$rootScope',
+    function(Refs, $cookies, $firebaseArray, $firebaseObject, $rootScope) {
       var user, e,
           newUser = {};
 
@@ -19,7 +19,6 @@ angular
           $cookies.put('user', authData.uid);
 
           user.$loaded().then(function() {
-            console.log('yeet', user);
             if (user.id == undefined) {
               // create user record depending on available field
               if (authData.email) newUser.email = authData.email;
@@ -37,6 +36,8 @@ angular
               this.update(authData)
             }
 
+            $rootScope.currentUser = user;
+
             // ...and we return the user when done
             return cb(e, user)
           }.bind(this)).catch(function(e) {
@@ -46,20 +47,22 @@ angular
 
         update: function(authData) {
           // update user access token
-          if (authData.provider)
+          if (authData.provider) {
             user.access_token  = authData.access_token;
             user.updated_at    = authData.created_at;
+          }
 
           user.$save().then(function(ref) {
-            if (ref.key() === user.$id)
+            if (ref.key() === user.$id) {
               console.info(ref.key() + ' updated');
+            }
           });
         },
 
         remove: function(uid, cb) {
-          user = $firebaseObject(Refs.users.child(uid));
+          var qry = $firebaseObject(Refs.users.child(uid));
 
-          user.$remove().then(function(ref) {
+          qry.$update({ 'active': false }).then(function(ref) {
             e = null;
             cb(e, 'Data has been deleted locally and in the database')
           }, function(e) {
@@ -68,14 +71,13 @@ angular
         },
 
         all: function(cb) {
-          var users;
+          var qry = Refs.users;
 
-          users = $firebaseArray(Refs.users);
           if (!cb) {
-            return users;
+            return $firebaseArray(qry);
           }
           else {
-            Refs.users.once('value', function(snap) {
+            qry.once('value', function(snap) {
               e = null;
               if (snap.exists()) {
                 cb(e, snap.val());
@@ -89,11 +91,13 @@ angular
         },
 
         find: function(uid, cb) {
+          var qry = Refs.users.child(uid);
+
           if (!cb) {
-            return $firebaseObject(Refs.users.child(uid));
+            return $firebaseObject(qry);
           }
           else {
-            Refs.users.child(uid).once('value', function(snap) {
+            qry.once('value', function(snap) {
               e = null;
               if (snap.exists()) {
                 cb(e, snap.val());

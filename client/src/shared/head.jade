@@ -11,19 +11,11 @@ mixin link(type, rel, href)
 - var type         = 'text/css'
 - var rel          = 'stylesheet'
 
-// Favicon
 +link('', 'shortcut icon', '/favicon.ico')
-
-// CDN provided
 +link(type, rel, '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css')
 +link('', rel, 'http://fonts.googleapis.com/css?family=Roboto:300,400,500,700')
-
-// Libraries
 +link(type, rel, lib_base + 'lumx/dist/lumx.css')
 +link(type, rel, lib_base + 'angular-spinkit/build/angular-spinkit.min.css')
-
-// build:css /styles/
 +link(type, rel, default_base + 'vendor.min.css')
 +link(type, rel, default_base + 'application.css')
 +link(type, rel, default_base + 'lib.css')
-// endbuild

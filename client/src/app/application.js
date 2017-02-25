@@ -2,25 +2,25 @@
   define all modules
  */
 angular.module('znote.services',    ['ngCookies', 'firebase', 'lumx']);
-angular.module('znote.controllers', []);
+angular.module('znote.controllers', ['ngCookies']);
 angular.module('znote.directives',  []);
 angular.module('znote.filters',     []);
 
 // require services
-require('./scripts/services/authentication.service.js');
-require('./scripts/services/notes.service.js');
-require('./scripts/services/notification.service.js');
-require('./scripts/services/refs.service.js');
-require('./scripts/services/users.service.js');
+require('./services/authentication.service.js');
+require('./services/notes.service.js');
+require('./services/notification.service.js');
+require('./services/refs.service.js');
+require('./services/users.service.js');
 
 // require directives
-require('./scripts/directives/dragnote.directive.js');
-require('./scripts/directives/pagetitle.directive.js');
+require('./directives/dragnote.directive.js');
+require('./directives/pagetitle.directive.js');
 
 // require controllers
-require('./scripts/controllers/authentication.controller.js');
-require('./scripts/controllers/main.controller.js');
-require('./scripts/controllers/notes.controller.js');
+require('./controllers/authentication.controller.js');
+require('./controllers/main.controller.js');
+require('./controllers/notes.controller.js');
 
 window.znote = angular.module("znote", [
   'ui.bootstrap',
@@ -28,32 +28,34 @@ window.znote = angular.module("znote", [
   'znote.directives',
   'znote.services',
   'angular-spinkit',
-  'ui.router'
+  'ui.router',
+  'lumx'
 ]);
 
 // firebase URL
-znote.constant('firebaseURL', 'https://znote.firebaseio.com/')
+znote.constant('fbURL', 'https://znote.firebaseio.com/')
 
 // application routes
 znote.config([
   '$stateProvider',
   '$urlRouterProvider',
   '$locationProvider',
-  'firebaseURL',
-  function($stateProvider, $urlRouterProvider, $locationProvider, firebaseURL) {
+  'fbURL',
+  function($stateProvider, $urlRouterProvider, $locationProvider, fbURL) {
     $locationProvider.html5Mode(true);
     $urlRouterProvider.otherwise('/404/notfound');
+
     $stateProvider
       .state('404', {
         url: "/404/notfound",
-        templateUrl: "partials/404.partial.html",
+        templateUrl: "views/404.partial.html",
         data: {
           pageTitle: '404 - Not Found | Znote'
         }
       })
       .state('login', {
         url   : '/',
-        templateUrl : 'partials/login.partial.html',
+        templateUrl : 'views/login.partial.html',
         controller: 'AuthenticationController as loginVm',
         data: {
           pageTitle: 'Login | Znote'
@@ -63,25 +65,45 @@ znote.config([
         url   : '/notes',
         views : {
           '' : {
-            templateUrl : 'partials/nav.partial.html'
+            templateUrl : 'views/nav.partial.html'
           },
           'theView@notes' : {
-            templateUrl : 'partials/notes.partial.html'
+            templateUrl : 'views/notes.partial.html'
           }
         },
         data: {
           pageTitle: 'Notes | Znote'
         }
-        // resolve: {
-        //   // controller will not be loaded until $waitForAuth resolves
-        //   // Auth refers to our $firebaseAuth wrapper in the example above
-        //   "currentAuth": ['$firebaseAuth', function($firebaseAuth) {
-        //     // $waitForAuth returns a promise so the resolve waits for it to complete
-        //     var ref = new Firebase(firebaseURL);
-        //     var authObj = $firebaseAuth(ref);
+        resolve: {
+          // controller will not be loaded until $waitForAuth resolves
+          // Auth refers to our $firebaseAuth wrapper in the example above
+          "currentAuth": ['$firebaseAuth', function($firebaseAuth) {
+            // $waitForAuth returns a promise so the resolve waits for it to complete
+            var ref = new Firebase(fbURL);
+            var authObj = $firebaseAuth(ref);
 
-        //     return authObj.$requireAuth();
-        //   }]
-        // }
-      });
-}]);
+            return authObj.$requireAuth();
+          }]
+        }
+      })
+//       .state('logout', {
+//         url: '/logout',
+//         templateUrl: 'scripts/login-register/login-logout/logout.html',
+//         controller: 'LoginCtrl',
+//         resolve: {
+//           logout: function(authService){
+//             authService.logout();
+//           }
+//         }
+//       })
+//       .state('secure', {
+//         abstract: true,
+//         template: '<div ui-view>',
+//         controller: 'SecureCtrl',
+//         resolve: {
+//           isLoggedIn: function(authService){
+//             return authService.isLoggedIn();
+//           }
+//         }
+//       });
+  }]);

@@ -36,7 +36,6 @@ angular
            * @return {authData} object containing authentication data about the logged-in user
            */
           authObj.$authWithOAuthPopup(provider, query).then(function(authData) {
-            console.log(authData);
             e = null;
 
             if (cb) cb(e, authData);
@@ -90,7 +89,7 @@ angular
          * @return {Object} containing filter logged-in user data
          */
         buildUserObjectFromProviders: function(authData) {
-          var social_provider = getName(authData);
+          var socialProvider = getName(authData);
 
           // return a suitable name based on the meta info given by each provider
           function getName(authData) {
@@ -108,18 +107,19 @@ angular
           }
 
           return {
-            uid : authData.uid,
-            provider : authData.provider,
-            display_name : authData[social_provider].displayName,
-            picture_img_url : authData[social_provider].profileImageURL,
+            uid: authData.uid,
+            provider: authData.provider,
+            display_name: authData[socialProvider].displayName,
+            picture_img_url: authData[socialProvider].profileImageURL,
 //             name: {
 //               first: ,
 //               last: ,
 //             },
-            email : authData[social_provider].email,
-            access_token : authData[social_provider].accessToken,
-            id : authData[social_provider].cachedUserProfile.id,
-            created_at: Firebase.ServerValue.TIMESTAMP
+            email: authData[socialProvider].email,
+            access_token: authData[socialProvider].accessToken,
+            id: authData[socialProvider].cachedUserProfile.id,
+            created_at: Firebase.ServerValue.TIMESTAMP,
+            active: true
           }
         },
 
@@ -130,6 +130,23 @@ angular
           authObj = $firebaseAuth(Refs.root);
           authObj.$unauth();
           $rootScope.currentUser = null;
+        },
+
+        isLoggedIn: function() {
+          var authObj = $firebaseAuth(Refs.root);
+
+          if (authObj.$getAuth()) {
+            return true;
+          } else {
+            return false;
+          }
+        },
+
+        getUser: function() {
+          var authObj = $firebaseAuth(Refs.root);
+
+//   this.cachedUser = ref.getAuth();
+          return authObj.$getAuth();
         }
       };
   }]);

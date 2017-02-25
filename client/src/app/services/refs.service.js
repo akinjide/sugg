@@ -2,9 +2,9 @@
 
 angular
   .module('znote.services')
-  .factory('Refs', ['firebaseURL',
-    function(firebaseURL) {
-      var rootRef = new Firebase(firebaseURL);
+  .factory('Refs', ['fbURL',
+    function(fbURL) {
+      var rootRef = new Firebase(fbURL);
 
       return {
         root: rootRef,

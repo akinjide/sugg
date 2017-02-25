@@ -4,11 +4,9 @@ mixin script(type, src)
 
 - // Variables
 - var default_base = 'scripts/'
-- var standalone   = 'scripts/standalone/'
 - var lib_base     = 'lib/'
 - var type         = 'text/javascript'
 
-// Libraries
 +script(type, lib_base + 'jquery/dist/jquery.min.js')
 +script(type, lib_base + 'velocity/velocity.js')
 +script(type, lib_base + 'moment/min/moment-with-locales.js')
@@ -22,12 +20,7 @@ mixin script(type, src)
 +script(type, lib_base + 'angular-bootstrap/ui-bootstrap.min.js')
 +script(type, lib_base + 'typed.js/js/typed.js')
 +script(type, lib_base + 'moment/moment.js')
-+script(type, lib_base + 'lodash/lodash.min.js')
++script(type, lib_base + 'lodash/dist/lodash.min.js')
 +script(type, lib_base + 'angular-cookies/angular-cookies.js')
-
-// build:js
-//- +script(type, standalone + 'script.js')
-//- +script(type, standalone + 'masonry.js')
-//- +script(type, standalone + 'firebase.js')
++script(type, default_base + 'vendor.min.js')
 +script(type, default_base + 'index.js')
-// endbuild
