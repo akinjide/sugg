@@ -1,21 +1,22 @@
-- // Mixins
+- // MIXINS
 mixin link(type, rel, href)
   if (!type)
     link(rel=rel, href=href)
   else
     link(type=type, rel=rel, href=href)
 
-- // Variables
+- // VARIABLES
 - var default_base = 'styles/'
-- var lib_base     = 'lib/'
-- var type         = 'text/css'
-- var rel          = 'stylesheet'
+- var lib_base = 'lib/'
+- var type = 'text/css'
+- var rel = 'stylesheet'
 
 +link('', 'shortcut icon', '/favicon.ico')
-+link(type, rel, '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css')
-+link('', rel, 'http://fonts.googleapis.com/css?family=Roboto:300,400,500,700')
++link('', rel, href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,700|Roboto:400,500,700')
 +link(type, rel, lib_base + 'lumx/dist/lumx.css')
++link(type, rel, lib_base + 'trix/dist/trix.css')
 +link(type, rel, lib_base + 'angular-spinkit/build/angular-spinkit.min.css')
++link(type, rel, lib_base + 'angular-loading-bar/build/loading-bar.min.css')
 +link(type, rel, default_base + 'vendor.min.css')
 +link(type, rel, default_base + 'application.css')
 +link(type, rel, default_base + 'lib.css')

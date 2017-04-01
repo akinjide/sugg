@@ -5,7 +5,8 @@ html(lang="en" ng-app="znote" ng-strict-di)
     title(route-title)
     include shared/header
     include shared/head
-  body(ng-controller="MainController as mainVm")
-    div(ui-view)
+  body
+    double-bounce-spinner(preloader)
+    div#ui-view(ui-view)
     include shared/footer
     include shared/foot

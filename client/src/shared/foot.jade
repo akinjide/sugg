@@ -1,11 +1,11 @@
-- // Mixins
+- // MIXINS
 mixin script(type, src)
   script(type=type, src=src)
 
-- // Variables
+- // VARIABLES
 - var default_base = 'scripts/'
-- var lib_base     = 'lib/'
-- var type         = 'text/javascript'
+- var lib_base = 'lib/'
+- var type = 'text/javascript'
 
 +script(type, lib_base + 'jquery/dist/jquery.min.js')
 +script(type, lib_base + 'velocity/velocity.js')
@@ -14,13 +14,17 @@ mixin script(type, src)
 +script(type, lib_base + 'lumx/dist/lumx.js')
 +script(type, lib_base + 'firebase/firebase.js')
 +script(type, lib_base + 'angularfire/dist/angularfire.min.js')
-+script(type, lib_base + 'masonry/dist/masonry.pkgd.min.js')
 +script(type, lib_base + 'angular-spinkit/build/angular-spinkit.min.js')
 +script(type, lib_base + 'angular-ui-router/release/angular-ui-router.min.js')
 +script(type, lib_base + 'angular-bootstrap/ui-bootstrap.min.js')
 +script(type, lib_base + 'typed.js/js/typed.js')
 +script(type, lib_base + 'moment/moment.js')
 +script(type, lib_base + 'lodash/dist/lodash.min.js')
-+script(type, lib_base + 'angular-cookies/angular-cookies.js')
++script(type, lib_base + 'ngstorage/ngStorage.min.js')
++script(type, lib_base + 'trix/dist/trix.js')
++script(type, lib_base + 'angular-trix/dist/angular-trix.min.js')
++script(type, lib_base + 'angular-sanitize/angular-sanitize.min.js')
++script(type, lib_base + 'angular-loading-bar/build/loading-bar.min.js')
++script(type, lib_base + 'angular-animate/angular-animate.min.js')
 +script(type, default_base + 'vendor.min.js')
 +script(type, default_base + 'index.js')
