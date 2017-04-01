@@ -9,6 +9,7 @@
   },
   "author": "Akinjide Bankole <r@akinjide.me>",
   "dependencies": {
+    "async": "^2.2.0",
     "body-parser": "^1.13.1",
     "bourbon": "^4.2.7",
     "browser-sync": "^2.18.8",
