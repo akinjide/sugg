@@ -6,10 +6,6 @@ dependencies:
     - npm install module-deps
     - npm install gulp -g
 
-compile:
-  override:
-    - gulp production
-
 test:
   override:
     - gulp nsp
@@ -17,6 +13,8 @@ test:
 deployment:
   development:
     branch: staging
+    commands:
+      - gulp production
     heroku:
       appname: znote-dev
 
