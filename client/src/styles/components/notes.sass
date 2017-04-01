@@ -1,0 +1,102 @@
+.col-masonry:hover > .znote-checkbox
+  :opacity 1
+
+.box-placeholder
+  :margin-bottom 12px
+  :padding 15px
+  :border 1px dashed #a0aab2
+  :border-radius 2px
+  :background $white
+  :color $darkGray
+  :transition-duration .218s
+  :transition-property box-shadow, opacity, border
+  :transition-timing-function ease-in
+
+  &:hover
+    :box-shadow 0 1px 3px 0 rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 2px 1px -1px rgba(0, 0, 0, .12)
+
+  & > p
+    :font-family $slabFF
+
+  & > p ul
+    :padding 10px 15px
+
+  & > p img
+    :margin 2px
+
+  & > p blockquote
+    :min-height 1em
+    :padding 0.5em
+    :background-color #fafafa
+    :border-left 0.2em solid #dbdbdb
+    :font italic 12px
+    :line-height 1.5em
+
+  &.selected
+    :box-shadow 0 0 0 4px #6f6f6f
+    :border-radius 2px
+    :border 0
+
+.list-view
+  :margin 0 auto
+  :min-width 240px
+  :max-width 500px
+  :width auto
+
+.znote-icons-container
+  :margin 30px 0 -36px
+
+.list-row__secondary
+  :position relative
+  :top -30px
+
+.znote-checkbox
+  :position absolute
+  :opacity 0
+  :transition opacity .218s linear
+  :z-index 201
+  :transform translate(-10px, -10px)
+
+  &:hover
+    :cursor pointer
+
+  &.selected
+    :background #f3f3f3
+
+label
+  :cursor pointer
+
+  &:before
+    :content "\F12C"
+    :display inline-block
+    :font-family "Material Design Icons"
+    :font-size 18px;
+    :text-rendering auto
+    :-webkit-font-smoothing antialiased
+    :-moz-osx-font-smoothing grayscale
+    :transform translate(0, 0)
+    :width 30px
+    :height 30px
+    :border 2px solid transparent
+    :box-shadow 0 1px 1px 1px rgba(0, 0, 0, .1)
+    :border-radius 100%
+    :vertical-align middle
+    :color #000
+    :text-align center
+    :line-height 1.35em
+    :transition transform 0.2s ease-in-out
+    :position absolute
+    :top 0
+    :left 0
+    :background-color $white
+
+input[type=checkbox]:checked + label:before
+  :background #6f6f6f
+  :color $white
+  :text-align center
+  :line-height 1.3em
+//   :transform rotate(45deg)
+//   :transform-origin center center
+
+input[type=checkbox]
+  :visibility hidden

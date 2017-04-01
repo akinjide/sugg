@@ -1,3 +1,5 @@
+// desk
+// @media screen and (min-width: 1024px)
 @media screen and (max-width: 1024px)
   [flex-gutter="24"]
     margin: 0;
@@ -7,14 +9,83 @@
       a
         h1
           :font
-            :family $allfontface
+            :family $defaultFF
             :size 34px
             :weight lighter
           :border-color $white
           :border 1px solid
           :margin 30px 34% 0px
           :padding 12px
-  .znote__login__divider,
-  #about__section,
-  .footer
+  .znote__login__divider, #about__section, .footer
     :display none
+
+  .login-social-link
+    ul
+      :margin-top 40px
+      li
+        :margin: 10px 0 20px 0 !important
+
+//   [flex-gutter="24"]
+//     margin: 0;
+//
+//   .login-wrap
+//     .overlay
+//       a
+//         img.logo
+//           :margin-top 40px
+//         h1
+//           :font
+//             :family $defaultFF
+//             :size 34px
+//             :weight lighter
+//
+//           :border-color $white
+//           :border 1px solid
+//           :margin 30px 34% 0px
+//           :padding 12px
+//
+//   .znote__login__divider, #about__section, .footer
+//     :display none
+//
+//   .login-social-link
+//     ul
+//       :margin-top 40px
+//       li
+//         :margin: 10px 0 20px 0 !important
+
+// palm
+@media screen and (max-width: 480px)
+  trix-toolbar
+    :display none;
+
+  .znote_navcontainer
+    nav
+      & > div
+        :padding 10px 20px
+
+    .bgc
+      border:
+        :right 10px solid $white
+        :left 10px solid $white
+//   .znote-search
+//     :display none
+
+
+// lap
+// @media screen and (min-width: 481px) and (max-width: 1023px)
+
+// lap-and-up
+// @media screen and (min-width: 481px)
+
+// portable
+// @media screen and (max-width: 1023px)
+
+// desk-wide
+// @media screen and (min-width: 1280px)
+
+// full-hd
+// @media screen and (min-width: 1920px)
+
+// retina
+// @media screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi), (min-resolution: 2dppx)
+

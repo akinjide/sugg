@@ -1,36 +1,14 @@
+html
+  :overflow-y hidden
+  :background-color #fafafa
+
 body
   :margin 0
   :padding 0
   :height 100%
   :width 100%
   :color $white
-  :font-family $allfontface
-
-.znote_navcontainer
-  nav
-    :background-color $default
-    :position fixed
-    :width 100%
-    :height 50px
-    :z-index 1000
-    & > div
-      :padding 5px 40px
-    img
-      :width 90px
-      :height auto
-      :float left
-      :padding 2px
-      :margin-top 2px
-  .bgc
-    :background $default
-    :box-shadow 0px 0px 1px 1px rgba(0, 0, 0, 0.14), 0px 0px 2px 2px rgba(0, 0, 0, 0.098), 0px 0px 5px 1px rgba(0, 0, 0, 0.084)
-    border:
-      :bottom 2px solid rgba(0, 0, 0, 0.6)
-      :right 60px solid $default
-      :left 60px solid $default
-
-.znote-sidebar
-  :float right
+  :font 13px $defaultFF
 
 .znote_content
   :height auto
@@ -39,45 +17,12 @@ body
 .znote-list
   :margin-top -2px !important
 
-.fab__actions--right
-  :position absolute !important
-  :top 6px !important
-  :left 40px !important
-
-.znote-icons-contain
-  :margin-bottom -36px
-  :margin-left 5px
-
-.list-row__secondary
-  :position relative
-  :left 35px
-  :top -30px
-
 .tabs
   :width 50%
   :margin 0 auto
 
 .bgc-white
   :background-color rgba(255, 255, 255, 0.31) !important
-
-.znote-input
-  :position relative
-  :top 20px
-  :width 100%
-  :margin 0 auto
-  :background none !important
-  :box-shadow none !important
-  textarea
-    :position relative
-    :top 0px
-    :width 100%
-    :height 46px
-    :margin 0 auto
-    :padding 6px
-    :margin-bottom 20px
-    :box-shadow none !important
-  & > textarea:focus
-    :outline none
 
 .znote-content-card
   :display inline-block
@@ -87,182 +32,3 @@ body
   :position relative
   :margin 10px
 
-.znote-checkbox
-  :position relative
-  :top 10px
-  :left 10px
-
-.add-note
-  :width 100px
-  :height 100px
-  :background $white
-  :border 1px solid $default
-  :border-radius 100%
-  :box-shadow 0 2px 5px rgba(0, 0, 0, 0.1)
-  :margin 0 auto
-  :right 0
-  :cursor pointer
-  :pointer-events none
-  :transition background-color 0.218s,border 0.218s,box-shadow 0.218s
-  p
-    :text-align center
-    :padding 40px 15px
-    :font-size 12px
-
-.btn--black
-  :background $default !important
-  :color $black !important
-
-.login-wrap
-  :text-align center
-  :position absolute
-  :width 100%
-  :height 100%
-  :top 0
-  :right 0
-  :bottom 0
-  :left 0
-  :overflow hidden
-  :-webkit-transition opacity 0.5s ease-out
-  :transition opacity 0.5s ease-out
-  video
-    :position absolute
-    :top 50%
-    :left 50%
-    :right 0
-    :bottom 0
-    :-webkit-transform translate(-50%, -50%)
-    :-ms-transform translate(-50%, -50%)
-    :transform translate(-50%, -50%)
-    :width auto
-    :height auto
-    :min-width 100%
-    :min-height 100%
-    :z-index -1
-  .overlay
-    :z-index 2
-    :position absolute
-    :background-color rgba($black, $alpha)
-    :top 0
-    :bottom 0
-    :left 0
-    :right 0
-    a
-      :text-decoration none
-      :color inherit
-      h1
-        :font
-          :family $allfontface
-          :size 52px
-          :weight lighter
-        :border-color $white
-        :border 1px solid
-        :margin 60px 40% 0px
-        :padding 12px
-    h4
-      font:
-        :family $allfontface
-        :size 22px
-        :weight 200
-      :margin 32px 0px 60px
-    .znote__about
-      :margin 20px 0px 0px
-      & div > p
-        :padding 100px 0px
-        :text-align center
-        :font-size 20px
-        :font-family $allfontface
-        :font-weight 300
-      .znote__login__divider
-        :border-right 1px solid
-        :border-right-color $white
-        :height 260px
-    .login-social-link
-      h4.signin
-        font:
-          :family $allfontface
-          :size 14px
-        :margin 10px 0px 30px
-      ul
-        :list-style-type none
-        li
-          :margin 15px 0px
-        button.facebook
-          :border-radius 50px
-          :width 160px
-          :height 40px
-          :background-color $toryBlue
-          p
-            :margin-top -36px
-            :margin-left 24px
-            :color $white
-            font:
-              :family $allfontface
-              :size 20px
-              :weight 600
-            :text-transform lowercase
-            :text-align center
-          span.icon
-            :display block
-            :width 34px
-            :height 34px
-            :border-radius 26px
-            :margin 0px 0px 0px -10px
-            :font-size 20px
-            :background-color $white
-          .fa
-            :color $toryBlue
-        button.twitter
-          :background-color $pictonBlue
-          :border-radius 50px
-          :width 140px
-          :height 40px
-          p
-            :margin-top -36px
-            :margin-left 24px
-            :color $white
-            font:
-              :family $allfontface
-              :size 20px
-              :weight 600
-            :text-transform lowercase
-            :text-align center
-          span.icon
-            :display block
-            :width 34px
-            :height 34px
-            :border-radius 26px
-            :margin 0px 0px 0px -10px
-            :font-size 20px
-            :background-color $white
-          .fa
-            :color $pictonBlue
-        button.google
-          :background-color $mahogany
-          :border-radius 50px
-          :width 140px
-          :height 40px
-          p
-            :margin-top -36px
-            :margin-left 24px
-            :color $white
-            font:
-              :family $allfontface
-              :size 20px
-              :weight 600
-            :text-transform lowercase
-            :text-align center
-          span.icon
-            :display block
-            :width 34px
-            :height 34px
-            :border-radius 26px
-            :margin 0px 0px 0px -10px
-            :font-size 20px
-            :background-color $white
-          .fa
-            :color $mahogany
-
-hr
-  :width 50%
-  :margin 0 auto
