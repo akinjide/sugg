@@ -6,10 +6,10 @@ dependencies:
     - npm install module-deps
     - npm install gulp -g
 
-#test:
-# override:
-##   - gulp browserify
-#   - gulp serve
+test:
+override:
+#   - gulp browserify
+  - gulp production
 
 deployment:
   development:

@@ -3,7 +3,7 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "start": "gulp serve"
+    "start": "nodemon ./bin/www"
   },
   "author": "Akinjide Bankole <r@akinjide.me>",
   "dependencies": {
