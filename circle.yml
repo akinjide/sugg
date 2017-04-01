@@ -7,9 +7,9 @@ dependencies:
     - npm install gulp -g
 
 test:
-override:
-#   - gulp browserify
-  - gulp production
+  override:
+  #   - gulp browserify
+    - gulp production
 
 deployment:
   development:
