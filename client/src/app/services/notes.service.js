@@ -2,78 +2,127 @@
 
 angular
   .module('znote.services')
-  .factory('Notes', ['Refs', '$rootScope', '$firebaseArray', '$firebaseObject',
-    function(Refs, $rootScope, $firebaseArray, $firebaseObject) {
-      var id;
-      var currentUser = $rootScope.currentUser;
-      var time = moment();
+  .factory('Note', ['Refs', '$q', '$rootScope', '$firebaseArray', '$firebaseObject', '$localStorage',
+    function(Refs, $q, $rootScope, $firebaseArray, $firebaseObject, $localStorage) {
+      var time = Firebase.ServerValue.TIMESTAMP;
 
       return {
-        create: function(payload, cb) {
-          if (!payload) cb('error');
+        create: function(uid, title, body, color) {
+          var deferred = $q.defer();
+          var notes = $firebaseArray(Refs.notes);
 
-          var qry = $firebaseArray(Refs.notes);
-          var qry1 = $firebaseArray(Refs.users.child(currentUser.$id).child('notes'));
+          notes.$add({ 'content': body, 'lang': 'html', 'color': color })
+            .then(function(ref) {
+              var noteId = ref.key();
 
-          id = qry.$ref().push({
-            'body': payload.body
-          }).key();
+              if (noteId) {
+                var metadata = $firebaseArray(Refs.users.child(uid).child('metadata'));
 
-          qry1.$ref().push({
-            'id': id,
-            'title': payload.title,
-            'created_at': time,
-            'updated_at': time
-          }, function(err) {
-            cb(err);
-          });
-
-          qry1.$ref().once('value', function(snap) {
-            console.log(snap.val());
-          });
-        },
-
-        all: function(cb) {
-          var qry = Refs.notes;
-
-          if (!cb) {
-            return $firebaseArray(qry)
-          }
-          else {
-            qry.on('value', function(snap) {
-              e = null;
-              if (snap.exists()) {
-                cb(e, snap.val());
+                metadata.$add({ 'note_id': noteId, 'title': title, 'created': time, 'updated': time })
+                  .then(function(ref) {
+                    var metadataId = ref.key();
+                    deferred.resolve({ metadataId: metadataId, noteId: noteId });
+                  })
+                  .catch(function(err) {
+                    deferred.reject(err);
+                  });
+              } else {
+                deferred.reject(new Error('Error occurred'));
               }
-              else {
-                e = 'no data found in the database';
-                cb(e)
-              }
+            })
+            .catch(function(err) {
+              deferred.reject(err);
             });
-          }
+
+//           var id = qry.$ref().push({
+//             'content': body,
+//             'lang': 'html'
+//           }).key();
+//
+//           if (id) {
+//             var qry1 = $firebaseArray(Refs.users.child(currentUser.$id).child('metadata'));
+//
+//             qry1.$ref().push({
+//               'id': id,
+//               'title': title,
+//               'created': time
+//             });
+//
+//             deferred.resolve(id);
+//           } else {
+//             deferred.reject(new Error('An Error occurred'));
+//           }
+          return deferred.promise;
         },
 
-        allMeta: function(uid, cb) {
-          var qry = Refs.users.child(uid).child('notes');
+        notes: function() {
+          var deferred = $q.defer();
+          var data = $firebaseArray(Refs.notes);
 
-          if (!cb) {
-            return $firebaseArray(qry);
-          }
-          else {
-            qry.on('value', function(snap) {
-              e = null;
-              if (snap.exists()) {
-                cb(e, snap.val());
-              }
-              else {
-                e = 'no data found in the database';
-                cb(e)
-              }
+          data.$loaded()
+            .then(function(data) {
+              deferred.resolve(data);
+            })
+            .catch(function(err) {
+              deferred.reject(err);
             });
-          }
+
+          return deferred.promise;
         },
 
-        byDate: function(date, cb){
+        metadata: function(uid) {
+          var deferred = $q.defer();
+          var data = $firebaseArray(Refs.users.child(uid).child('metadata'));
+
+          data.$loaded()
+            .then(function(data) {
+              deferred.resolve(data);
+            })
+            .catch(function(err) {
+              deferred.reject(err);
+            });
+
+          return deferred.promise;
+        },
+
+        all: function(uid) {
+          var deferred = $q.defer();
+          var qry1 = $firebaseArray(Refs.users.child(uid).child('metadata'));
+          var _this = this;
+
+          _this.result = [];
+          _this.note;
+
+          qry1.$loaded()
+            .then(function(data) { return data; })
+            .then(function(metadata) {
+              var qry2 = $firebaseArray(Refs.notes);
+
+              return qry2.$loaded()
+                .then(function(notes) { return { 'metadata': metadata, 'notes': notes }; });
+            })
+            .then(function(data) {
+              if (data.notes && data.metadata) {
+                for (var i = 0; i < data.metadata.length; i++) {
+                  _this.note = _.find(data.notes, { $id: data.metadata[i].note_id });
+                  _this.note['metadata'] = data.metadata[i];
+  //                         note = _.extend(metadata[i], _.pick(notes[i], ['content']));
+                  _this.result.push(_this.note);
+                }
+              } else {
+                _this.result = [];
+              }
+
+              deferred.resolve(_this.result);
+            })
+            .catch(function(err) {
+              deferred.reject(err);
+            });
+
+          return deferred.promise;
+        },
+        // TODO: filter by date
+        byDate: function(date, cb) {
           var qry = Refs.notes.child(date);
 
           if(!cb){
@@ -85,54 +134,92 @@ angular
           }
         },
 
-        find: function(noteid, cb) {
-          var qry = Refs.notes.child(noteid);
+        findNote: function(noteId) {
+          var deferred = $q.defer();
+          var data = $firebaseObject(Refs.notes.child(noteId));
 
-          if (!cb) {
-            return $firebaseArray(qry);
+          if (!_.isEmpty(data)) {
+            data.$loaded()
+              .then(function(note) {
+                deferred.resolve(note);
+              })
+              .catch(function(err) {
+                deferred.reject(err);
+              });
+          } else {
+            deferred.reject('Note not found.');
           }
-          else {
-            qry.on('value', function(snap) {
-              e = null;
-              if (snap.exists()) {
-                cb(e, snap.val());
-              }
-              else {
-                e = 'no data found in the database';
-                cb(e)
-              }
+
+          return deferred.promise;
+        },
+
+        findMetadata: function(uid, metadataId) {
+          var deferred = $q.defer();
+          var data = $firebaseObject(Refs.users.child(uid).child('metadata').child(metadataId));
+
+          if (!_.isEmpty(data)) {
+            data.$loaded()
+              .then(function(metadata) {
+                deferred.resolve(metadata);
+              })
+              .catch(function(err) {
+                deferred.reject(err);
+              });
+          } else {
+            deferred.reject('Metadata not found.');
+          }
+
+          return deferred.promise;
+        },
+
+        remove: function(uid, noteId, metadataId) {
+          var deferred = $q.defer();
+          var _this = this;
+
+          _this.findNote(noteId).then(function(note) {
+            _this.findMetadata(uid, metadataId).then(function(metadata) {
+              metadata.$remove().then(function(metaRef) {
+                note.$remove().then(function(noteRef) {
+                  deferred.resolve({ id: [metaRef, noteRef], message: 'Data has been deleted locally and in the database' });
+                })
+                .catch(function(err) {
+                  deferred.reject(err);
+                });
+              })
+              .catch(function(err) {
+                deferred.reject(err);
+              });
+            })
+            .catch(function(err) {
+              deferred.reject(err);
             });
-          }
-        },
-
-        findMeta: function(uid, noteid, cb) {
-          var qry = Refs.users.child(uid).child('notes');
-
-          qry.on('value', function(snap) {
-            var notes = snap.val();
-            var note _.find(notes, { id: noteid });
-
-            if (!cb) {
-              return note;
-            } else {
-              cb(note)
-            }
+          })
+          .catch(function(err) {
+            deferred.reject(err);
           });
+
+          return deferred.promise;
         },
 
-        remove: function(uid, noteid, cb) {
-          Refs.users.child(uid).child('notes').child(noteid).$remove();
-          Refs.notes.child(noteid).$remove();
-        },
-
-        edit: function(uid, noteid, cb) {
+        // TODO: edit note
+        edit: function(uid, noteId) {
 
         },
 
-        rename: function(uid, noteid, payload) {
-          var qry = Refs.users.child(uid).child('notes').child(noteid);
+        // TODO: rename note
+        rename: function(uid, noteId, title) {
+          var deferred = $q.defer();
+          var qry = Refs.users.child(uid).child('metadata').child(noteId);
 
-          qry.$update({ 'title': payload.title, 'updated_at': time });
+          if (qry) {
+            qry.$update({ 'title': title, 'updated_at': time });
+
+            deferred.resolve();
+          } else {
+            deferred.reject(new Error('An Error occurred'));
+          }
+
+          return deferred.promise;
         }
       };
   }]);

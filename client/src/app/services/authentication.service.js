@@ -2,8 +2,8 @@
 
 angular
   .module('znote.services')
-  .factory('Authentication', ['Refs', '$firebaseAuth', '$rootScope',
-    function(Refs, $firebaseAuth, $rootScope) {
+  .factory('Authentication', ['Refs', '$firebaseAuth', '$rootScope', '$localStorage',
+    function(Refs, $firebaseAuth, $rootScope, $localStorage) {
       var e, authObj;
 
       return {
@@ -62,10 +62,9 @@ angular
           })
         },
 
-        isAdmin: function (usersEmail, cb) {
+        isAdmin: function (userEmail, cb) {
           e = null;
-
-          if (!usersEmail) cb(e);
+          if (!userEmail) cb(e);
 
           if (!cb) return 'A callback function is needed.';
 
@@ -81,7 +80,7 @@ angular
               }
             }
             cb(e, false)
-          })
+          });
         },
 
         /**
@@ -109,8 +108,8 @@ angular
           return {
             uid: authData.uid,
             provider: authData.provider,
-            display_name: authData[socialProvider].displayName,
-            picture_img_url: authData[socialProvider].profileImageURL,
+            name: authData[socialProvider].displayName,
+            image_URL: authData[socialProvider].profileImageURL,
 //             name: {
 //               first: ,
 //               last: ,
@@ -118,8 +117,10 @@ angular
             email: authData[socialProvider].email,
             access_token: authData[socialProvider].accessToken,
             id: authData[socialProvider].cachedUserProfile.id,
-            created_at: Firebase.ServerValue.TIMESTAMP,
-            active: true
+            created: Firebase.ServerValue.TIMESTAMP,
+            is_active: true,
+            is_new: true,
+            suspended: null
           }
         },
 
@@ -130,23 +131,19 @@ angular
           authObj = $firebaseAuth(Refs.root);
           authObj.$unauth();
           $rootScope.currentUser = null;
+          $localStorage.cachedUser = null;
         },
 
         isLoggedIn: function() {
           var authObj = $firebaseAuth(Refs.root);
 
-          if (authObj.$getAuth()) {
-            return true;
-          } else {
-            return false;
-          }
+          return authObj.$getAuth() ? true : false;
         },
 
-        getUser: function() {
+        authenticatedUser: function() {
           var authObj = $firebaseAuth(Refs.root);
 
-//   this.cachedUser = ref.getAuth();
-          return authObj.$getAuth();
+          return $localStorage.cachedUser || this.buildUserObjectFromProviders(authObj.$getAuth());
         }
       };
   }]);

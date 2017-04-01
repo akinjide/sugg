@@ -12,3 +12,5 @@ npm-debug.log
 client/public/
 
 *.log
+dump.txt
+Dockerfile

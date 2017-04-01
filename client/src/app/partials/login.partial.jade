@@ -5,9 +5,9 @@
       source(src=link + ".#{media_type}" type="video/#{media_type}")
   .overlay
     a(href="/")
-      h1 Znote
+      img.logo(src="images/logo-znote.png")
     h4
-      | Simpe. Create. Love it.
+      | simpe. create. love it.
     div(class="mt++ znote__about" flex-container="row" flex-gutter="24")
       div(flex-item="1")
       div(id="about__section" flex-item="6")
@@ -19,7 +19,11 @@
         ul
           each social_network in ['facebook', 'twitter', 'google']
             li
-              button(class="btn btn--m btn--blue btn--raised #{social_network}" lx-ripple ng-click="loginVm.Login('#{social_network}')")
+              button(class="btn btn--m btn--blue btn--raised #{social_network}" lx-ripple ng-click="vm.Login('#{social_network}')")
                 span.icon
-                  i.fa.fa-facebook
-                  p #{social_network.charAt().toUpperCase() + social_network.slice(1)}
+                  if social_network === 'google'
+                    i(class="fa fa-#{social_network}-plus")
+                    p #{social_network.charAt().toUpperCase() + social_network.slice(1)}
+                  else
+                    i(class="fa fa-#{social_network}")
+                    p #{social_network.charAt().toUpperCase() + social_network.slice(1)}

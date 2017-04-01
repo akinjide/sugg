@@ -1,28 +1,30 @@
 .znote_navcontainer
   nav.bgc(ng-cloak)
     div
-      img(src="images/logo-znote.png")
-      .znote-sidebar
-        button.btn.btn--l.btn--black.btn--fab(lx-ripple)
+      img.logo(src="images/logo-znote.png")
+
+      .znote-profile
+        lx-button(lx-type="icon" lx-size="m" lx-color="grey" ng-click="vm.Refresh()" lx-tooltip="Refresh" lx-tooltip-position="bottom")
           i.mdi.mdi-refresh
-        lx-dropdown(position="right" from-top="true")
-          button.btn.btn--l.btn--black.btn--fab(lx-ripple lx-dropdown-toggle)
-            i.mdi.mdi-menu
+
+        lx-dropdown(lx-position="right" lx-width="190px" lx-offset="6")
+          lx-dropdown-toggle
+            lx-button(lx-type="fab" lx-size="m" lx-color="white")
+              img(class="img-round" ng-src="{{ vm.currentUser.image_url }}" alt="{{ vm.currentUser.name }} Profile Picture" lx-ripple lx-tooltip="{{ vm.currentUser.name }}" lx-tooltip-position="bottom")
+
           lx-dropdown-menu
             ul
-            - var classes = ['dropdown-link', 'dropdown-link--is-large']
-              li
-                a(class=classes)
-                  i.mdi.mdi-eye
-                  span Preview
-              li
-                a(class=classes)
-                  i.mdi.mdi-account-plus
-                  span Search
+              - var classes = ['dropdown-link', 'dropdown-link--is-large']
+              li.dropdown-link.dropdown-link--is-header.text-flex-center.no-pd
+                span Signed in as <strong>{{ vm.currentUser.name | splitWord }}</strong>
               li.dropdown-divider
+              li.deactivate
+                a(class=classes ng-click="vm.Deactivate(vm.currentUser.$id)")
+                  i.mdi.mdi-account-remove
+                  span Deactivate account
               li
-                a(class=classes)
-                  i.mdi.mdi-delete
-                  span Clear All
+                a(class=classes ng-click="vm.Logout()")
+                  i.mdi.mdi-logout
+                  span Sign out
 
-div(ui-view="theView")
+div(ui-view="theView" style="padding: 15px 15px 80px; color: #000")

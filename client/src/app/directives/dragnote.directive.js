@@ -1,4 +1,7 @@
-angular.module('znote.directives')
+"use strict";
+
+angular
+  .module('znote.directives')
   .directive('dragNote', ['$document', function($document){
     // Runs during compile
     return {

@@ -5,57 +5,54 @@
     .module('znote.controllers')
     .controller('AuthenticationController', AuthenticationController)
 
-  AuthenticationController.$inject = ['$scope', '$state', 'Authentication', 'Notification', 'User', '$rootScope'];
+  AuthenticationController.$inject = ['$state', 'Authentication', 'Notification', 'User', '$localStorage'];
 
-  function AuthenticationController ($scope, $state, Authentication, Notification, User, $rootScope) {
+  function AuthenticationController ($state, Authentication, Notification, User, $localStorage) {
     var vm = this;
-    vm.isLoggedIn = Authentication.isLoggedIn();
+    vm.Login = Login;
 
-    vm.Login = function(provider) {
-      Authentication.login(provider, function(e, authData) {
-        if (!e) {
+    function Login(provider) {
+      Authentication.login(provider, function(err, authData) {
+        if (!err) {
           var payload = Authentication.buildUserObjectFromProviders(authData);
-          $rootScope.currentUser = payload
 
-          User.create(payload, function (e, data) {
-            if (e) {
+          User.create(payload, function (err, data) {
+            $localStorage.cachedUser = data;
+
+            if (err) {
               Notification.notify('error', 'Login failed. Try again...(ツ)');
               console.log('An error occurred while attempting to contact the authentication server.');
             } else {
-              Notification.notify('success', 'Hi, ' + payload.display_name + '.');
-
-              setTimeout(function() {
-                Notification.notify('simple', 'Welcome to znote, get started by clicking on add note button.');
-              }, 3000);
-
-              $state.go('notes');
+//               console.log(data.is_active, data)
+//               if (data && data.is_active) {
+                Notification.notify('success', 'Hi, ' + payload.name + '.');
+                $state.go('notes');
+//               } else {
+//                 Authentication.logout();
+//                 $state.go('login');
+//                 Notification.notify('error', 'Login failed. This account has been deactivated. :( Contact Support.');
+//               }
             }
           });
-        }
-        else {
-          if (e == 'Error: The user cancelled authentication.' || e.code == 'USER_CANCELLED' ) {
+        } else {
+          if (err == 'Error: The user cancelled authentication.' || err.code == 'USER_CANCELLED' ) {
             Notification.notify('error', 'You cancelled authentication...');
-          } else if (e == 'Error: Invalid authentication credentials provided.' || e.code == 'INVALID_CREDENTIALS') {
+          } else if (err == 'Error: Invalid authentication credentials provided.' || err.code == 'INVALID_CREDENTIALS') {
             Notification.notify('error', 'Invalid credentials');
-          } else if (e.code == 'NETWORK_ERROR') {
+          } else if (err.code == 'NETWORK_ERROR') {
+            Notification.notify('error', 'An error occurred while attempting to contact the authentication server.');
             console.log('An error occurred while attempting to contact the authentication server.');
-          } else if (e.code == 'UNKNOWN_ERROR') {
+          } else if (err.code == 'UNKNOWN_ERROR') {
             console.log('An unknown error occurred');
-          } else if (e.code == 'USER_DENIED') {
+          } else if (err.code == 'USER_DENIED') {
             console.log('The user did not authorize the application.');
+            Notification.notify('error', 'The user did not authorize the application.');
           } else {
-            console.error(e);
+            console.error(err);
             Notification.notify('error', 'Login failed. Try again...(ツ)')
           }
         }
       });
-     }
-
-     vm.logout = function() {
-       Authentication.logout();
-       vm.isLoggedIn = Authentication.isLoggedIn();
-       $state.go('home');
-       Notification.notify('sticky', 'Hi, ' + userObj.display_name + '.', true);
-     }
+    }
   }
 })()

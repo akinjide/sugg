@@ -5,24 +5,57 @@
     .module('znote.controllers')
     .controller('MainController', MainController)
 
-  MainController.$inject = ['$scope', '$state'];
+  MainController.$inject = ['$rootScope', '$q', '$state', 'Authentication', 'Notification', 'User', 'cfpLoadingBar'];
 
-  function MainController ($scope, $state) {
-
+  function MainController ($rootScope, $q, $state, Authentication, Notification, User, cfpLoadingBar) {
     var vm = this;
 
-    vm.navigateTo = function(state) {
-      $state.go(state);
-    };
+    vm.isLoggedIn = $rootScope.isLoggedIn;
+    vm.listView = false;
 
-    if (typeof(Storage) !== "undefined") {
-      console.log("Code for localStorage/sessionStorage.")
-    } else {
-      console.log("Sorry! No Web Storage support..")
+    if (vm.isLoggedIn) {
+      vm.currentUser = $rootScope.currentUser;
     }
 
-    // localStorage.setItem("title", angular.toJson(storeItem));
+    vm.Refresh = Refresh;
+    vm.Deactivate = Deactivate;
+    vm.Logout = Logout;
 
-    // var storage = localStorage.getItem("title", angular.fromJson(storeItem));
+//     cfpLoadingBar.start();
+    activate();
+
+    function activate() {
+      var promises = [];
+
+      return $q.all(promises)
+        .then(function() {
+//           cfpLoadingBar.complete();
+        })
+        .catch(function(err) {
+          Notification.notify('error', 'Error while loading. Try again...(ツ)');
+        })
+    }
+
+    function Refresh() {
+      $state.reload();
+    }
+
+    function Deactivate(uid) {
+      User.remove(uid)
+        .then(function(data) {
+          $state.go('login');
+          Notification.notify('simple', 'Account Deactivate Successfully! :( Sad to see you leave');
+        })
+        .catch(function(err) {
+          $state.go('login');
+          Notification.notify('error', 'It\'s our fault. Please try again.');
+        });
+    }
+
+    function Logout() {
+      Notification.notify('sticky', 'Successfully Signed Out! :)');
+      Authentication.logout();
+      $state.go('login');
+    }
   }
 })()
