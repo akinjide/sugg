@@ -3,9 +3,7 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "init": "npm install",
-    "start": "nodemon ./bin/www",
-    "test": "NODE_ENV=test gulp test"
+    "start": "gulp serve"
   },
   "author": "Akinjide Bankole <r@akinjide.me>",
   "dependencies": {
