@@ -1,22 +1,23 @@
 dependencies:
   pre:
     - bower install
+    - npm install
   post:
     - npm install module-deps
     - npm install gulp -g
 
 test:
-  override:
-    - gulp browserify
-    - gulp test
+ override:
+#   - gulp browserify
+   - gulp serve
 
 deployment:
-  development: 
-    branch: develop
+  development:
+    branch: staging
     heroku:
       appname: znote-dev
 
-  production:
-    branch: master
-    heroku:
-      appname: znote
+#  production:
+#    branch: master
+#    heroku:
+#      appname: znote

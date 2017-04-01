@@ -1,37 +1,37 @@
 'use strict';
 
-function loadEnv(variable) {
-  if (process.env[variable] === undefined) throw new Error('You must create an environment variable for ' + variable);
+function load(variable) {
+  if (process.env[variable] === undefined)
+    return new Error('You must create an environment variable for ' + variable);
 
   return process.env[variable];
 }
 
 var test = {
-  firebase : {
+  firebase: {
     rootRefUrl: "",
-    serverUID: "",
+    serverUID: "znote",
     secretKey: ""
-  }
+  },
+  port: 1336
 };
 
 var development = {
   firebase : {
-    // future firebase url >> https://dazzling-fire-783.firebaseio.com/
-    rootRefUrl : loadEnv('firebase_URL'),
-    serverUID : loadEnv('server_uid'),
-    secretKey : loadEnv('secretKey')
+    rootRefUrl: load('fbURL'),
+    serverUID: "znote-dev" || load('serveruid'),
+    secretKey: load('secretKey')
   },
-  port: 1337 || loadEnv('PORT')
+  port: 1338
 };
 
 var production = {
   firebase: {
-    // TODO: move env variables to heroku env
-    rootRefUrl: "https://znote.firebaseio.com/",
-    serverUID: "",
-    secretKey: "l0cWwNTbFONgOQDgmQkPeFuiIT53tZkewuvwjwvm"
+    rootRefUrl: load('fbURL'),
+    serverUID: load('serveruid'),
+    secretKey: load('secretKey')
   },
-  port: process.env.PORT || 1337
+  port: load('PORT') || 1338
 };
 
 var config = {

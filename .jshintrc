@@ -2,7 +2,8 @@
   "node": true,
   "esnext": true,
   "bitwise": true,
-  "camelcase": true,
+  "camelcase": false,
+  "maxlen": 1220,
   "curly": true,
   "eqeqeq": true,
   "immed": true,
@@ -13,5 +14,19 @@
   "quotmark": "single",
   "undef": true,
   "unused": true,
-  "strict": true
+  "strict": true,
+  "predef": [
+    "$",
+    "jQuery",
+    "_",
+    "Firebase",
+    "window",
+    "moment",
+    "inject",
+    "angular",
+    "module"
+  ],
+  "globals": {
+      "znote": true
+  }
 }
