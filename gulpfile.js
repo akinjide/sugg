@@ -1,365 +1,406 @@
-var gulp          = require('gulp'),
-    sass          = require('gulp-sass'),
-    gutil         = require('gulp-util'),
-    jshint        = require('gulp-jshint'),
-    browserify    = require('browserify'),
-    argv          = require('yargs').argv,
-    browsersync   = require('browser-sync')
-    karma         = require('karma').server,
-    bower         = require('gulp-bower'),
-    concat        = require('gulp-concat'),
-    cleandest     = require('gulp-clean-dest'),
-    gulpif        = require('gulp-if'),
-    empty         = require('gulp-empty'),
-    jade          = require('gulp-jade'),
-    htmlmin       = require('gulp-htmlmin'),
-    cssmin        = require('gulp-cssnano'),
-    uglify        = require('gulp-uglify'),
-    ngAnnotate    = require('gulp-ng-annotate'),
-    path          = require('path'),
-    protractor    = require('gulp-protractor').protractor,
-    exit          = require('gulp-exit'),
-    mocha         = require('gulp-mocha'),
-    watchify      = require('watchify'),
-    stringify     = require('stringify'),
-    rename        = require('gulp-rename'),
-    source        = require('vinyl-source-stream'),
-    shell         = require('gulp-shell'),
-    nodemon       = require('gulp-nodemon'),
-    reload        = require('gulp-livereload'),
-    imagemin      = require('gulp-imagemin'),
-    cache         = require('gulp-cache'),
-    taskListing   = require('gulp-task-listing'),
-    autoprefixer  = require('gulp-autoprefixer'),
-    istanbul      = require('gulp-istanbul'),
-    sourcemaps    = require('gulp-sourcemaps');
+var gulp  = require('gulp');
+var browserify = require('browserify');
+var argv = require('yargs').argv;
+var karma = require('karma').server;
+var $ = require('gulp-load-plugins')({lazy: true});
+var source = require('vinyl-source-stream');
+var browserSync = require('browser-sync');
+var reload = browserSync.reload;
+var path = require('path');
 
-var rootPath           = 'app/',
-    public_path          = 'public/',
+/**
+ * List the available gulp tasks
+ */
+gulp.task('help', $.taskListing);
+gulp.task('default', ['help']);
 
-    whitelist_extensions = '{jpg,jpeg,gif,png,swf,flv,eot,svg,ttf,woff,woff2,otf,ico,htc,pdf,mp4,ogv,webm}',
+var config = {
+  packages: [
+    path.resolve(__dirname, 'package.json'),
+    './bower.json'
+  ],
+  nodeModules: 'node_modules',
+  bower: {
+    json: require('./bower.json'),
+    directory: './client/public/lib',
+    ignorePath: '../..'
+  },
+  src: 'client/src/',
+  public: 'client/public/',
+  browserReloadDelay: 1000,
+  extensions: '{jpg,jpeg,gif,png,swf,flv,eot,svg,ttf,woff,woff2,otf,ico,htc,pdf,mp4,ogv,webm}',
+  defaultPort: process.env.PORT || '1338'
+};
 
-    js_root              = rootPath + 'application.js',
-    js_controllers_glob  = rootPath + 'scripts/controllers/*.js',
-    js_directives_glob   = rootPath + 'scripts/directives/*.js',
-    js_filters_glob      = rootPath + 'scripts/filters/*.js',
-    js_services_glob     = rootPath + 'scripts/services/*.js',
-    js_watcher_glob      = rootPath + 'scripts/**/*.js',
-    js_standalone_glob   = rootPath + 'standalone/**/*.js',
+var paths = {
+  root: __dirname,
+  js: {
+    root: config.src + 'app/application.js',
+    controllers_glob: config.src + 'app/controllers/*.js',
+    directives_glob: config.src + 'app/directives/*.js',
+    services_glob: config.src + 'app/services/*.js',
+    filters_glob: config.src + 'app/filters/*.js',
+    watcher_glob: config.src + 'app/**/*.js',
+    vendors_glob: config.src + 'scripts/**/*.js'
+  },
+  sass: {
+    root: config.src + 'styles/',
+    combined_glob: config.src + 'styles/*.sass', // base dir only
+    watcher_glob: config.src + 'styles/**/*.sass',
+    vendor_glob: config.src + 'styles/vendor/**/*.css'
+  },
+  jade: {
+    root: config.src + 'index.jade',
+    watcher_glob: config.src + '**/*.jade',
+    partials_glob: config.src + 'app/partials/*.jade',
+    four0four: config.src + '404.jade'
+  },
+  files: {
+    video_glob: config.src + 'videos/**/*.' + config.extensions,
+    image_glob: config.src + 'images/**/*.' + config.extensions,
+    font_glob: config.src + 'fonts/**/*.' + config.extensions
+  },
+  reload_globs: [
+    config.public + '**/*.html',
+    config.public + 'styles/**/*.+(css|css.map|min.css)',
+    config.public + 'images/**/*.' + config.extensions
+  ],
+  index: config.public + 'index.html'
+};
 
-    sass_path            = rootPath + 'styles/',
-
-    paths = {
-      jade_watcher_glob     : rootPath + '**/*.jade',
-      jade_partials_glob    : rootPath + 'partials/*.jade',
-      jade_root_glob        : rootPath + 'index.jade',
-      jade_404              : rootPath + '404.jade',
-
-      sass_watcher_glob     : sass_path  + '**/*.sass',
-      sass_combined_glob    : sass_path  + '*.sass',            // base dir only
-      sass_standalone_glob  : sass_path  + 'standalone/**/*.sass',
-      css_vendor_glob       : sass_path  + 'vendor/**/*.css',
-
-      lint_controllers      : js_controllers_glob,
-      lint_directives       : js_directives_glob,
-      lint_services         : js_services_glob,
-      lint_filters          : js_filters_glob,
-      lint_root             : js_root,
-
-      video_glob            : rootPath + 'video/**/*.'  + whitelist_extensions,
-      image_glob            : rootPath + 'images/**/*.' + whitelist_extensions,
-      font_glob             : rootPath + 'fonts/**/*.'  + whitelist_extensions,
-
-      reload_globs          : [
-                                'public/**/*.html',
-                                'public/styles/**/*.+(css|css.map|min.css)',
-                                'public/images/**/*.' + whitelist_extensions,
-                              ]
-      // staticFiles : [
-      //   '!app/**/*.+(sass|css|sass)',
-      //   '!app/images/*.+(png|jpg|gif)',
-      //   '!app/**/*.+(jade)',
-      //   '!app/**/*.+(js)',
-      //   'app/**/*.*'
-      // ]
-    };
+var autoprefixer_options = {
+  browsers: [
+    '> 1%',
+    'last 2 versions',
+    'firefox >= 4',
+    'safari 7',
+    'safari 8',
+    'IE 8',
+    'IE 9',
+    'IE 10',
+    'IE 11'
+  ],
+  cascade: false
+};
 
 // compile sass
-gulp.task('sass', ['sass-combined', 'sass-standalone', 'css_vendor_glob']);
-var autoprefixer_options = {
-      browsers: [
-        '> 1%',
-        'last 2 versions',
-        'firefox >= 4',
-        'safari 7',
-        'safari 8',
-        'IE 8',
-        'IE 9',
-        'IE 10',
-        'IE 11'
-      ],
-      cascade: false
-    };
+gulp.task('sass', ['sass-combined', 'css-vendor-combined']);
 
 gulp.task('sass-combined', function() {
-  var output_path = public_path + 'styles';
+  var out = config.public + 'styles';
 
-  return gulp.src(paths.sass_combined_glob)
-    .pipe(sourcemaps.init())
-    .pipe(sass({ outputStyle: 'compressed' }))
-    .pipe(autoprefixer(autoprefixer_options))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
-});
-
-gulp.task('sass-standalone', function() {
-  var output_path = public_path + 'styles';
-
-  return gulp.src(paths.sass_standalone_glob)
-    .pipe(sourcemaps.init())
-    .pipe(sass({ outputStyle: 'compressed' }))
-    .pipe(autoprefixer(autoprefixer_options))
-    .pipe(sourcemaps.write('.'))
-    .pipe(cleandest(output_path))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+  log('Compiling Sass --> CSS');
+  return gulp.src(paths.sass.combined_glob)
+    .pipe($.sourcemaps.init())
+    .pipe($.sass({ outputStyle: 'compressed' }))
+    .pipe($.autoprefixer(autoprefixer_options))
+    .pipe($.sourcemaps.write('.'))
+    .pipe($.cleanDest(out))
+    .pipe(gulp.dest(out));
 });
 
 // compile vendor lib
-gulp.task('css_vendor_glob', function () {
-  var output_path = public_path + 'styles',
-      filename    = 'vendor.css';
+gulp.task('css-vendor-combined', function () {
+  var out = config.public + 'styles';
+  var filename = 'vendor.css';
 
-  return gulp.src(paths.css_vendor_glob)
-    .pipe(concat(filename))
-    .pipe(cssmin())
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(cleandest(output_path))
-    .pipe(gulp.dest(output_path))
+  return gulp.src(paths.sass.vendor_glob)
+    .pipe($.concat(filename))
+    .pipe($.cssnano())
+    .pipe($.rename({ suffix: '.min' }))
+    .pipe($.cleanDest(out))
+    .pipe(gulp.dest(out))
 })
 
+
 // compile jade
-gulp.task('jade',
-  ['jade_partials_glob', 'jade_root_glob', 'jade_404']);
+gulp.task('jade', ['jade-partials-glob', 'jade-root', 'jade-four0four']);
 
-gulp.task('jade_partials_glob', function() {
-  var output_path = public_path + 'partials';
+gulp.task('jade-partials-glob', function() {
+  log('Compiling Jade --> HTML');
+  var out = config.public + 'views';
 
-  return gulp.src(paths.jade_partials_glob)
-    .pipe(cleandest(output_path))
-    .pipe(jade())
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+  return gulp.src(paths.jade.partials_glob)
+    .pipe($.cleanDest(out))
+    .pipe($.jade())
+//     .pipe($.htmlmin({
+//       collapseWhitespace: true,
+//       removeComments: true
+//     }))
+    .pipe(gulp.dest(out));
 });
 
-gulp.task('jade_root_glob', function() {
-  var output_path =  public_path;
-
-  return gulp.src(paths.jade_root_glob)
-    .pipe(jade())
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+gulp.task('jade-root', function() {
+  return gulp.src(paths.jade.root)
+    .pipe($.jade())
+    .pipe(gulp.dest(config.public));
 });
 
-gulp.task('jade_404', function() {
-  var output_path =  public_path;
-
-  return gulp.src(paths.jade_404)
-    .pipe(jade())
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+gulp.task('jade-four0four', function() {
+  return gulp.src(paths.jade.four0four)
+    .pipe($.jade())
+    .pipe(gulp.dest(config.public));
 });
+
 
 // compile javascripts
-gulp.task('js',
-  ['js_controllers_glob', 'js_directives_glob', 'js_services_glob', 'js_filters_glob'])
+gulp.task('js', ['js-controllers-glob', 'js-directives-glob', 'js-services-glob', 'js-filters-glob', 'js-vendor-combined'])
 
-gulp.task('js_controllers_glob', function() {
-  var output_path = public_path + 'scripts',
-      filename    = 'controllers.js';
+gulp.task('js-controllers-glob', function() {
+  log('Compressing and copying controllers');
+  var filename = 'controllers.js';
 
-  return gulp.src(js_controllers_glob)
-    .pipe(concat(filename))
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(gulpif(argv.development, empty(), ngAnnotate()))
-    .pipe(gulpif(argv.development, empty(), uglify()))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+  return gulp.src(paths.js.controllers_glob)
+    .pipe($.concat(filename))
+    .pipe($.rename({ suffix: '.min' }))
+    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
+    .pipe($.if(argv.development, $.empty(), $.uglify()))
+    .pipe(gulp.dest(config.public + 'scripts'));
 });
 
-gulp.task('js_directives_glob', function() {
-  var output_path = public_path + 'scripts',
-      filename    = 'directives.js';
+gulp.task('js-directives-glob', function() {
+  log('Compressing and copying directives');
+  var filename = 'directives.js';
 
-  return gulp.src(js_directives_glob)
-    .pipe(concat(filename))
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(gulpif(argv.development, empty(), ngAnnotate()))
-    .pipe(gulpif(argv.development, empty(), uglify()))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+  return gulp.src(paths.js.directives_glob)
+    .pipe($.concat(filename))
+    .pipe($.rename({ suffix: '.min' }))
+    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
+    .pipe($.if(argv.development, $.empty(), $.uglify()))
+    .pipe(gulp.dest(config.public + 'scripts'));
 });
 
-gulp.task('js_services_glob', function() {
-  var output_path = public_path + 'scripts',
-      filename    = 'services.js';
+gulp.task('js-services-glob', function() {
+  log('Compressing and copying services');
+  var filename = 'services.js';
 
-  return gulp.src(js_services_glob)
-    .pipe(concat(filename))
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(gulpif(argv.development, empty(), ngAnnotate()))
-    .pipe(gulpif(argv.development, empty(), uglify()))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+  return gulp.src(paths.js.services_glob)
+    .pipe($.concat(filename))
+    .pipe($.rename({ suffix: '.min' }))
+    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
+    .pipe($.if(argv.development, $.empty(), $.uglify()))
+    .pipe(gulp.dest(config.public + 'scripts'));
 });
 
-gulp.task('js_filters_glob', function() {
-  var output_path = public_path + 'scripts',
-      filename    = 'filters.js';
+gulp.task('js-filters-glob', function() {
+  log('Compressing and copying filters');
+  var filename = 'filters.js';
 
-  return gulp.src(js_filters_glob)
-    .pipe(concat(filename))
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(gulpif(argv.development, empty(), ngAnnotate()))
-    .pipe(gulpif(argv.development, empty(), uglify()))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+  return gulp.src(paths.js.filters_glob)
+    .pipe($.concat(filename))
+    .pipe($.rename({ suffix: '.min' }))
+    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
+    .pipe($.if(argv.development, $.empty(), $.uglify()))
+    .pipe(gulp.dest(config.public + 'scripts'));
 });
+
+gulp.task('js-vendor-combined', function() {
+  log('Compressing and copying third party scripts');
+  var filename = 'vendor.js';
+
+  return gulp.src(paths.js.vendors_glob)
+    .pipe($.concat(filename))
+    .pipe($.rename({ suffix: '.min' }))
+    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
+    .pipe($.if(argv.development, $.empty(), $.uglify()))
+    .pipe(gulp.dest(config.public + 'scripts'));
+});
+
 
 // copy assets
 gulp.task('assets', ['images', 'fonts', 'videos']);
 
 gulp.task('images', function() {
-  var output_path = public_path + 'images';
+  var out = config.public + 'images';
 
-  return gulp.src(paths.image_glob)
-    .pipe(cleandest(output_path))
-    .pipe(cache(imagemin({
+  log('Compressing and copying images');
+  return gulp.src(paths.files.image_glob)
+    .pipe($.cleanDest(out))
+    .pipe($.cache($.imagemin({
       optimizationLevel : 3,
       progressive : true,
       interlaced : true
     })))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+    .pipe(gulp.dest(out));
 });
 
 gulp.task('fonts', function() {
-  var output_path = public_path + 'fonts';
+  var out = config.public + 'fonts';
 
-  return gulp.src(paths.font_glob)
-    .pipe(cleandest(output_path))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload());
+  log('Copying fonts');
+  return gulp.src(paths.files.font_glob)
+    .pipe($.cleanDest(out))
+    .pipe(gulp.dest(out));
 });
 
 gulp.task('videos', function() {
-  var output_path = public_path + 'videos';
+  var out = config.public + 'videos';
 
-  return gulp.src(paths.video_glob)
-    .pipe(cleandest(output_path))
-    .pipe(gulp.dest(output_path))
-    .pipe(reload())
+  log('Copying videos');
+  return gulp.src(paths.files.video_glob)
+    .pipe($.cleanDest(out))
+    .pipe(gulp.dest(out));
 });
-
 
 // nodemon server
 gulp.task('nodemon', function() {
-  nodemon({
-    script: 'index.js',
-    ext: 'js css html',
-    env: { 'NODE_ENV': 'development' }
-  })
-  .on('start', function() {
-    console.log('nodemon started')
-  })
-  .on('restart', function() {
-    console.log('>> node restart');
-  })
-  .on('crash', function() {
-    console.log('script crashed for some reason');
-  })
+  var nodeOptions = {
+    script: './bin/www',
+    delayTime: 1,
+    env: {
+      'NODE_ENV': 'development'
+    },
+    watch: ['./routes', './index.js', './config']
+  };
+
+  $.nodemon(nodeOptions)
+    .on('restart', function(ev) {
+      log('*** nodemon restarted');
+      log('files changed:\n' + ev);
+      setTimeout(function() {
+          browserSync.notify('reloading now ...');
+          reload({stream: false});
+      }, config.browserReloadDelay);
+    })
+    .on('start', function() {
+      log('*** nodemon started');
+      startBrowserSync();
+    })
+    .on('crash', function() {
+      log('*** nodemon crashed: script crashed for some reason');
+    })
+    .on('exit', function () {
+      log('*** nodemon exited cleanly');
+    });
 });
 
 // linters
-gulp.task('lint', function() {
-  return gulp.src(
-      [
-        paths.lint_controllers,
-        paths.lint_directives,
-        paths.lint_services,
-        paths.lint_filters,
-        paths.lint_root
-      ]
-    )
-    .pipe(jshint())
-    .pipe(jshint.reporter('jshint-stylish'));
+gulp.task('vet', function() {
+  log('Analyzing source with JSHint');
+
+  return gulp.src(paths.js.watcher_glob)
+    .pipe($.jshint())
+    .pipe($.jshint.reporter('jshint-stylish', {verbose: true}))
+    .pipe($.jshint.reporter('fail'));
 });
 
-// browserify
+gulp.task('watch:vet', function() { gulp.watch(paths.js.watcher_glob,  ['vet']); });
+
+gulp.task('nsp', function (cb) {
+  $.nsp({
+    package: config.packages[0],
+    stopOnError: false
+  }, cb);
+});
+
 gulp.task('browserify', function() {
-  var output_path = public_path + 'scripts',
-      b           = browserify();
+  log('Bundling main script');
+  var b = browserify();
+  b.add(paths.js.root);
 
-  b.add(js_root);
   return b.bundle()
-    .on('success', gutil.log.bind(gutil, 'Browserify Rebundled'))
-    .on('error', gutil.log.bind(gutil, 'Browserify Error: in browserify gulp task'))
+    .on('success', $.util.log.bind($.util, 'Browserify Rebundled'))
+    .on('error', $.util.log.bind($.util, 'Browserify Error: in browserify gulp task'))
     .pipe(source('index.js'))
-    .pipe(gulp.dest(output_path));
+    .pipe(gulp.dest(config.public + 'scripts'));
 });
 
-// bower
-// fix April 6, 2016 at 11:02:07 PM GMT+1
+gulp.task('compress', ['browserify'], function () {
+  return gulp.src(config.public + 'scripts/index.js')
+      .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
+      .pipe($.if(argv.development, $.empty(), $.uglify()))
+      .pipe($.cleanDest(config.public + 'scripts'))
+      .pipe(gulp.dest(config.public + 'scripts'));
+});
+
 gulp.task('bower', function() {
-  var output_path = public_path + 'lib/'
-  return bower()
-    // .pipe(gulpif(argv.development, empty(), ngAnnotate()))
-    .pipe(gulp.dest(output_path))
+  log('Installing Dependencies');
+  return $.bower()
+    .pipe(gulp.dest(config.public + 'lib/'))
 });
 
-// reload
-gulp.task('reload', function() {
-  reload.reload()
-})
+/**
+ * Optimize the code and re-load browserSync
+ */
+gulp.task('browserSyncReload', ['build'], browserSync.reload);
 
-// watcher
-gulp.task('watch', ['build'], function() {
-  reload.listen();
-  gulp.watch(paths.sass_watcher_glob, ['sass']);
-  gulp.watch(paths.jade_watcher_glob, ['jade']);
-  gulp.watch(js_watcher_glob,         ['browserify']);
-  gulp.watch(paths.image_glob,        ['images']);
-  gulp.watch(paths.font_glob,         ['fonts']);
-  gulp.watch(paths.video_glob,        ['videos']);
-  gulp.watch(paths.reload_globs,      ['reload']);
-});
-
-gulp.task('watch:lint', function() {
-  gulp.watch(paths.lint_controllers,  ['lint']);
-  gulp.watch(paths.lint_directives,   ['lint']);
-  gulp.watch(paths.lint_services,     ['lint']);
-  gulp.watch(paths.lint_filters,      ['lint']);
-  gulp.watch(paths.lint_root,         ['lint']);
-});
-
-// build
-gulp.task('build', ['jade', 'sass', 'js', 'assets', 'browserify']);
-
-// serve
-gulp.task('serve', ['nodemon']);
-
-// setup
-gulp.task('setup', shell.task([
+gulp.task('setup', $.shell.task([
   'bower install',
   'npm install'
 ]));
 
-gulp.task('help', taskListing);
-gulp.task('production',         ['nodemon', 'build']);
-gulp.task('heroku:production',  ['build']);
-gulp.task('test',               ['test:client', 'test:server']);
-gulp.task('default',            ['build', 'nodemon', 'watch'],
-  function(){
-    return gutil.log('Gulp is running!!');
-  });
+gulp.task('build', ['jade', 'sass', 'assets', 'compress', 'js'], function() {
+  log('Building everything');
+
+  var msg = {
+    title: 'gulp build',
+    subtitle: 'Deployed to the public folder',
+    message: 'Running `gulp`'
+  };
+
+  log(msg);
+});
+
+gulp.task('production', ['build']);
+gulp.task('serve', ['build', 'nodemon']);
+gulp.task('test', ['test:client', 'test:server']);
+
+// browser-sync
+function startBrowserSync() {
+  if (browserSync.active) {
+    return;
+  }
+
+  log('Starting BrowserSync on port ' + config.defaultPort);
+  gulp.watch([paths.sass.watcher_glob, paths.js.watcher_glob, paths.jade.watcher_glob], ['browserSyncReload'])
+    .on('change', changeEvent);
+
+  var options = {
+    proxy: 'localhost:' + config.defaultPort,
+    port: 1337,
+    files: [
+      config.public + '**/*.*'
+    ],
+    ghostMode: { // these are the defaults t,f,t,t
+      clicks: true,
+      location: false,
+      forms: true,
+      scroll: true
+    },
+    injectChanges: true,
+    logFileChanges: true,
+    logLevel: 'info',
+    logPrefix: 'znote',
+    notify: false,
+//     server: 'client/public',
+    reloadDelay: 0 //1000
+  };
+
+  browserSync(options);
+}
+
+
+/**
+ * When files change, log it
+ * @param  {Object} event - event that fired
+ */
+function changeEvent(event) {
+    var srcPattern = new RegExp('/.*(?=/' + 'client/' + ')/');
+    log('File ' + event.path.replace(srcPattern, '') + ' ' + event.type);
+}
+
+/**
+ * Log a message or series of messages using chalk's blue color.
+ * Can pass in a string, object or array.
+ */
+function log(msg) {
+    if (typeof(msg) === 'object') {
+        for (var item in msg) {
+            if (msg.hasOwnProperty(item)) {
+                $.util.log($.util.colors.blue(msg[item]));
+            }
+        }
+    } else {
+        $.util.log($.util.colors.blue(msg));
+    }
+}
