@@ -1,9 +1,14 @@
+machine:
+  node:
+    version: 6.1.0
+  environment:
+    NODE_ENV: test
+
 dependencies:
   pre:
     - bower install
     - npm install
   post:
-    - npm install module-deps
     - npm install gulp -g
 
 test:
