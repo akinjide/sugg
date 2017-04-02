@@ -3,7 +3,8 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": ""
   },
   "author": "Akinjide Bankole <r@akinjide.me>",
   "dependencies": {
