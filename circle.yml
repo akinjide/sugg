@@ -6,10 +6,11 @@ machine:
 
 dependencies:
   pre:
+    - npm install gulp -g
+    - npm install bower -g
+  post:
     - bower install
     - npm install
-  post:
-    - npm install gulp -g
 
 test:
   override:
