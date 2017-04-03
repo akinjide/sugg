@@ -20,7 +20,7 @@ deployment:
   development:
     branch: staging
     commands:
-      - gulp production
+      - ./start.sh
     heroku:
       appname: znote-dev
 
