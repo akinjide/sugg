@@ -19,8 +19,6 @@ test:
 deployment:
   development:
     branch: staging
-    commands:
-      - ./start.sh
     heroku:
       appname: znote-dev
 
