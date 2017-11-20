@@ -1,0 +1,39 @@
+div.znote-profile-main(flex-container="row" flex-column="12" flex-align="center center")
+
+  div(flex-item="1")
+    div.znote-profile-img-container
+      img(
+        class="img-round"
+        ng-src="{{ vm.currentUser.image_url || 'http://www.sessionlogs.com/media/icons/defaultIcon.png' }}"
+        alt="{{ vm.currentUser.name }} Profile Picture"
+        lx-ripple
+        lx-tooltip="{{ vm.currentUser.name }}"
+        lx-tooltip-position="bottom")
+
+      span.active
+
+  div.znote-profile-details(flex-item="4")
+    div(class="p+")
+      h1 {{ vm.currentUser.name }}
+
+      div(class="pt")
+        span Joined
+          strong  {{ vm.currentUser.created | date : 'MMM d, yyyy'}}
+
+        br
+
+        span Last Seen
+          strong  {{ vm.currentUser.updated | date : 'MMM d, yyyy'}}
+
+      div(class="pt+")
+        span.pr
+          lx-button.br20(
+            lx-color="red"
+            lx-type="raised"
+            ng-click="vm.Deactivate(vm.currentUser.$id)") Deactivate Account
+
+        span.pr
+          lx-button.br20(
+            lx-color="black"
+            lx-type="raised"
+            ng-click="vm.Logout()") Sign Out

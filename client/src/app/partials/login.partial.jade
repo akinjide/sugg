@@ -1,29 +1,36 @@
 .login-wrap
   video(poster="../images/background.jpg" autoplay loop)
     - var link = "../videos/background"
+
     each media_type in ['mp4', 'webm', 'ogv']
       source(src=link + ".#{media_type}" type="video/#{media_type}")
+
   .overlay
     a(href="/")
-      img.logo(src="images/logo-znote.png")
+      img.logo(src="images/logo.png")
     h4
       | simpe. create. love it.
-    div(class="mt++ znote__about" flex-container="row" flex-gutter="24")
-      div(flex-item="1")
-      div(id="about__section" flex-item="6")
-        p#about
-      div(class="znote__login__divider" flex-item="1")
-      div(class="login-social-link" flex-item="4")
+    div(
+      class="mt++ znote__login"
+      flex-container="column"
+      flex-align="center center"
+      style="height: 300px;")
+
+      div(class="login-social-link")
         h4.signin
           | you can sign up via your social network
         ul
           each social_network in ['facebook', 'twitter', 'google']
             li
-              button(class="btn btn--m btn--blue btn--raised #{social_network}" lx-ripple ng-click="vm.Login('#{social_network}')")
+              button(
+                class="btn btn--m btn--blue btn--raised #{social_network}"
+                lx-ripple
+                ng-click="vm.Login('#{social_network}')")
+
                 span.icon
                   if social_network === 'google'
                     i(class="fa fa-#{social_network}-plus")
-                    p #{social_network.charAt().toUpperCase() + social_network.slice(1)}
+                    p #{social_network}
                   else
                     i(class="fa fa-#{social_network}")
-                    p #{social_network.charAt().toUpperCase() + social_network.slice(1)}
+                    p #{social_network}

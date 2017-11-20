@@ -23,18 +23,22 @@ require('./services/settings.service.js');
 require('./directives/dragnote.directive.js');
 require('./directives/pagetitle.directive.js');
 require('./directives/preloader.directive.js');
-require('./directives/listview.directive.js');
+require('./directives/slideToggle.directive.js');
+require('./directives/masonry.directive.js');
+require('./directives/contenteditable.directive.js');
 
 // require controllers
 require('./controllers/authentication.controller.js');
 require('./controllers/notes.controller.js');
 require('./controllers/main.controller.js');
+require('./controllers/profile.controller.js');
 
 // require filters
 require('./filters/word.filter.js');
 require('./filters/capitalize.filter.js');
 
 window.znote = angular.module('znote', [
+  'angular-clipboard',
   'angular-loading-bar',
   'angular-spinkit',
   'angularTrix',
@@ -64,7 +68,7 @@ znote
         }
       });
 
-      $rootScope.$on('$stateChangeStart', function (event, toState) {
+      $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams, options) {
           var requireLogin = toState.data.requireLogin;
           var isLoggedIn = Authentication.isLoggedIn();
 
@@ -73,19 +77,55 @@ znote
             $rootScope.currentUser = Authentication.authenticatedUser();
             $rootScope.$stateParams = $stateParams;
             $rootScope.isLoggedIn = isLoggedIn;
-
-            $location.path('/notes');
+//             $location.path('/notes');
           }
       });
   }])
-  .config(['$stateProvider', '$urlRouterProvider', '$locationProvider', '$logProvider', 'cfpLoadingBarProvider',
-    function($stateProvider, $urlRouterProvider, $locationProvider, $logProvider, cfpLoadingBarProvider) {
-      // uncomment to enable dev logging in the app
+  .config(['$stateProvider', '$urlRouterProvider', '$locationProvider', '$logProvider', '$provide', 'cfpLoadingBarProvider',
+    function($stateProvider, $urlRouterProvider, $locationProvider, $logProvider, $provide, cfpLoadingBarProvider) {
+
+      // comment to disable dev logging in the app
       $logProvider.debugEnabled && $logProvider.debugEnabled(true);
 
       /* Angular loading bar configuration */
       cfpLoadingBarProvider.includeSpinner = false;
       cfpLoadingBarProvider.parentSelector = '.znote_navcontainer';
+
+      /**
+       * Configure by setting an optional string value for appErrorPrefix.
+       * Accessible via config.appErrorPrefix (via config value).
+       * @param  {Object} $provide
+       */
+      $provide.decorator('$exceptionHandler', ['$delegate', '$window', 'exceptionHandler',
+      /**
+       * Extend the $exceptionHandler service to also search for error on stackoverflow.
+       * @param  {Object} $delegate
+       * @param  {Object} $window
+       * @param  {Object} exceptionHandler
+       * @param  {Object} Notification
+       * @return {Function} the decorated $exceptionHandler service
+       */
+      function extendExceptionHandler($delegate, $window, exceptionHandler) {
+         return function(exception, cause) {
+            var appErrorPrefix = exceptionHandler.config.appErrorPrefix || '';
+            var errorData = { exception: exception, cause: cause };
+
+            exception.message = appErrorPrefix + exception.message;
+            $delegate(exception, cause);
+
+            /**
+             * Could add the error to a service's collection,
+             * add errors to $rootScope, log errors to remote web server,
+             * or log locally. Or throw hard. It is entirely up to you.
+             * throw exception;
+             *
+             * @example
+             *     throw { message: 'error message we added' };
+             */
+            console.error(exception.message, errorData);
+            $window.open('http://stackoverflow.com/search?q=[js] + ' + errorData.exception.message);
+         };
+      }]);
 
       $locationProvider.html5Mode(true);
       $urlRouterProvider.otherwise('/404/notfound');
@@ -93,7 +133,7 @@ znote
       $stateProvider
         .state('404', {
           url: '/404/notfound',
-          templateUrl: 'views/404.partial.html',
+          templateUrl: 'views/404.html',
           data: {
             title: '404 - Not Found'
           }
@@ -137,37 +177,62 @@ znote
             }],
             "isLoggedIn": ['Authentication', function(Authentication) {
               return Authentication.isLoggedIn();
-            }]
-          }
-//           resolve: {
-//             // controller will not be loaded until $waitForAuth resolves
-//             // Auth refers to our $firebaseAuth wrapper in the example above
-//             "currentAuth": ['$firebaseAuth', function($firebaseAuth) {
+            }],
+            // "currentAuth": ['$firebaseAuth', function($firebaseAuth) {
 //               // $waitForAuth returns a promise so the resolve waits for it to complete
 //               var ref = new Firebase(fbURL);
 //               var authObj = $firebaseAuth(ref);
 //
 //               console.log(authObj.$waitForAuth());
 //             }]
-
-//           }
+          }
       })
-      .state('note', {
-        url: '/notes/:id?title',
+      .state('profile', {
+        url: '/profile/:uid?name',
         views: {
           '': {
             templateUrl: 'views/nav.partial.html',
             controller: 'MainController',
             controllerAs: 'vm',
           },
-          'theView@notes': {
-            templateUrl: 'views/notes.partial.html',
-            controller: 'NotesController',
+          'theView@profile': {
+            templateUrl: 'views/profile.partial.html',
+            controller: 'ProfileController',
             controllerAs: 'vm'
           }
         },
         data: {
+          title: 'Profile',
           requireLogin: true
+        },
+        resolve: {
+          "currentAuth": ['$firebaseAuth', 'Refs', function($firebaseAuth, Refs) {
+            var Auth = $firebaseAuth(Refs.root);
+            return Auth.$requireAuth();
+          }],
+          "isLoggedIn": ['Authentication', function(Authentication) {
+            return Authentication.isLoggedIn();
+          }]
+        },
+        onEnter: function($state, $rootScope) {
+          this.data.title = $rootScope.currentUser.name + ' Profile';
         }
       })
-  }]);
+  }])
+  .provider('exceptionHandler', function exceptionHandlerProvider() {
+      /**
+       * Must configure the exception handling
+       */
+
+      this.config = {
+        appErrorPrefix: '[znote Error] '
+      };
+
+      this.configure = function(appErrorPrefix) {
+        this.config.appErrorPrefix = appErrorPrefix;
+      };
+
+      this.$get = function() {
+        return { config: this.config };
+      };
+  });

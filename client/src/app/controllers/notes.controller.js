@@ -5,40 +5,48 @@
     .module('znote.controllers')
     .controller('NotesController', NotesController)
 
-  NotesController.$inject = ['Refs', '$firebaseArray', '$q', 'Note', '$state', '$rootScope', '$timeout', 'Notification', 'cfpLoadingBar', 'LxDropdownService', '$scope'];
+  NotesController.$inject = ['$q', '$state', '$rootScope', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings'];
 
-  function NotesController (Refs, $firebaseArray, $q, Note, $state, $rootScope, $timeout, Notification, cfpLoadingBar, LxDropdownService, $scope) {
+  function NotesController ($q, $state, $rootScope, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings) {
     var vm = this;
 
     vm.isLoggedIn = $rootScope.isLoggedIn;
-    vm.note = {
+    vm.NoteColors = [
+      'white', 'blue', 'red',
+      'orange', 'yellow', 'grey',
+      'teal', 'green'
+    ];
+    vm.dialogId = 'dialog' + Math.floor((Math.random() * 6) + 1);
+    var defaultNote = {
       title: '',
       trix: '',
-      color: ''
+      settings: {
+        color: ''
+      }
     };
-    vm.NoteColors = ['white', 'blue', 'red', 'orange', 'yellow', 'grey', 'teal', 'green'];
 
+    vm.note = defaultNote;
     vm.Remove = Remove;
     vm.Create = Create;
+    vm.ChangeNoteColor = ChangeNoteColor;
+    vm.Copy = Copy;
+    vm.Edit = Edit;
 
     if (vm.isLoggedIn) {
       vm.currentUser = $rootScope.currentUser;
-      var Notes = $firebaseArray(Refs.notes);
-      var metadata = $firebaseArray(Refs.users.child(vm.currentUser.$id).child('metadata'));
+
+      if (!clipboard.supported) {
+        vm.CopyNotSupported = true;
+      }
 
       ///////////////////////
       // WATCHERS
       //////////////////////
+      $scope.$on('handleBroadcast', function(e, args) {
+        console.log(e, Note, 'line 31', args);
 
-      Notes.$watch(function(e) {
-        if (e.event === 'child_removed') {
-          init();
-        }
-      });
-
-      metadata.$watch(function(e) {
-        if (e.event === 'child_changed') {
-          init();
+        if (Note.syncedNotes) {
+          vm.Notes = Note.syncedNotes;
         }
       });
     }
@@ -48,46 +56,25 @@
     cfpLoadingBar.start();
     activate();
 
-//     $rootScope.$on('$viewContentLoaded', function(event, toState, toParams, fromState, fromParams) {});
-
-//     $scope.$watch(angular.bind(this, function () {
-//       return this.Notes; // `this` IS the `this` above!!
-//     }), function (newVal, oldVal) {
-//       // now we will pickup changes to newVal and oldVal
-//       if (!_.isEmpty(newVal)) {
-//         if (_.eq(newVal.length, 0)) {
-//           console.log('yeet')
-//           $timeout(function() {
-//             Notification.notify('info', 'You\'ve cleared your notes. :(');
-//           }, 5000);
-//         }
-//       }
-//     });
 
     function activate() {
-      var promises = [init()];
+      var promises = [init(), Settings.find(vm.currentUser.$id)];
 
       return $q.all(promises)
-        .then(function() {
-          vm.note.color = 'white';
-//           if (vm.currentUser.is_new) {
-//             $timeout(function() {
-//               Notification.notify('info', 'Welcome to znote, get started by adding a Note.');
-//               // Add default note.
-//               Create({
-//                 title: 'Welcome to Znote',
-//                 trix: '<div><h3>Znote lets you quickly capture what’s on your mind.</h3> <br><h3>To start a new note, use the "Add note" bar above.</h3></div>',
-//                 color: 'yellow'
-//               });
-//             }, 1000);
-//           }
+        .then(function(response) {
+          var userSettings = response[1];
 
           cfpLoadingBar.complete();
+          vm.note.settings.color = userSettings.defaultNoteColor;
+          vm.View = $localStorage.view || userSettings.defaultLayout;
         })
         .catch(function(err) {
           Notification.notify('error', 'Error while loading. Try again...(ツ)');
         })
     }
+
+    /////////////////////
+
 
     function init() {
       return Note.all(vm.currentUser.$id)
@@ -100,12 +87,102 @@
         });
     }
 
-//     vm.trixInitialize = function(e, editor) {
+
+    function Create(note) {
+      cfpLoadingBar.start();
+      var uid = vm.currentUser.$id;
+
+      if (uid) {
+        Note.create(uid, note.title, note.trix, note.settings)
+          .then(function(id) {
+            cfpLoadingBar.complete();
+            Note.sync(uid);
+            Notification.notify('success', 'Note added!');
+            vm.note = defaultNote;
+            vm.show = false;
+            Reload();
+          })
+          .catch(function(err) {
+            Notification.notify('error', 'Note not created!. Try again...(ツ)');
+          });
+      } else {
+          Notification.notify('error', 'Note not created!. Try again...(ツ)');
+      }
+    }
+
+
+    function ChangeNoteColor(noteId, metadataId, color) {
+      var uid = vm.currentUser.$id;
+      var options = {};
+
+      options.color = color;
+
+      Note.edit(uid, noteId, metadataId, options)
+        .then(function(data) {
+          Note.sync(uid);
+          Reload();
+        })
+        .catch(function(error) {
+          Notification.notify('error', 'Note not updated!. Try again...(ツ)');
+        });
+    }
+
+
+    function Remove(noteId, metadataId) {
+      var uid = vm.currentUser.$id;
+
+      if (uid && noteId && metadataId) {
+        Note.remove(uid, noteId, metadataId)
+          .then(function(data) {
+            Notification.notify('success', 'Note deleted!');
+            Note.sync(uid);
+            Reload();
+          })
+          .catch(function(error) {
+            Notification.notify('error', 'Note not deleted!. Try again...(ツ)');
+          });
+      } else {
+          Notification.notify('error', 'Note not deleted!. Try again...(ツ)');
+      }
+    }
+
+
+    function Reload() { $state.reload(); }
+
+
+    function Copy(note) {
+      if (!clipboard.supported) {
+        vm.CopyNotSupported = true;
+        Notification.notify('error', 'Note not copied! Copy to clipboard not supported');
+      }
+
+      try {
+        clipboard.copyText(angular.element(note).text());
+        Notification.notify('success', 'Note copied to clipboard!');
+      } catch(error) {
+        Notification.notify('error', 'Nothing to copy...(ツ)');
+      }
+    }
+
+    function Edit(note) {
+      vm.editNote = note;
+
+      LxDialogService.open(vm.dialogId, note);
+//       vm.note = {
+//         title: note.metadata.title,
+//         trix: note.content,
+//         color: note.color
+//       };
+      console.log(note, 'line 173');
+    }
+
+
+   //  vm.trixInitialize = function(e, editor) {
 //       editor.setSelectedRange([0, 0]);
 //       editor.insertHTML("<div>Znote <strong>rocks!</strong>, do you?</div>");
 //     };
-
- //    var events = ['trixInitialize', 'trixChange', 'trixSelectionChange', 'trixFocus', 'trixBlur', 'trixFileAccept', 'trixAttachmentAdd', 'trixAttachmentRemove'];
+//
+//     var events = ['trixInitialize', 'trixChange', 'trixSelectionChange', 'trixFocus', 'trixBlur', 'trixFileAccept', 'trixAttachmentAdd', 'trixAttachmentRemove'];
 //
 //     for (var i = 0; i < events.length; i++) {
 //         vm[events[i]] = function(e) {
@@ -170,48 +247,5 @@
 //         return "tmp/" + day + "/" + time + "-" + file.name;
 //     };
 
-    function Create(note) {
-      cfpLoadingBar.start();
-      var uid = vm.currentUser.$id;
-
-      if (uid) {
-        var color = note.color || 'white';
-
-        Note.create(uid, note.title, note.trix, color)
-          .then(function(id) {
-            Notification.notify('success', 'Note added!');
-            cfpLoadingBar.complete();
-  //           $state.go('note', { id: id, title: vm.noteTitle });
-            vm.note = {
-              title: '',
-              trix: ''
-            };
-            vm.show = false;
-          })
-          .catch(function(err) {
-            Notification.notify('error', 'Note not created!. Try again...(ツ)');
-          });
-      } else {
-          Notification.notify('error', 'Note not created!. Try again...(ツ)');
-      }
-    }
-
-    function Remove(noteId, metadataId) {
-      cfpLoadingBar.start();
-      var uid = vm.currentUser.$id;
-
-      if (uid && noteId && metadataId) {
-        Note.remove(uid, noteId, metadataId)
-          .then(function(data) {
-            Notification.notify('success', 'Note deleted!');
-            cfpLoadingBar.complete();
-          })
-          .catch(function(err) {
-            Notification.notify('error', 'Note not deleted!. Try again...(ツ)');
-          });
-      } else {
-          Notification.notify('error', 'Note not deleted!. Try again...(ツ)');
-      }
-    }
   }
 })()

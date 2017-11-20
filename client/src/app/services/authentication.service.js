@@ -90,7 +90,6 @@ angular
         buildUserObjectFromProviders: function(authData) {
           var socialProvider = getName(authData);
 
-          // return a suitable name based on the meta info given by each provider
           function getName(authData) {
             switch(authData.provider) {
              case 'facebook':
@@ -110,10 +109,6 @@ angular
             provider: authData.provider,
             name: authData[socialProvider].displayName,
             image_URL: authData[socialProvider].profileImageURL,
-//             name: {
-//               first: ,
-//               last: ,
-//             },
             email: authData[socialProvider].email,
             access_token: authData[socialProvider].accessToken,
             id: authData[socialProvider].cachedUserProfile.id,

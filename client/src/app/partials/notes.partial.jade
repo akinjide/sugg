@@ -1,47 +1,144 @@
 div.main-content
-  .card.card-content(ng-mouseleave="Colors = false" class="{{vm.note.color}}")
+  .card.card-content(ng-mouseleave="Colors = false" class="{{vm.note.settings.color}}")
     div
-      .toolbar.card(style="margin: 0;" ng-click="vm.show = true")
+      .toolbar.card(style={margin: 0} ng-click="vm.show = true")
         input.znote-input(type="text" ng-model="vm.note.title" placeholder="Take a note ...")
 
-      .toolbar(style="padding: 0; height: auto; max-height: 600px;" ng-show="vm.show" ng-init="vm.show = false; Colors = false" data-slide-toggle="vm.show" data-slide-toggle-duration="1000")
-        div.editor-wrap.note-container(style="max-height:600px; overflow-y: auto; padding: 10px; width: 100%")
-          trix-editor.trix-content(angular-trix ng-model="vm.note.trix" ng-model-options="{ updateOn: 'blur' }" spellcheck="false" trix-initialize="vm.trixInitialize(e, editor);" trix-change="vm.trixChange(e, editor);" trix-selection-change="vm.trixSelectionChange(e, editor);" trix-focus="vm.trixFocus(e, editor);" trix-blur="vm.trixBlur(e, editor);" trix-file-accept="vm.trixFileAccept(e, editor);" trix-attachment-add="vm.trixAttachmentAdd(e, editor);" trix-attachment-remove="vm.trixAttachmentRemove(e, editor);" prevent-trix-file-accept = "true" placeholder="Write Something; Anything.")
+      .toolbar(style="padding: 0; height: auto; max-height: 600px;" ng-show="vm.show" ng-init="vm.show = false; Colors = false" data-slide-toggle="vm.show" data-slide-toggle-duration="100")
 
-    .colors(ng-class="{active: Colors}" ng-mouseleave="Colors = false" style="margin: 0 8px;")
-      .color(ng-repeat="Color in vm.NoteColors" class="{{Color}} color-{{$index}}" ng-click="vm.note.color = Color" lx-tooltip="{{ Color | capitalize : true }}" ng-class="{active: vm.note.color == Color}" lx-tooltip-position="bottom")
+        div.editor-wrap.note-container
+          trix-editor.trix-content(
+            angular-trix
+            ng-model="vm.note.trix"
+            ng-model-options="{ updateOn: 'blur' }"
+            spellcheck="false"
+            trix-initialize="vm.trixInitialize(e, editor);"
+            trix-change="vm.trixChange(e, editor);"
+            trix-selection-change="vm.trixSelectionChange(e, editor);"
+            trix-focus="vm.trixFocus(e, editor);"
+            trix-blur="vm.trixBlur(e, editor);"
+            trix-file-accept="vm.trixFileAccept(e, editor);"
+            trix-attachment-add="vm.trixAttachmentAdd(e, editor);"
+            trix-attachment-remove="vm.trixAttachmentRemove(e, editor);"
+            prevent-trix-file-accept = "true"
+            placeholder="Znote rocks!, do you?")
 
-    .controls(style="margin: 0; padding: 6px" ng-show="vm.show")
-      lx-button(lx-type="icon" lx-color="black" lx-tooltip="Change color" lx-tooltip-position="bottom" ng-click="Colors =! Colors" ng-mousemove="Colors = true" style="margin-right: 10px;")
+    .colors(ng-class="{active: Colors}" ng-mouseleave="Colors = false")
+      .color(
+        ng-repeat="Color in vm.NoteColors"
+        class="{{Color}} color-{{$index}}"
+        ng-click="vm.note.settings.color = Color"
+        ng-class="{active: vm.note.settings.color === Color}"
+        lx-tooltip="{{Color | capitalize : true}}"
+        lx-tooltip-position="bottom")
+
+    .controls(ng-show="vm.show")
+      lx-button.mr10(
+        lx-type="icon"
+        lx-color="black"
+        lx-tooltip="Change color"
+        lx-tooltip-position="bottom"
+        ng-click="Colors =! Colors"
+        ng-mousemove="Colors = true")
+
         i.mdi.mdi-palette
 
-      //lx-button(lx-type="icon" lx-color="black" ng-click="vm.show = false" lx-tooltip="Cancel" lx-tooltip-position="bottom"  style="margin-right: 10px;")
-        //i.mdi.mdi-close-circle
+      lx-button.mr10(
+        lx-type="icon"
+        lx-color="black"
+        lx-tooltip="Add Image"
+        lx-tooltip-position="bottom"
+        ng-click="")
 
-      lx-button.add-note(lx-type="flat" lx-color="black" lx-size="s" ng-click="vm.Create(vm.note)" lx-tooltip="Add Note" lx-tooltip-position="bottom") Done
+        i.mdi.mdi-image
 
-//.row-masonry.row-masonry-xl-5.row-masonry-lg-4.row-masonry-md-3.row-masonry-sm-2
-.znote-notes.list-view.row-masonry(ng-click="vm.show = false")
-  div.col-masonry(ng-repeat="Note in vm.Notes | orderBy:'-metadata.created'")
-    .znote-checkbox
+      lx-button.add-note(
+        lx-type="flat"
+        lx-color="black"
+        lx-size="s"
+        lx-tooltip="Add Note"
+        lx-tooltip-position="bottom"
+        ng-click="vm.Create(vm.note)") Done
+
+.znote-notes.row-masonry(class="{{vm.View}}" masonry)
+  div.col-masonry(ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated'")
+    //.znote-checkbox
       input(type="checkbox" name="checkbox" id="checkbox")
       label.label--checkbox(for="checkbox")
 
-    .box-placeholder.m0(class="{{Note.color}}")
-      h3.text-muted(style="color: rgba(0, 0, 0, .87);font-size: 17px")
+    .box-placeholder.m0(
+      class="{{Note.settings.color}}"
+      ng-mouseleave="noteColors = false"
+      ng-dblclick="vm.Edit(Note)")
+
+      h3.text-muted
         strong(ng-bind-html="Note.metadata.title")
-      h5.text-muted(style="color: rgba(0, 0, 0, .54);")
-        strong.italic(lx-tooltip="Created {{Note.metadata.created | date : 'MMM d, h:mm a'}}" lx-tooltip-position="bottom") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }}
+      h5.text-muted
+        strong.italic(
+          lx-tooltip="Created {{Note.metadata.created | date : 'MMM d, h:mm a'}}"
+          lx-tooltip-position="bottom") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }} {{Note.metadata.note_id}} {{Note.settings.color}}
       p(ng-bind-html="Note.content")
 
+      .colors(ng-class="{active: noteColors}" ng-mouseleave="noteColors = false")
+        .color(
+          ng-repeat="noteColor in vm.NoteColors"
+          class="{{noteColor}} color-{{$index}}"
+          ng-click="vm.ChangeNoteColor(Note.metadata.note_id, Note.metadata.$id, noteColor); Note.settings.color = noteColor"
+          ng-class="{active: Note.settings.color === noteColor}"
+          lx-tooltip="{{noteColor | capitalize : true}}"
+          lx-tooltip-position="bottom")
+
       .znote-icons-container
-        .list-row__secondary
-          .mt
-            lx-fab(lx-direction="right")
-              lx-fab-trigger
-                lx-button.fab__primary(lx-ripple lx-size="l" lx-tooltip="options" lx-tooltip-position="bottom" lx-type="icon" lx-color="teal")
-                  i.mdi.mdi-chevron-right
-                  i.mdi.mdi-plus
-              lx-fab-actions
-                lx-button(lx-ripple lx-size="s" lx-tooltip="delete" lx-tooltip-position="bottom" lx-type="icon" lx-color="red" ng-click="vm.Remove(Note.metadata.note_id, Note.metadata.$id)")
-                  i.mdi.mdi-close
+
+        div(class="mt+" flex-container="row" flex-align="flex-start center")
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            lx-tooltip="Change color"
+            lx-tooltip-position="bottom"
+            ng-click="noteColors =! noteColors")
+
+            i.mdi.mdi-palette
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            lx-tooltip="Get link"
+            lx-tooltip-position="bottom"
+            disabled)
+
+            i.mdi.mdi-link
+
+          lx-dropdown(lx-position="left" lx-over-toggle="true" lx-width="120")
+            lx-dropdown-toggle
+              lx-button(
+                lx-color="black"
+                lx-type="icon"
+                lx-tooltip="More"
+                lx-tooltip-position="bottom")
+
+                i.mdi.mdi-dots-vertical
+
+            lx-dropdown-menu
+              ul
+                li: a.dropdown-link(ng-click="vm.Remove(Note.metadata.note_id, Note.metadata.$id)") Delete note
+                //- li: a.dropdown-link Lock note
+                li(ng-hide="vm.CopyNotSupported"): a.dropdown-link(ng-click="vm.Copy(Note.content)") Copy content
+
+
+lx-dialog(id="{{ vm.dialogId }}" lx-size="m" class="{{vm.editNote.settings.color}}")
+  lx-dialog-header
+    div(class="toolbar {{vm.editNote.settings.color}} dialog__header__content")
+      h2(class="tc-black-1")
+        strong(ng-bind-html="vm.editNote.metadata.title || 'Title'" contenteditable="true" ng-model="vm.updateNoteTitle")
+
+  lx-dialog-content
+    div(ng-bind-html="vm.editNote.content || 'Note'" class="tc-black-1 dialog__body__content {{vm.editNote.settings.color}}" contenteditable="true" ng-model="vm.updateNote")
+
+  lx-dialog-footer(class="{{vm.editNote.settings.color}}")
+    h5.left.m10(class="tc-black-1")
+      span.italic(
+        lx-tooltip="Created {{vm.editNote.metadata.created | date : 'MMM d, h:mm a'}}"
+        lx-tooltip-position="top") Edited {{ vm.editNote.metadata.updated | date : 'MMM d, h:mm a' }}
+
+    lx-button(lx-color="black" lx-type="flat" lx-size="s" lx-dialog-close) Done

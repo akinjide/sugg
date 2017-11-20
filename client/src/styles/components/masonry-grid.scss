@@ -2,31 +2,7 @@
    Component: masonry-grid.scss
 */
 
-.row-masonry {
-  position: relative;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-}
-.row-masonry > .col-masonry {
-  display: inline-block;
-  width: 100%;
-  min-height: 1em;
-  margin-bottom: 15px;
-}
-.row-masonry > .col-masonry img {
-  padding: 2px;
-  line-height: 1.52857143;
-  background-color: #fff;
-  border: 1px solid #fff;
-  border-radius: 2px;
-  -webkit-transition: all .2s ease-in-out;
-  -o-transition: all .2s ease-in-out;
-  transition: all .2s ease-in-out;
-  display: inline-block;
-  max-width: 100%;
-  height: auto
-}
+
 
 /* Columns definition by devices */
 @media only screen and (min-width: 480px) {

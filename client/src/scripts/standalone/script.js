@@ -1,17 +1,4 @@
 $(function() {
-
-  $("#about").typed({
-    strings: [
-      "Znote keeps, your brain rests.",
-      "Admit it your brain can’t keep every single note you want to remember, but Znote can, with no limit to how many note you can write and sync.",
-      "I’m a web addict, Hang in there",
-      "Keep calm and carry on. The obstacle is the path. . ."
-    ],
-    showCursor: false,
-    typeSpeed: 10,
-    loop: true
-  });
-
   $("#znote__txtarea").click(function() {
     $("#znote__txtarea").css({
       'height': '200px'

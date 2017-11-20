@@ -9,7 +9,6 @@ angular
       return {
         root: rootRef,
         notes: rootRef.child('notes'),
-        admin: rootRef.child('admin'),
         users: rootRef.child('users'),
         settings: rootRef.child('settings')
       };

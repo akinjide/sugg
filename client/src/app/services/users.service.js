@@ -2,24 +2,13 @@
 
 angular
   .module('znote.services')
-  .factory('User', ['Refs', '$q', '$firebaseArray', '$firebaseObject', '$rootScope', '$firebaseAuth',
-    function(Refs, $q, $firebaseArray, $firebaseObject, $rootScope, $firebaseAuth) {
+  .factory('User', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
+    function(Refs, $q, $firebaseArray, $firebaseObject) {
       var time = Firebase.ServerValue.TIMESTAMP;
-      var user, e,
-          newUser = {};
+      var user, newUser = {};
 
       return {
         create: function(authData, cb) {
-          e = null;
-
-          if (!authData) {
-            cb(e);
-          }
-
-          if (!cb) {
-            return 'A callback function is required.';
-          }
-
           user = $firebaseObject(Refs.users.child(authData.uid));
 
           user.$loaded().then(function() {
@@ -46,9 +35,9 @@ angular
             }
 
             // ...and we return the user when done
-            return cb(e, user);
-          }.bind(this)).catch(function(e) {
-            cb(e);
+            return cb(null, user);
+          }.bind(this)).catch(function(error) {
+            cb(null);
           });
         },
 
@@ -80,12 +69,12 @@ angular
                 deferred.resolve({ id: ref.key() + ' updated', message: 'Data has been deleted locally and in the database' } );
               }
             })
-            .catch(function(err) {
-              deferred.reject(err);
+            .catch(function(error) {
+              deferred.reject(error);
             });
           })
-          .catch(function(err) {
-            deferred.reject(err);
+          .catch(function(error) {
+            deferred.reject(error);
           });
 
           return deferred.promise;
@@ -100,8 +89,8 @@ angular
               .then(function(users) {
                 deferred.resolve(users);
               })
-              .catch(function(err) {
-                deferred.reject(err);
+              .catch(function(error) {
+                deferred.reject(error);
               });
           } else {
             deferred.reject([]);
@@ -110,25 +99,23 @@ angular
           return deferred.promise;
         },
 
-        // TODO
-        find: function(uid, cb) {
-          var qry = Refs.users.child(uid);
+        find: function(uid) {
+          var deferred = $q.defer();
+          var data = Refs.users.child(uid);
 
-          if (!cb) {
-            return $firebaseObject(qry);
+          if (!_.isEmpty(data)) {
+            data.$loaded()
+              .then(function(user) {
+                deferred.resolve(user);
+              })
+              .catch(function(error) {
+                deferred.reject(error);
+              });
+          } else {
+            deferred.reject('User not found.');
           }
-          else {
-            qry.once('value', function(snap) {
-              e = null;
-              if (snap.exists()) {
-                cb(e, snap.val());
-              }
-              else {
-                e = 'no data found in the database';
-                cb(e);
-              }
-            });
-          }
+
+          return deferred.promise;
         }
       };
   }]);

@@ -1,13 +1,15 @@
-.col-masonry:hover > .znote-checkbox
-  :opacity 1
+.col-masonry:hover > .znote-checkbox,
+.col-masonry:hover .box-placeholder > .znote-icons-container
+    :opacity 1
 
 .box-placeholder
   :margin-bottom 12px
-  :padding 15px
-  :border 1px dashed #a0aab2
+  :padding 8px 12px
+  :position relative
+  :box-shadow 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12)
   :border-radius 2px
   :background $white
-  :color $darkGray
+  :color rgba(0, 0, 0, .87)
   :transition-duration .218s
   :transition-property box-shadow, opacity, border
   :transition-timing-function ease-in
@@ -17,9 +19,12 @@
 
   & > p
     :font-family $slabFF
+    :word-break break-all
 
-  & > p ul
-    :padding 10px 15px
+  & > p ul,
+  & > p ol
+    :padding 10px 0 10px 25px
+
 
   & > p img
     :margin 2px
@@ -37,18 +42,76 @@
     :border-radius 2px
     :border 0
 
+  h3
+    :color rgba(0, 0, 0, .87)
+    :font-size 17px
+
+  h5
+    :color rgba(0, 0, 0, .54)
+
+  .colors
+    :bottom 40px
+    :left 0
+    :position absolute
+
+.row-masonry
+  :position relative
+  :margin 0
+  :padding 0
+  :width 100%
+
+.row-masonry > .col-masonry
+  :display inline-block
+  :width 100%
+  :min-height 1em
+  :margin-bottom 15px
+
+  img
+    :padding 2px;
+    :line-height 1.52857143
+    :background-color $white
+    :border 1px solid $white
+    :border-radius 2px
+    :transition all .2s ease-in-out
+    :display inline-block
+    :max-width 100%
+    :height auto
+
 .list-view
   :margin 0 auto
   :min-width 240px
   :max-width 500px
   :width auto
 
-.znote-icons-container
-  :margin 30px 0 -36px
+.masonry-brick
+  :margin 0 auto
+  :min-width 240px
+  :max-width 70vw
+  :width auto
 
-.list-row__secondary
-  :position relative
-  :top -30px
+.col-masonry.w0
+  :display inline-block
+  :width 20%
+
+.col-masonry.w1
+  :display inline-block
+  :width 21%
+
+.col-masonry.w2
+  :display inline-block
+  :width 29%
+
+.col-masonry.w3
+  :display inline-block
+  :width 18%
+
+.col-masonry.w4
+  :display inline-block
+  :width 24%
+
+.znote-icons-container
+  :opacity 0
+  :transition opacity .218s linear
 
 .znote-checkbox
   :position absolute
@@ -75,15 +138,15 @@ label
     :-webkit-font-smoothing antialiased
     :-moz-osx-font-smoothing grayscale
     :transform translate(0, 0)
-    :width 30px
-    :height 30px
+    :width 24px
+    :height 24px
     :border 2px solid transparent
     :box-shadow 0 1px 1px 1px rgba(0, 0, 0, .1)
     :border-radius 100%
     :vertical-align middle
     :color #000
     :text-align center
-    :line-height 1.35em
+    :line-height 1.10em
     :transition transform 0.2s ease-in-out
     :position absolute
     :top 0
@@ -94,9 +157,34 @@ input[type=checkbox]:checked + label:before
   :background #6f6f6f
   :color $white
   :text-align center
-  :line-height 1.3em
-//   :transform rotate(45deg)
-//   :transform-origin center center
+  :line-height 1.2em
+  :content "\F156"
+  :font-size 17px
+  :opacity 1
 
 input[type=checkbox]
   :visibility hidden
+
+
+.dialog__header
+  .dialog__header__content
+    :border-bottom 1px solid rgba(0, 0, 0, .12)
+    :height auto
+    :word-break break-all
+    h2 > strong
+      :outline none
+
+.dialog__scrollable
+  .dialog__body__content
+    :padding 16px
+    :outline none
+    :word-break break-all
+    ul
+      :padding 10px 0 10px 25px
+
+    ol
+      :padding 10px 0 10px 25px
+
+.dialog__footer
+  h5 > span
+    :font-weight lighter

@@ -13,8 +13,8 @@ angular
 
         // Watch for when the value bound to isOpen changes
         // When it changes trigger a slideToggle
-        scope.$watch('isOpen', function(newIsOpenVal, oldIsOpenVal){
-          if(newIsOpenVal !== oldIsOpenVal){
+        scope.$watch('isOpen', function(newIsOpenVal, oldIsOpenVal) {
+          if (newIsOpenVal !== oldIsOpenVal) {
             element.stop().slideToggle(slideDuration);
           }
         });

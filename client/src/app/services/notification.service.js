@@ -2,7 +2,7 @@
 
 angular
   .module('znote.services')
-  .factory('Notification', ['LxNotificationService', function(LxNotificationService) {
+  .factory('Notification', ['LxNotificationService', '$log', function(LxNotificationService, $log) {
     return {
       /**
         * type: notification type.

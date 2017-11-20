@@ -5,9 +5,9 @@
     .module('znote.controllers')
     .controller('AuthenticationController', AuthenticationController)
 
-  AuthenticationController.$inject = ['$state', 'Authentication', 'Notification', 'User', '$localStorage'];
+  AuthenticationController.$inject = ['$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings'];
 
-  function AuthenticationController ($state, Authentication, Notification, User, $localStorage) {
+  function AuthenticationController ($state, $localStorage, Authentication, Notification, User, Settings) {
     var vm = this;
     vm.Login = Login;
 
@@ -21,17 +21,20 @@
 
             if (err) {
               Notification.notify('error', 'Login failed. Try again...(ツ)');
-              console.log('An error occurred while attempting to contact the authentication server.');
             } else {
-//               console.log(data.is_active, data)
-//               if (data && data.is_active) {
+              Settings.add(data.$id, {
+                defaultLayout: 'list-view',
+                defaultNoteColor: 'white'
+              });
+
+              if (data && data.is_active) {
                 Notification.notify('success', 'Hi, ' + payload.name + '.');
                 $state.go('notes');
-//               } else {
-//                 Authentication.logout();
-//                 $state.go('login');
-//                 Notification.notify('error', 'Login failed. This account has been deactivated. :( Contact Support.');
-//               }
+              } else {
+                Authentication.logout();
+                $state.go('login');
+                Notification.notify('error', 'Login failed. This account has been deactivated. :( Contact Support.');
+              }
             }
           });
         } else {
@@ -41,11 +44,9 @@
             Notification.notify('error', 'Invalid credentials');
           } else if (err.code == 'NETWORK_ERROR') {
             Notification.notify('error', 'An error occurred while attempting to contact the authentication server.');
-            console.log('An error occurred while attempting to contact the authentication server.');
           } else if (err.code == 'UNKNOWN_ERROR') {
-            console.log('An unknown error occurred');
+            Notification.notify('error', 'Unknown error. Try again...(ツ)');
           } else if (err.code == 'USER_DENIED') {
-            console.log('The user did not authorize the application.');
             Notification.notify('error', 'The user did not authorize the application.');
           } else {
             console.error(err);
