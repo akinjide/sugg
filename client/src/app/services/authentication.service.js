@@ -1,7 +1,7 @@
 "use strict";
 
 angular
-  .module('znote.services')
+  .module('sugg.services')
   .factory('Authentication', ['Refs', '$firebaseAuth', '$rootScope', '$localStorage',
     function(Refs, $firebaseAuth, $rootScope, $localStorage) {
       var e, authObj;

@@ -2,7 +2,7 @@
   "use strict";
 
   angular
-    .module('znote.controllers')
+    .module('sugg.controllers')
     .controller('AuthenticationController', AuthenticationController)
 
   AuthenticationController.$inject = ['$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings'];
@@ -27,7 +27,7 @@
                 defaultNoteColor: 'white'
               });
 
-              if (data && data.is_active) {
+              if (data && Boolean(data.is_active) === true) {
                 Notification.notify('success', 'Hi, ' + payload.name + '.');
                 $state.go('notes');
               } else {

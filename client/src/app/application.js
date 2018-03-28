@@ -1,17 +1,20 @@
 "use strict";
 
+
 /**
- * define all modules
- */
-angular.module('znote.services',    ['firebase', 'lumx']);
-angular.module('znote.controllers', ['ngStorage', 'cfp.loadingBar']);
-angular.module('znote.directives',  []);
-angular.module('znote.filters',     []);
-angular.module('znote.config',      []);
+  * firebaseURL, run, config and application routes
+  */
+
+// define all modules
+angular.module('sugg.services', ['firebase', 'lumx']);
+angular.module('sugg.controllers', ['ngStorage', 'cfp.loadingBar']);
+angular.module('sugg.directives', []);
+angular.module('sugg.filters', []);
+angular.module('sugg.config', []);
 
 require('./config.js');
 
-// require services
+// require services; directives; controllers; filters
 require('./services/authentication.service.js');
 require('./services/notes.service.js');
 require('./services/notification.service.js');
@@ -19,7 +22,6 @@ require('./services/refs.service.js');
 require('./services/users.service.js');
 require('./services/settings.service.js');
 
-// require directives
 require('./directives/dragnote.directive.js');
 require('./directives/pagetitle.directive.js');
 require('./directives/preloader.directive.js');
@@ -27,17 +29,15 @@ require('./directives/slideToggle.directive.js');
 require('./directives/masonry.directive.js');
 require('./directives/contenteditable.directive.js');
 
-// require controllers
 require('./controllers/authentication.controller.js');
 require('./controllers/notes.controller.js');
 require('./controllers/main.controller.js');
 require('./controllers/profile.controller.js');
 
-// require filters
 require('./filters/word.filter.js');
 require('./filters/capitalize.filter.js');
 
-window.znote = angular.module('znote', [
+window.sugg = angular.module('sugg', [
   'angular-clipboard',
   'angular-loading-bar',
   'angular-spinkit',
@@ -47,39 +47,62 @@ window.znote = angular.module('znote', [
   'ngSanitize',
   'ui.bootstrap',
   'ui.router',
-  'znote.config',
-  'znote.controllers',
-  'znote.directives',
-  'znote.services',
-  'znote.filters'
+  'sugg.config',
+  'sugg.controllers',
+  'sugg.directives',
+  'sugg.services',
+  'sugg.filters'
 ]);
 
-/** firebaseURL, run, config and application routes */
-znote
-  .run(['$rootScope', '$state', '$stateParams', '$location', 'Notification', 'Authentication',
-    function($rootScope, $state, $stateParams, $location, Notification, Authentication) {
+sugg
+  .run(['$rootScope', '$transitions', '$state', '$stateParams', '$location', 'Notification', 'Authentication',
+    function($rootScope, $transitions, $state, $stateParams, $location, Notification, Authentication) {
+//       $rootScope.$on("$stateChangeError", function(event, toState, toParams, fromState, fromParams, error) {
+//         // We can catch the error thrown when the $requireAuth promise is rejected
+//         // and redirect the user back to the home page
+//         if (error === "AUTH_REQUIRED") {
+//           Notification.notify('error', 'Please Login And Try again... (ツ)');
+//           $state.go("login");
+//         }
+//       });
 
-      $rootScope.$on("$stateChangeError", function(event, toState, toParams, fromState, fromParams, error) {
+
+      $transitions.onError({}, function(trans) {
+        var $state = trans.router.stateService;
         // We can catch the error thrown when the $requireAuth promise is rejected
         // and redirect the user back to the home page
-        if (error === "AUTH_REQUIRED") {
+        if (trans.error().detail === "AUTH_REQUIRED") {
           Notification.notify('error', 'Please Login And Try again... (ツ)');
           $state.go("login");
         }
       });
 
-      $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams, options) {
-          var requireLogin = toState.data.requireLogin;
-          var isLoggedIn = Authentication.isLoggedIn();
+      $transitions.onSuccess({}, function(trans) {
+        var $state = trans.router.stateService;
+        var requireLogin = trans.to().data.requireLogin;
+        var isLoggedIn = Authentication.isLoggedIn();
 
-          if (requireLogin && isLoggedIn === true) {
-            // Set reference to access them from any scope
-            $rootScope.currentUser = Authentication.authenticatedUser();
-            $rootScope.$stateParams = $stateParams;
-            $rootScope.isLoggedIn = isLoggedIn;
-//             $location.path('/notes');
-          }
+        if (requireLogin && isLoggedIn) {
+          console.log(trans, Authentication.authenticatedUser(), trans.params('to'), trans.params('from'), trans.to(), trans.from());
+        }
+
+        if (!requireLogin && isLoggedIn) {
+          $location.path('/notes');
+        }
       });
+//
+//       $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams, options) {
+//           var requireLogin = toState.data.requireLogin;
+//           var isLoggedIn = Authentication.isLoggedIn();
+//
+//           if (!requireLogin && isLoggedIn === true) {
+//             // Set reference to access them from any scope
+//             $rootScope.currentUser = Authentication.authenticatedUser();
+//             $rootScope.$stateParams = $stateParams;
+//             $rootScope.isLoggedIn = isLoggedIn;
+//             $location.path('/notes');
+//           }
+//       });
   }])
   .config(['$stateProvider', '$urlRouterProvider', '$locationProvider', '$logProvider', '$provide', 'cfpLoadingBarProvider',
     function($stateProvider, $urlRouterProvider, $locationProvider, $logProvider, $provide, cfpLoadingBarProvider) {
@@ -87,9 +110,9 @@ znote
       // comment to disable dev logging in the app
       $logProvider.debugEnabled && $logProvider.debugEnabled(true);
 
-      /* Angular loading bar configuration */
+      // Angular loading bar configuration
       cfpLoadingBarProvider.includeSpinner = false;
-      cfpLoadingBarProvider.parentSelector = '.znote_navcontainer';
+      cfpLoadingBarProvider.parentSelector = '.sugg_navcontainer';
 
       /**
        * Configure by setting an optional string value for appErrorPrefix.
@@ -122,7 +145,6 @@ znote
              * @example
              *     throw { message: 'error message we added' };
              */
-            console.error(exception.message, errorData);
             $window.open('http://stackoverflow.com/search?q=[js] + ' + errorData.exception.message);
          };
       }]);
@@ -151,7 +173,7 @@ znote
         .state('notes', {
           url: '/notes',
           views: {
-            '': {
+            $default: {
               templateUrl: 'views/nav.partial.html',
               controller: 'MainController',
               controllerAs: 'vm',
@@ -168,7 +190,7 @@ znote
           },
           resolve: {
             // controller will not be loaded until $requireAuth resolves
-            // Auth refers to our $firebaseAuth wrapper in the example above
+            // Auth refers to our $firebaseAuth wrapper above
             "currentAuth": ['$firebaseAuth', 'Refs', function($firebaseAuth, Refs) {
               // $requireAuth returns a promise so the resolve waits for it to complete
               // If the promise is rejected, it will throw a $stateChangeError (see above)
@@ -177,20 +199,13 @@ znote
             }],
             "isLoggedIn": ['Authentication', function(Authentication) {
               return Authentication.isLoggedIn();
-            }],
-            // "currentAuth": ['$firebaseAuth', function($firebaseAuth) {
-//               // $waitForAuth returns a promise so the resolve waits for it to complete
-//               var ref = new Firebase(fbURL);
-//               var authObj = $firebaseAuth(ref);
-//
-//               console.log(authObj.$waitForAuth());
-//             }]
+            }]
           }
       })
       .state('profile', {
         url: '/profile/:uid?name',
         views: {
-          '': {
+          $default: {
             templateUrl: 'views/nav.partial.html',
             controller: 'MainController',
             controllerAs: 'vm',
@@ -214,9 +229,9 @@ znote
             return Authentication.isLoggedIn();
           }]
         },
-        onEnter: function($state, $rootScope) {
-          this.data.title = $rootScope.currentUser.name + ' Profile';
-        }
+        onEnter: ['$transition$', '$state$', function($transition$, $state$) {
+          $state$.data.title = $transition$.params('to').name + ' Profile';
+        }]
       })
   }])
   .provider('exceptionHandler', function exceptionHandlerProvider() {
@@ -225,7 +240,7 @@ znote
        */
 
       this.config = {
-        appErrorPrefix: '[znote Error] '
+        appErrorPrefix: '[sugg Error] '
       };
 
       this.configure = function(appErrorPrefix) {

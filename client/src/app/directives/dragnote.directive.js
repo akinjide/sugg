@@ -1,7 +1,7 @@
 "use strict";
 
 angular
-  .module('znote.directives')
+  .module('sugg.directives')
   .directive('dragNote', ['$document', function($document){
     // Runs during compile
     return {

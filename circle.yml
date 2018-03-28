@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 6.1.0
+    version: 6.11.1
   environment:
     NODE_ENV: test
 
@@ -20,9 +20,9 @@ deployment:
   development:
     branch: staging
     heroku:
-      appname: znote-dev
+      appname: sugg-dev
 
 #  production:
 #    branch: master
 #    heroku:
-#      appname: znote
+#      appname: sugg

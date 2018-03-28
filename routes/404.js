@@ -9,14 +9,11 @@ module.exports = function () {
   }
 
   function send404(req, res, description) {
-    res
-      .status(404)
-      .send({
+    res.status(404).send({
         status: 404,
         message: 'Not Found',
         description: description,
         url: req.url
-      })
-      .end();
+      }).end();
   }
 };

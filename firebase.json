@@ -1,0 +1,20 @@
+{
+  "database": {
+    "rules": "config/security-rules.json"
+  },
+  "hosting": {
+    "public": "client/public",
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "clent/src"
+    ]
+  }
+}

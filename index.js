@@ -42,22 +42,22 @@ function run(appDir, rootRef) {
       writeLog(req);
 
     // Tell the client what firebase to use
-    res.cookie('rootRef', rootRef.toString());
+    res.cookie('sugg-ref', rootRef.toString());
     next();
   });
 
-  var logDirectory = path.join(__dirname, '/log');
+  var logDirectory = path.join(__dirname, '/logs');
   var islogDirectory = fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
 
   function writeLog(req) {
     if (islogDirectory) {
       var filename = logDirectory + '/request.log';
-      var log = t().format('HH:MM') + ' ::: PATH: ' + req.path + ' ' + req.method + ' ' + req.url + ' BYTES: ' + req.socket.bytesRead + '\n';
+      var log = '[' + t().format('HH:MM') + '] path: ' + req.path + ' ' + req.method + ' ' + req.url + ' bytes: ' + req.socket.bytesRead + '\n';
 
-      fs.appendFile(filename, log, function(err) {
-        if (err) throw new Error(err);
-
-        console.log('Request log updated\n', log);
+      fs.appendFile(filename, log, function(error) {
+        if (error) {
+          console.log(error);
+        }
       });
     }
   }
@@ -80,44 +80,42 @@ function run(appDir, rootRef) {
   routes(app, config, rootRef);
 
 
-  /* error handler */
-
   // Error handling catch 404 and forward to error handler
   app.use(function(req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
+    var error = new Error('Not Found');
+    error.status = 404;
+    next(error);
   });
 
   // development error handler will print stacktrace
   if (app.get('env') === 'development') {
-    app.use(function(err, req, res, next) {
-      console.log(err.stack);
+    app.use(function(error, req, res, next) {
+      console.log(error.stack);
       // use morgan to log out on command line
       // combined logs the Apache style logs
       app.use(logger('combined'));
 
-      res.status(err.status || 500)
+      res.status(error.status || 500)
           .json({
-            message: err.message,
-            error: err
+            message: error.message,
+            error: error
           });
     });
   }
 
   // Production error handler no stacktraces leaked to user
-  app.use(function(err, req, res, next) {
-    console.log(err.stack);
-    res.status(err.status || 500)
+  app.use(function(error, req, res, next) {
+    console.log(error.stack);
+    res.status(error.status || 500)
         .json({
-          message: err.message,
-          error: err,
+          message: error.message,
+          error: error,
           friendly_error: 'It\'s our fault, Something Broke!'
         });
   });
 }
 
-firebaseAuth.authWithCustomToken(function(err, rootRef) {
+firebaseAuth.authWithCustomToken(function(error, rootRef) {
   run(process.cwd(), rootRef);
 });
 

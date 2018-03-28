@@ -1,7 +1,7 @@
 "use strict";
 
 angular
-  .module('znote.filters')
+  .module('sugg.filters')
   .filter('splitWord', [function() {
       return function(input, position) {
         if (input) {

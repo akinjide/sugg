@@ -4,9 +4,5 @@ var async = require('async'),
 module.exports = function(router, rootRef) {
   var noteRef = rootRef.child('notes');
 
-  router.get('/notes')
-
-  router.get()
-
   return router;
 };

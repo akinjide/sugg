@@ -1,12 +1,12 @@
 doctype html
-html(lang="en" ng-app="znote" ng-strict-di)
+html(lang="en" ng-app="sugg" ng-strict-di)
   head
     base(href="/")
     title(route-title)
     include shared/header
     include shared/head
-  body
+  body(ng-cloak)
     double-bounce-spinner(preloader)
     div#ui-view(ui-view)
-    //include shared/footer
+    // include shared/footer
     include shared/foot

@@ -1,7 +1,7 @@
 "use strict";
 
 angular
-  .module('znote.services')
+  .module('sugg.services')
   .factory('Settings', ['Refs', '$q', '$firebaseArray', '$firebaseObject', '$firebaseAuth',
     function(Refs, $q, $firebaseArray, $firebaseObject, $firebaseAuth) {
       var time = Firebase.ServerValue.TIMESTAMP;

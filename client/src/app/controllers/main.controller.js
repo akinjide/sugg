@@ -2,7 +2,7 @@
   "use strict";
 
   angular
-    .module('znote.controllers')
+    .module('sugg.controllers')
     .controller('MainController', MainController)
 
   MainController.$inject = ['$rootScope', '$q', '$state', '$window', '$localStorage', 'Authentication', 'Notification', 'User'];
@@ -10,16 +10,31 @@
   function MainController ($rootScope, $q, $state, $window, $localStorage, Authentication, Notification, User) {
     var vm = this;
 
-    vm.isLoggedIn = $rootScope.isLoggedIn;
+    vm.isLoggedIn = Authentication.isLoggedIn();
     vm.View = $localStorage.view || 'list-view';
 
     if (vm.isLoggedIn) {
-      vm.currentUser = $rootScope.currentUser;
+      vm.currentUser = Authentication.authenticatedUser();
     }
 
     vm.Refresh = Refresh;
     vm.Logout = Logout;
     vm.changeView = changeView;
+    vm.searchFilter = {
+      text: ''
+    };
+
+    console.log(vm.searchFilter)
+
+   //  this.array = [
+//     {name: 'Tobias'},
+//     {name: 'Jeff'},
+//     {name: 'Brian'},
+//     {name: 'Igor'},
+//     {name: 'James'},
+//     {name: 'Brad'}
+//   ];
+//   this.filteredArray = filterFilter(this.array, 'a');
 
     /////////////////////
 
@@ -48,18 +63,15 @@
         $localStorage.view = 'list-view';
       }
 
-//       Reload();
+      Reload();
     }
-
 
     function Refresh() { $window.location.reload(); }
 
-
     function Reload() { $state.reload(); }
 
-
     function Logout() {
-      Notification.notify('sticky', 'Successfully Signed Out! :)');
+      Notification.notify('sticky', 'Successfully Signed Out :)');
       Authentication.logout();
       $state.go('login');
     }

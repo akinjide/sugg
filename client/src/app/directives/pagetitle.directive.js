@@ -1,27 +1,29 @@
 "use strict";
 
 angular
-  .module('znote.directives')
-  .directive('routeTitle', ['$rootScope', '$timeout',
-    function($rootScope, $timeout) {
+  .module('sugg.directives')
+  .directive('routeTitle', ['$transitions', '$timeout',
+    function($transitions, $timeout) {
       return {
         link: function(scope, element) {
-          var listener = function(event, toState, toParams) {
-            var title = 'Znote | Welcome';
+          var listener = function(trans) {
+            var title = 'Welcome  — Sugg';
+            var toData = trans.to().data;
+            var toParams = trans.params();
 
-            if (toState.data && toState.data.title) {
-              title = toState.data.title;
+            if (toData && toData.title) {
+              title = toData.title;
             } else if (toParams.title) {
               title = toParams.title;
             }
 
             $timeout(function() {
-              element.text(title + ' | Znote');
+              element.text(title + ' — Sugg');
             }, 0, false);
 
           };
 
-          $rootScope.$on('$stateChangeSuccess', listener);
+          $transitions.onSuccess({}, listener);
         }
       };
     }

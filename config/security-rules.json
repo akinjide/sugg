@@ -1,0 +1,32 @@
+{
+  "rules": {
+    ".read": "root.child('users').hasChild(auth.uid) || auth.token.isAdmin === true",
+
+    // NOTES
+    "notes": {
+      ".read": "root.child('users').hasChild(auth.uid) && root.child('users').child(auth.uid).child('is_active').val() === true",
+      ".write": "root.child('users').hasChild(auth.uid) && root.child('users').child(auth.uid).child('is_active').val() === true"
+    },
+
+    // SETTINGS
+    "settings": {
+      "$uid": {
+        ".read": "auth.uid === $uid && root.child('users').child(auth.uid).child('is_active').val() === true",
+        ".write": "auth.uid === $uid || root.child('users').child(auth.uid).child('is_active').val() === true",
+        ".validate": "newData.hasChildren(['created'])"
+      }
+    },
+
+    // USERS
+    "users": {
+      ".indexOn": ["name", "id", "email"],
+      "$userId": {
+        ".read": "auth !== null && auth.uid === $userId",
+        ".write": "auth !== null && auth.uid === $userId",
+        "metadata": {
+          ".indexOn": ["note_id", "title"]
+        }
+      }
+    }
+  }
+}

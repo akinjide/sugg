@@ -1,7 +1,7 @@
 "use strict";
 
 angular
-  .module('znote.services')
+  .module('sugg.services')
   .factory('Note', ['Refs', '$q', '$rootScope', '$firebaseArray', '$firebaseObject',
     function(Refs, $q, $rootScope, $firebaseArray, $firebaseObject) {
       var time = Firebase.ServerValue.TIMESTAMP;
@@ -77,10 +77,10 @@ angular
         all: function(uid) {
           var deferred = $q.defer();
           var qry1 = $firebaseArray(Refs.users.child(uid).child('metadata'));
-          var _this = this;
+          var self = this;
 
-          _this.result = [];
-          _this.note;
+          self.result = [];
+          self.note;
 
           qry1.$loaded()
             .then(function(data) { return data; })
@@ -95,12 +95,13 @@ angular
             .then(function(data) {
               if (data.notes.length > 0 && data.metadata.length > 0) {
                 _.each(data.metadata, function(metadata, key) {
-                  _this.note = _.find(data.notes, { $id: metadata.note_id });
-                  _this.note['metadata'] = metadata;
-                  _this.result.push(_this.note);
+                  self.note = _.find(data.notes, { $id: metadata.note_id });
+                  self.note['metadata'] = metadata;
+                  self.note['Selected'] = false;
+                  self.result.push(self.note);
 
                   if ((key + 1) === data.metadata.length) {
-                    deferred.resolve(_this.result);
+                    deferred.resolve(self.result);
                   }
                 });
               } else {
@@ -154,10 +155,10 @@ angular
 
         remove: function(uid, noteId, metadataId) {
           var deferred = $q.defer();
-          var _this = this;
+          var self = this;
 
-          _this.findNote(noteId).then(function(note) {
-            _this.findMetadata(uid, metadataId).then(function(metadata) {
+          self.findNote(noteId).then(function(note) {
+            self.findMetadata(uid, metadataId).then(function(metadata) {
 
               $q.all([metadata.$remove(), note.$remove()])
                 .then(function(metaRef, noteRef) {
@@ -180,16 +181,17 @@ angular
 
         edit: function(uid, noteId, metadataId, options) {
           var deferred = $q.defer();
-          var _this = this;
+          var self = this;
 
-          _this.findNote(noteId).then(function(note) {
-            _this.findMetadata(uid, metadataId).then(function(metadata) {
-              note.settings.color = options.color;
+          self.findNote(noteId).then(function(note) {
+            self.findMetadata(uid, metadataId).then(function(metadata) {
+              if (options.content) note.content = options.content;
+              if (options.color) note.settings.color = options.color;
               metadata.updated = time;
 
               $q.all([note.$save(), metadata.$save()])
-                .then(function(noteRef, metaRef) {
-                  deferred.resolve([noteRef, metaRef])
+                .then(function(refs) {
+                  deferred.resolve(refs);
                 })
                 .catch(function(error) {
                   deferred.reject(error);
@@ -206,18 +208,25 @@ angular
           return deferred.promise;
         },
 
-        // TODO: rename note
-        rename: function(uid, noteId, title) {
+        rename: function(uid, metadataId, title) {
           var deferred = $q.defer();
-          var qry = Refs.users.child(uid).child('metadata').child(noteId);
+          var self = this;
 
-          if (qry) {
-            qry.$update({ 'title': title, 'updated_at': time });
+          self.findMetadata(uid, metadataId).then(function(metadata) {
+            metadata.title = title;
+            metadata.updated = time;
 
-            deferred.resolve();
-          } else {
-            deferred.reject(new Error('An Error occurred'));
-          }
+            metadata.$save()
+              .then(function(metaRef) {
+                deferred.resolve(metaRef);
+              })
+              .catch(function(error) {
+                deferred.reject(error);
+              });
+          })
+          .catch(function(error) {
+            deferred.reject(error);
+          });
 
           return deferred.promise;
         },
@@ -225,38 +234,38 @@ angular
         sync: function(uid) {
           var Notes = $firebaseArray(Refs.notes);
           var metadata = $firebaseArray(Refs.users.child(uid).child('metadata'));
-          var _this = this;
+          var self = this;
 
           Notes.$watch(function(e) {
             if (e.event === 'child_removed') {
-              _this.all(uid)
+              self.all(uid)
                 .then(function(notes) {
-                  _this.prepForBroadcast("syncedNotes", notes);
+                  self.prepForBroadcast("syncedNotes", notes);
                 })
                 .catch(function(err) {
-                  _this.prepForBroadcast("syncedNotes", []);
+                  self.prepForBroadcast("syncedNotes", []);
                 });
             }
           });
 
           metadata.$watch(function(e) {
             if (e.event === 'child_changed') {
-              _this.all(uid)
+              self.all(uid)
                 .then(function(notes) {
-                  _this.prepForBroadcast("syncedNotes", notes);
+                  self.prepForBroadcast("syncedNotes", notes);
                 })
                 .catch(function(err) {
-                  _this.prepForBroadcast("syncedNotes", []);
+                  self.prepForBroadcast("syncedNotes", []);
                 });
             }
           });
         },
 
         prepForBroadcast: function(key, msg) {
-          var _this = this;
+          var self = this;
 
-          _this[key] = msg;
-          _this.broadcastItem(_this);
+          self[key] = msg;
+          self.broadcastItem(self);
         },
 
         broadcastItem: function(data) {

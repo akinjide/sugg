@@ -1,8 +1,6 @@
-- // MIXINS
 mixin script(type, src)
   script(type=type, src=src)
 
-- // VARIABLES
 - var default_base = 'scripts/'
 - var lib_base = 'lib/'
 - var type = 'text/javascript'
@@ -10,12 +8,12 @@ mixin script(type, src)
 +script(type, lib_base + 'jquery/dist/jquery.min.js')
 +script(type, lib_base + 'velocity/velocity.min.js')
 +script(type, lib_base + 'moment/min/moment-with-locales.min.js')
-+script(type, lib_base + 'angular/angular.min.js')
++script(type, lib_base + 'angular/angular.js')
 +script(type, lib_base + 'lumx/dist/lumx.min.js')
 +script(type, lib_base + 'firebase/firebase.js')
 +script(type, lib_base + 'angularfire/dist/angularfire.min.js')
 +script(type, lib_base + 'angular-spinkit/build/angular-spinkit.min.js')
-+script(type, lib_base + 'angular-ui-router/release/angular-ui-router.min.js')
++script(type, lib_base + 'angular-ui-router/release/angular-ui-router.js')
 +script(type, lib_base + 'angular-bootstrap/ui-bootstrap.min.js')
 +script(type, lib_base + 'moment/min/moment.min.js')
 +script(type, lib_base + 'lodash/dist/lodash.min.js')

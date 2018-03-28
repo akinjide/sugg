@@ -8,7 +8,7 @@ module.exports = function(router, rootRef) {
     return {
       uid: userId,
       id: user.id,
-      image_URL: user.image_URL,
+      image_url: user.image_url,
       fullname: user.name,
       email: user.email,
       name: {
@@ -18,7 +18,7 @@ module.exports = function(router, rootRef) {
     };
   }
 
-  router.get('/users', function(req, res) {
+  router.get('/', function(req, res) {
     userRef.once('value', function(snap) {
       var users = snap.val(),
           result = [];
@@ -39,7 +39,7 @@ module.exports = function(router, rootRef) {
     });
   });
 
-  router.get('/users/:id', function(req, res) {
+  router.get('/:id', function(req, res) {
     if (req.params.id) {
       userRef
         .child(req.params.id)

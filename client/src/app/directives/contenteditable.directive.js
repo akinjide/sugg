@@ -1,14 +1,12 @@
 "use strict";
 
 angular
-  .module('znote.directives')
+  .module('sugg.directives')
   .directive('contenteditable', [function() {
     return {
       restrict: 'A',
       require: "?ngModel",
       link: function(scope, element, attr, ngModel) {
-        console.log(ngModel);
-
         function read() {
           ngModel.$setViewValue(element.html());
         }

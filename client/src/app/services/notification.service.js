@@ -1,7 +1,7 @@
 "use strict";
 
 angular
-  .module('znote.services')
+  .module('sugg.services')
   .factory('Notification', ['LxNotificationService', '$log', function(LxNotificationService, $log) {
     return {
       /**

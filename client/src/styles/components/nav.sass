@@ -1,4 +1,4 @@
-.znote_navcontainer
+.sugg_navcontainer
   nav
     :background-color $default
     :position fixed
@@ -13,10 +13,16 @@
       :justify-content space-around
       :padding 20px 40px
 
-    img.logo
-      :width 80px
-      :height auto
-      :padding 2px
+    a
+      :text-decoration none
+
+      span.logo
+        :height auto
+        :padding 2px
+        :color #000000
+        :font-family inherit
+        :font-weight 500
+        :font-size 30px
 
     button
       img
@@ -27,7 +33,7 @@
     :background $white
     :box-shadow 0px 0px 1px 1px rgba(0, 0, 0, 0.14), 0px 0px 2px 2px rgba(0, 0, 0, 0.098), 0px 0px 5px 1px rgba(0, 0, 0, 0.084)
 
-.znote-search
+.sugg-search
   :background #fafafa
   :border solid 1px #dbdbdb
   :min-width 125px
@@ -35,7 +41,7 @@
   :height 28px
   :font-size 13px
   :border-radius 3px
-  :color #999
+  :color #999999
   :cursor text
   :font-weight 300
 
@@ -43,15 +49,15 @@
     :height inherit
 
     .search-filter__container
-      :padding 0 20px 0 30px
+      :padding 0 10px
       :height inherit
 
       .search-filter__button
-        :height 0
-        :width 0
         :top 0
-        :left 10px
+        :left 0
         :padding 8px
+        :position relative
+        :height 30px
 
         & > .btn--icon.btn--black
           :line-height 0
@@ -64,23 +70,32 @@
             :color #666
 
       .search-filter__input
-        :padding 7px
+        :padding 2px
+        :position absolute
+        :top 0
+        :left 38px
 
         input
-          :height 14px
+          :height 20px
           :color #262626
+          :font-size 14px
+          :width 82%
+          :line-height 16px
 
       .search-filter__clear
-        :color #999
-        :font-size 16px
-        :height 10px
-        :width 10px
-        :padding 4px 20px 4px 0
+        :color #999999
+        :top 0
 
-        .mdi
+        & > .btn--icon.btn--black
+          :opacity .54
           :line-height 0
+          :height 24px
 
-.znote-profile-nav
+          .mdi
+            :line-height 0
+            :font-size 16px
+
+.sugg-profile-nav
   button
     :margin-left 15px
 

@@ -2,8 +2,8 @@
   :width 6px
 
 .note-container::-webkit-scrollbar-thumb
-  :background #ECEFF1
-  :border 1px solid #D7D7D7
+  :background #4D4D4D
+  :border 1px solid $white
 
 .note-container::-webkit-scrollbar-thumb:hover
   :background $white
@@ -37,7 +37,7 @@
       :background-color inherit
       :height: 0
 
-      .znote-input
+      .sugg-input
         :width 100%
         :color $black
         :border none
@@ -146,21 +146,21 @@
     :vertical-align middle
 
 trix-toolbar
-  .dialogs .dialog
+  .trix-dialogs .trix-dialog
     :border 1px solid #d6d6d6
     :border-radius 2px
 
-  .button_row
+  .trix-button-row
     :justify-content flex-start
     :padding-bottom 10px
 
-  .button_group
+  .trix-button-group
     :border 0
     :box-shadow none
     :margin-bottom 0
     :margin-right 2px
 
-  .button_group button
+  .trix-button-group button
     :border 0
     :cursor pointer
     :opacity 0.5
@@ -169,30 +169,30 @@ trix-toolbar
     &.icon::before
       :opacity .74
 
-  .button_group button:not(:first-child)
+  .trix-button-group button:not(:first-child)
     :border 0
 
-  .button_group button:hover
+  .trix-button-group button:hover
     :box-shadow none
     :opacity .87
 
-  & .button_group button.active,
-  & .button_group button.active:hover
-    :background none
+  & .trix-button-group button.active,
+  & .trix-button-group button.active:hover
+    :background none !important
     :box-shadow none
     :opacity .9
 
-.dialogs
-  .link_dialog.active
+.trix-dialogs
+  .trix-dialog--link.trix-active
     :opacity 1
     :margin 0
     :width 70%
     :top 10px
 
-.dialog .button_group
+.trix-dialog .trix-button-group
   :margin-top 0
 
-.link_url_fields > input
+.trix-dialog__link-fields > input
   :border-color #d6d6d6 !important
   :border-radius 2px !important
 

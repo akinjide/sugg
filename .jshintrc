@@ -27,6 +27,6 @@
     "module"
   ],
   "globals": {
-      "znote": true
+      "sugg": true
   }
 }

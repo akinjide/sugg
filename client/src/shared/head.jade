@@ -1,11 +1,9 @@
-- // MIXINS
 mixin link(type, rel, href)
   if (!type)
     link(rel=rel, href=href)
   else
     link(type=type, rel=rel, href=href)
 
-- // VARIABLES
 - var default_base = 'styles/'
 - var lib_base = 'lib/'
 - var type = 'text/css'

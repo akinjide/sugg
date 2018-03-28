@@ -2,7 +2,7 @@
   "use strict";
 
   angular
-    .module('znote.controllers')
+    .module('sugg.controllers')
     .controller('ProfileController', ProfileController)
 
   ProfileController.$inject = ['$rootScope', '$q', '$state', '$window', '$controller', 'Authentication', 'Notification', 'User'];
@@ -10,14 +10,10 @@
   function ProfileController ($rootScope, $q, $state, $window, $controller, Authentication, Notification, User) {
     var vm = this;
 
-    // Inherit MainContoller
     vm._main = $controller('MainController', {});
-    console.log(vm._main, 'line 15')
-
-    vm.isLoggedIn = $rootScope.isLoggedIn;
-
+    vm.isLoggedIn = vm._main.isLoggedIn;
     if (vm.isLoggedIn) {
-      vm.currentUser = $rootScope.currentUser;
+      vm.currentUser = vm._main.currentUser;
     }
 
     vm.Deactivate = Deactivate;
@@ -36,7 +32,7 @@
         })
         .catch(function(err) {
           Notification.notify('error', 'Error while loading. Try again...(ツ)');
-        })
+        });
     }
 
     /////////////////////
@@ -45,7 +41,7 @@
     function Deactivate(uid) {
       User.remove(uid)
         .then(function(data) {
-          Notification.notify('simple', 'Account Deactivate Successfully! :( Sad to see you leave');
+          Notification.notify('simple', 'Account Deactivate Successfully :( Sad to see you leave');
         })
         .catch(function(err) {
           Notification.notify('error', 'It\'s our fault. Please try again.');

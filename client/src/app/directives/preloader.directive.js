@@ -1,22 +1,23 @@
 "use strict";
 
 angular
-  .module('znote.directives')
-  .directive('preloader', ['$rootScope', '$timeout',
-    function($rootScope, $timeout) {
+  .module('sugg.directives')
+  .directive('preloader', ['$timeout', '$transitions',
+    function($timeout, $transitions) {
       return {
         restrict: 'A',
         link: function(scope, element) {
-          $rootScope.$on('$stateChangeStart', function() {
+          $transitions.onStart({}, function(trans) {
             $('#ui-view').html('');
             element.removeClass("hidden");
           });
 
-          $rootScope.$on('$stateChangeSuccess', function() {
+          $transitions.onSuccess({}, function(trans) {
             $timeout(function() {
               element.addClass("hidden");
             }, 800);
           });
+
         }
       };
     }

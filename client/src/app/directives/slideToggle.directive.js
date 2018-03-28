@@ -1,7 +1,7 @@
 "use strict";
 
 angular
-  .module('znote.directives')
+  .module('sugg.directives')
   .directive('slideToggle', [function() {
     return {
       restrict: 'A',
@@ -18,7 +18,6 @@ angular
             element.stop().slideToggle(slideDuration);
           }
         });
-
       }
     };
   }]);

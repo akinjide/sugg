@@ -1,5 +1,5 @@
-.col-masonry:hover > .znote-checkbox,
-.col-masonry:hover .box-placeholder > .znote-icons-container
+.col-masonry:hover > .sugg-checkbox,
+.col-masonry:hover .box-placeholder > .sugg-icons-container
     :opacity 1
 
 .box-placeholder
@@ -65,6 +65,7 @@
   :width 100%
   :min-height 1em
   :margin-bottom 15px
+  :user-select none
 
   img
     :padding 2px;
@@ -89,31 +90,11 @@
   :max-width 70vw
   :width auto
 
-.col-masonry.w0
-  :display inline-block
-  :width 20%
-
-.col-masonry.w1
-  :display inline-block
-  :width 21%
-
-.col-masonry.w2
-  :display inline-block
-  :width 29%
-
-.col-masonry.w3
-  :display inline-block
-  :width 18%
-
-.col-masonry.w4
-  :display inline-block
-  :width 24%
-
-.znote-icons-container
+.sugg-icons-container
   :opacity 0
   :transition opacity .218s linear
 
-.znote-checkbox
+.sugg-checkbox
   :position absolute
   :opacity 0
   :transition opacity .218s linear
@@ -188,3 +169,19 @@ input[type=checkbox]
 .dialog__footer
   h5 > span
     :font-weight lighter
+
+.selected-notes-options
+  :height 70px
+  :width 100%
+  :background $white
+  :z-index 1001
+  :position fixed
+  :bottom 0
+  :left 0
+  :transform translateY(20px)
+  :transition opacity .218s ease-in, transform .218s ease-in
+
+.toolbar.selected-notes-toolbar
+  :padding-bottom 24px
+  :width 60%
+  :margin 0 auto

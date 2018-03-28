@@ -1,10 +1,10 @@
 "use strict";
 
 angular
-  .module('znote.services')
-  .factory('Refs', ['fbURL',
-    function(fbURL) {
-      var rootRef = new Firebase(fbURL);
+  .module('sugg.services')
+  .factory('Refs', ['fb_uri',
+    function(fb_uri) {
+      var rootRef = new Firebase(fb_uri);
 
       return {
         root: rootRef,

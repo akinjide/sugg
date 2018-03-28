@@ -1,11 +1,9 @@
 var gulp  = require('gulp');
 var browserify = require('browserify');
 var argv = require('yargs').argv;
-var karma = require('karma').server;
+var Karma = require('karma').Server;
 var $ = require('gulp-load-plugins')({lazy: true});
 var source = require('vinyl-source-stream');
-var browserSync = require('browser-sync');
-var reload = browserSync.reload;
 var path = require('path');
 
 /**
@@ -123,10 +121,10 @@ gulp.task('jade-partials-glob', function() {
   return gulp.src(paths.jade.partials_glob)
     .pipe($.cleanDest(out))
     .pipe($.jade())
-//     .pipe($.htmlmin({
-//       collapseWhitespace: true,
-//       removeComments: true
-//     }))
+    .pipe($.htmlmin({
+      collapseWhitespace: true,
+      removeComments: true
+    }))
     .pipe(gulp.dest(out));
 });
 
@@ -250,21 +248,17 @@ gulp.task('nodemon', function() {
     env: {
       'NODE_ENV': 'development'
     },
-    watch: ['./routes', './index.js', './config']
+    watch: ['./routes', './index.js', './config', paths.js.watcher_glob, paths.jade.watcher_glob, paths.sass.watcher_glob],
+    tasks: ['build']
   };
 
   $.nodemon(nodeOptions)
     .on('restart', function(ev) {
       log('*** nodemon restarted');
       log('files changed:\n' + ev);
-      setTimeout(function() {
-          browserSync.notify('reloading now ...');
-          reload({stream: false});
-      }, config.browserReloadDelay);
     })
     .on('start', function() {
       log('*** nodemon started');
-      startBrowserSync();
     })
     .on('crash', function() {
       log('*** nodemon crashed: script crashed for some reason');
@@ -302,6 +296,7 @@ gulp.task('browserify', function() {
     .on('success', $.util.log.bind($.util, 'Browserify Rebundled'))
     .on('error', $.util.log.bind($.util, 'Browserify Error: in browserify gulp task'))
     .pipe(source('index.js'))
+    .pipe($.cleanDest(config.public + 'scripts'))
     .pipe(gulp.dest(config.public + 'scripts'));
 });
 
@@ -309,7 +304,6 @@ gulp.task('compress', ['browserify'], function () {
   return gulp.src(config.public + 'scripts/index.js')
       .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
       .pipe($.if(argv.development, $.empty(), $.uglify()))
-      .pipe($.cleanDest(config.public + 'scripts'))
       .pipe(gulp.dest(config.public + 'scripts'));
 });
 
@@ -319,10 +313,29 @@ gulp.task('bower', function() {
     .pipe(gulp.dest(config.public + 'lib/'))
 });
 
-/**
- * Optimize the code and re-load browserSync
- */
-gulp.task('browserSyncReload', ['build'], browserSync.reload);
+gulp.task('test:client', function(done) {
+  var server = new Karma({
+    configFile: paths.root + '/karma.conf.js',
+    singleRun: false,
+    watch: true
+  }, done);
+
+  server.start();
+});
+
+gulp.task('test:server', function() {
+  return gulp.src('./tests/server/*.spec.js')
+    .pipe($.jasmine({
+      showColors: true,
+      verbose: true
+    }))
+    .once('end', function() {
+      process.exit(1);
+    })
+    .once('end', function () {
+      process.exit();
+    });
+});
 
 gulp.task('setup', $.shell.task([
   'bower install',
@@ -344,41 +357,6 @@ gulp.task('build', ['jade', 'sass', 'assets', 'compress', 'js'], function() {
 gulp.task('production', ['build']);
 gulp.task('serve', ['build', 'nodemon']);
 gulp.task('test', ['test:client', 'test:server']);
-
-// browser-sync
-function startBrowserSync() {
-  if (browserSync.active) {
-    return;
-  }
-
-  log('Starting BrowserSync on port ' + config.defaultPort);
-  gulp.watch([paths.sass.watcher_glob, paths.js.watcher_glob, paths.jade.watcher_glob], ['browserSyncReload'])
-    .on('change', changeEvent);
-
-  var options = {
-    proxy: 'localhost:' + config.defaultPort,
-    port: 1337,
-    files: [
-      config.public + '**/*.*'
-    ],
-    ghostMode: { // these are the defaults t,f,t,t
-      clicks: true,
-      location: false,
-      forms: true,
-      scroll: true
-    },
-    injectChanges: true,
-    logFileChanges: true,
-    logLevel: 'info',
-    logPrefix: 'znote',
-    notify: false,
-//     server: 'client/public',
-    reloadDelay: 0 //1000
-  };
-
-  browserSync(options);
-}
-
 
 /**
  * When files change, log it

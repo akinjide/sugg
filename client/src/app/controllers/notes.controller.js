@@ -2,24 +2,26 @@
   "use strict";
 
   angular
-    .module('znote.controllers')
+    .module('sugg.controllers')
     .controller('NotesController', NotesController)
 
-  NotesController.$inject = ['$q', '$state', '$rootScope', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings'];
+  NotesController.$inject = ['$q', '$state', '$controller', '$transitions', '$rootScope', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Authentication', 'filterFilter'];
 
-  function NotesController ($q, $state, $rootScope, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings) {
+  function NotesController ($q, $state, $controller, $transitions, $rootScope, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Authentication, filterFilter) {
     var vm = this;
 
-    vm.isLoggedIn = $rootScope.isLoggedIn;
+    vm._main = $controller('MainController', {});
+    console.log(vm._main.filterSearch)
+    vm.isLoggedIn = vm._main.isLoggedIn;
     vm.NoteColors = [
-      'white', 'blue', 'red',
-      'orange', 'yellow', 'grey',
-      'teal', 'green'
+      'white', 'blue', 'red', 'orange', 'yellow', 'grey', 'teal', 'green'
     ];
     vm.dialogId = 'dialog' + Math.floor((Math.random() * 6) + 1);
+    vm.isMarked = false;
+    vm.removeQueue = [];
     var defaultNote = {
       title: '',
-      trix: '',
+      content: '',
       settings: {
         color: ''
       }
@@ -27,13 +29,17 @@
 
     vm.note = defaultNote;
     vm.Remove = Remove;
+    vm.RemoveMarked = RemoveMarked;
     vm.Create = Create;
     vm.ChangeNoteColor = ChangeNoteColor;
     vm.Copy = Copy;
     vm.Edit = Edit;
+    vm.MarkNote = MarkNote;
+    vm.ClearMarked = ClearMarked;
+    vm.AttachmentAdd = vm.AttachmentAdd;
 
     if (vm.isLoggedIn) {
-      vm.currentUser = $rootScope.currentUser;
+      vm.currentUser = vm._main.currentUser;
 
       if (!clipboard.supported) {
         vm.CopyNotSupported = true;
@@ -93,38 +99,37 @@
       var uid = vm.currentUser.$id;
 
       if (uid) {
-        Note.create(uid, note.title, note.trix, note.settings)
+        Note.create(uid, note.title, note.content, note.settings)
           .then(function(id) {
             cfpLoadingBar.complete();
             Note.sync(uid);
-            Notification.notify('success', 'Note added!');
+            Notification.notify('success', 'Note added');
             vm.note = defaultNote;
             vm.show = false;
             Reload();
           })
           .catch(function(err) {
-            Notification.notify('error', 'Note not created!. Try again...(ツ)');
+            Notification.notify('error', 'Note not created. Try again...(ツ)');
           });
       } else {
-          Notification.notify('error', 'Note not created!. Try again...(ツ)');
+          Notification.notify('error', 'Note not created. Try again...(ツ)');
       }
     }
 
 
     function ChangeNoteColor(noteId, metadataId, color) {
       var uid = vm.currentUser.$id;
-      var options = {};
 
-      options.color = color;
-
-      Note.edit(uid, noteId, metadataId, options)
-        .then(function(data) {
-          Note.sync(uid);
-          Reload();
-        })
-        .catch(function(error) {
-          Notification.notify('error', 'Note not updated!. Try again...(ツ)');
-        });
+      Note.edit(uid, noteId, metadataId, {
+        color: color
+      })
+      .then(function(data) {
+        Note.sync(uid);
+        Reload();
+      })
+      .catch(function(error) {
+        Notification.notify('error', 'Note not updated. Try again...(ツ)');
+      });
     }
 
 
@@ -134,54 +139,126 @@
       if (uid && noteId && metadataId) {
         Note.remove(uid, noteId, metadataId)
           .then(function(data) {
-            Notification.notify('success', 'Note deleted!');
+            Notification.notify('success', 'Note deleted');
             Note.sync(uid);
             Reload();
           })
           .catch(function(error) {
-            Notification.notify('error', 'Note not deleted!. Try again...(ツ)');
+            Notification.notify('error', 'Note not deleted. Try again...(ツ)');
           });
       } else {
-          Notification.notify('error', 'Note not deleted!. Try again...(ツ)');
+          Notification.notify('error', 'Note not deleted. Try again...(ツ)');
       }
+    }
+
+
+    function RemoveMarked() {
+      for (var i = 0; i < vm.removeQueue.length; i++) {
+        Remove(vm.removeQueue[i].metadata.note_id, vm.removeQueue[i].metadata.$id);
+      }
+
+      Reload();
     }
 
 
     function Reload() { $state.reload(); }
 
+    function ClearMarked() { vm.removeQueue = []; }
+
+    function MarkNote(note) {
+      vm.removeQueue.push(note);
+    }
+
 
     function Copy(note) {
       if (!clipboard.supported) {
         vm.CopyNotSupported = true;
-        Notification.notify('error', 'Note not copied! Copy to clipboard not supported');
+        Notification.notify('error', 'Note not copied Copy to clipboard not supported');
       }
 
       try {
         clipboard.copyText(angular.element(note).text());
-        Notification.notify('success', 'Note copied to clipboard!');
+        Notification.notify('success', 'Note copied to clipboard');
       } catch(error) {
         Notification.notify('error', 'Nothing to copy...(ツ)');
       }
     }
 
-    function Edit(note) {
-      vm.editNote = note;
+    function Edit(previousNote, state, nowNote) {
+      var uid = vm.currentUser.$id;
 
-      LxDialogService.open(vm.dialogId, note);
-//       vm.note = {
-//         title: note.metadata.title,
-//         trix: note.content,
-//         color: note.color
-//       };
-      console.log(note, 'line 173');
+      if (!state) {
+        vm.editNote = previousNote;
+        LxDialogService.open(vm.dialogId, previousNote);
+
+        (function() {
+          vm.initializeEdit = function(e, editor) {
+            editor.setSelectedRange([0, previousNote.content.length]);
+            editor.insertHTML(previousNote.content || '');
+          };
+        })();
+
+        return;
+      }
+
+      if (state) {
+        if (nowNote && nowNote.title) {
+          Note.rename(uid, previousNote.metadata.$id, nowNote.title)
+            .then(function(data) {
+              Notification.notify('success', 'Note Renamed');
+              Note.sync(uid);
+              Reload();
+            })
+            .catch(function(error) {
+              Notification.notify('error', 'Note not renamed. Try again...(ツ)');
+            });
+
+          return;
+        }
+
+        if (nowNote && nowNote.content) {
+          Note.edit(uid, previousNote.metadata.note_id, previousNote.metadata.$id, {
+            content: nowNote.content
+          })
+          .then(function(data) {
+              console.log(data);
+              Notification.notify('success', 'Note Updated');
+              Note.sync(uid);
+              Reload();
+            })
+            .catch(function(error) {
+              Notification.notify('error', 'Note not updated. Try again...(ツ)');
+            });
+
+          return;
+        }
+
+        if (nowNote && (nowNote.title && nowNote.content)) {
+          Note.rename(uid, previousNote.metadata.$id, nowNote.title)
+            .then(function(data) {
+
+              Note.edit(uid, previousNote.metadata.note_id, previousNote.metadata.$id, {
+                content: nowNote.content
+              })
+              .then(function(data) {
+                  Notification.notify('success', 'Note Updated');
+                  Note.sync(uid);
+                  Reload();
+                })
+                .catch(function(error) {
+                  Notification.notify('error', 'Note not updated. Try again...(ツ)');
+                });
+
+            })
+            .catch(function(error) {
+              Notification.notify('error', 'Note not updated. Try again...(ツ)');
+            });
+
+          return;
+        }
+      }
     }
 
-
-   //  vm.trixInitialize = function(e, editor) {
-//       editor.setSelectedRange([0, 0]);
-//       editor.insertHTML("<div>Znote <strong>rocks!</strong>, do you?</div>");
-//     };
-//
 //     var events = ['trixInitialize', 'trixChange', 'trixSelectionChange', 'trixFocus', 'trixBlur', 'trixFileAccept', 'trixAttachmentAdd', 'trixAttachmentRemove'];
 //
 //     for (var i = 0; i < events.length; i++) {
@@ -194,58 +271,59 @@
 // //             console.info('Event type:', e.type, vm.trix, vm.noteTitle);
 //         }
 //     };
-//     var createStorageKey, host, uploadAttachment;
-//
-//     vm.trixAttachmentAdd = function(e) {
-//         document.getElementById('trix-attachment-add').className = 'active';
-//         $timeout(function() {
-//             document.getElementById('trix-attachment-add').className = '';
-//         }, 500);
-//         console.log(e);
-//         var attachment;
-//         attachment = e.attachment;
-//         if (attachment.file) {
-//             return uploadAttachment(attachment);
-//         }
-//     }
-//
-//     host = "https://d13txem1unpe48.cloudfront.net/";
-//
-//     uploadAttachment = function(attachment) {
-//         var file, form, key, xhr;
-//         file = attachment.file;
-//         key = createStorageKey(file);
-//         form = new FormData;
-//         form.append("key", key);
-//         form.append("Content-Type", file.type);
-//         form.append("file", file);
-//         xhr = new XMLHttpRequest;
-//         xhr.open("POST", host, true);
-//         xhr.upload.onprogress = function(event) {
-//             var progress;
-//             progress = event.loaded / event.total * 100;
-//             return attachment.setUploadProgress(progress);
-//         };
-//         xhr.onload = function() {
-//             var href, url;
-//             if (xhr.status === 204) {
-//                 url = href = host + key;
-//                 return attachment.setAttributes({
-//                     url: url,
-//                     href: href
-//                 });
-//             }
-//         };
-//         return xhr.send(form);
-//     };
-//
-//     createStorageKey = function(file) {
-//         var date, day, time;
-//         date = new Date();
-//         day = date.toISOString().slice(0, 10);
-//         time = date.getTime();
-//         return "tmp/" + day + "/" + time + "-" + file.name;
-//     };
 
+    var host = "https://d13txem1unpe48.cloudfront.net/";
+
+    function AttachmentAdd(e) {
+        document.getElementById('trix-attachment-add').className = 'active';
+        $timeout(function() {
+            document.getElementById('trix-attachment-add').className = '';
+        }, 500);
+        console.log(e);
+        var attachment;
+        attachment = e.attachment;
+        if (attachment.file) {
+            return uploadAttachment(attachment);
+        }
+    }
+
+    function createStorageKey(file) {
+      var date, day, time;
+      date = new Date();
+      day = date.toISOString().slice(0, 10);
+      time = date.getTime();
+      return "tmp/" + day + "/" + time + "-" + file.name;
+    }
+
+    function uploadAttachment(attachment) {
+      var file, form, key, xhr;
+      file = attachment.file;
+      key = createStorageKey(file);
+      form = new FormData;
+      form.append("key", key);
+      form.append("Content-Type", file.type);
+      form.append("file", file);
+      xhr = new XMLHttpRequest;
+      xhr.open("POST", host, true);
+
+      xhr.upload.onprogress = function(event) {
+          var progress;
+          progress = event.loaded / event.total * 100;
+          return attachment.setUploadProgress(progress);
+      }
+
+      xhr.onload = function() {
+          var href, url;
+          if (xhr.status === 204) {
+              url = href = host + key;
+              return attachment.setAttributes({
+                  url: url,
+                  href: href
+              });
+          }
+      }
+
+      return xhr.send(form);
+    }
   }
 })()
