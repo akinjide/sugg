@@ -20,21 +20,7 @@
     vm.Refresh = Refresh;
     vm.Logout = Logout;
     vm.changeView = changeView;
-    vm.searchFilter = {
-      text: ''
-    };
-
-    console.log(vm.searchFilter)
-
-   //  this.array = [
-//     {name: 'Tobias'},
-//     {name: 'Jeff'},
-//     {name: 'Brian'},
-//     {name: 'Igor'},
-//     {name: 'James'},
-//     {name: 'Brad'}
-//   ];
-//   this.filteredArray = filterFilter(this.array, 'a');
+    vm.searchFilterChange = searchFilterChange;
 
     /////////////////////
 
@@ -67,8 +53,10 @@
     }
 
     function Refresh() { $window.location.reload(); }
-
     function Reload() { $state.reload(); }
+    function searchFilterChange(search) {
+      $rootScope.$broadcast('filterSearch', search);
+    }
 
     function Logout() {
       Notification.notify('sticky', 'Successfully Signed Out :)');

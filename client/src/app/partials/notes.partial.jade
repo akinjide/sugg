@@ -1,22 +1,36 @@
-div.selected-notes-options(ng-show="vm.isMarked")
+div.selected-notes-options(ng-show="vm.removeQueue.length")
   div.toolbar.selected-notes-toolbar
     div(class="mr++ toolbar__left")
       lx-button(
         lx-size="m"
         lx-color="black"
         lx-type="icon"
-        ng-click="vm.isMarked = false; vm.ClearMarked()")
+        ng-click="vm.ClearMarked()")
         i.mdi.mdi-close
 
     span.toolbar__label.fs-title {{vm.removeQueue.length}} selected
 
     div.toolbar__right
       lx-button.mr8(
+        lx-type="icon"
+        lx-color="black"
+        lx-tooltip="Change color"
+        lx-tooltip-position="bottom"
+        ng-click="vm.ColorMarkedNote('blue')")
+
+        i.mdi.mdi-palette
+
+      lx-button.mr8(
         lx-type="flat"
         lx-color="black"
+        lx-size="s"
         lx-tooltip="Delete note"
-        lx-tooltip-position="top"
-        ng-click="vm.RemoveMarked()") Delete note
+        lx-tooltip-position="bottom"
+        ng-click="vm.RemoveMarked()")
+
+        ng-pluralize(
+          count="vm.removeQueue.length"
+          when="{ '0': 'Delete note', 'one': 'Delete note', 'other': 'Delete notes'}")
 
 div.main-content
   .card.card-content(ng-mouseleave="Colors = false" class="{{vm.note.settings.color}}")
@@ -81,9 +95,15 @@ div.main-content
         ng-click="vm.Create(vm.note)") Done
 
 .sugg-notes.row-masonry(class="{{vm.View}}" masonry)
-  div.col-masonry(ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated'")
-    .sugg-checkbox
-      input(type="checkbox" class="checkbox" name="checkbox" ng-model="Note.Selected" id="{{Note.metadata.note_id}}" ng-change="vm.MarkNote(Note); vm.isMarked = true")
+  div.col-masonry(ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
+    .sugg-checkbox(class="{{(vm.isMarked && Note.Selected) ?'selected' :''}}")
+      input(
+        type="checkbox"
+        class="checkbox"
+        name="checkbox"
+        ng-model="Note.Selected"
+        id="{{Note.metadata.note_id}}"
+        ng-change="vm.MarkNote(Note, Note.Selected); vm.isMarked = true")
       label.label--checkbox(for="{{Note.metadata.note_id}}")
 
     .box-placeholder.m0(
@@ -102,7 +122,7 @@ div.main-content
       .colors(ng-class="{active: noteColors}" ng-mouseleave="noteColors = false")
         .color(
           ng-repeat="noteColor in vm.NoteColors"
-          class="{{noteColor}} color-{{$index}} {{((Note.settings.color == noteColor) == true) ? 'active' : ''}}"
+          class="{{noteColor}} color-{{$index}} {{((Note.settings.color == noteColor) == true) ?'active' :''}}"
           ng-click="vm.ChangeNoteColor(Note.metadata.note_id, Note.metadata.$id, noteColor); Note.settings.color = noteColor"
           lx-tooltip="{{noteColor | capitalize : true}}"
           lx-tooltip-position="bottom")
@@ -141,9 +161,7 @@ div.main-content
             lx-dropdown-menu
               ul
                 li: a.dropdown-link(ng-click="vm.Remove(Note.metadata.note_id, Note.metadata.$id)") Delete note
-                li: a.dropdown-link(
-                  disabled
-                  ng-click="vm.show = true; vm.isEdit = true; vm.Edit(Note, false)") Edit note
+                li: a.dropdown-link(ng-click="vm.Edit(Note, false)") Edit note
                 li(ng-hide="vm.CopyNotSupported"): a.dropdown-link(ng-click="vm.Copy(Note.content)") Copy content
 
 

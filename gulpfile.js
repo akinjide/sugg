@@ -15,14 +15,14 @@ gulp.task('default', ['help']);
 var config = {
   packages: [
     path.resolve(__dirname, 'package.json'),
-    './bower.json'
+//     './bower.json'
   ],
   nodeModules: 'node_modules',
-  bower: {
-    json: require('./bower.json'),
-    directory: './client/public/lib',
-    ignorePath: '../..'
-  },
+//   bower: {
+//     json: require('./bower.json'),
+//     directory: './client/public/lib',
+//     ignorePath: '../..'
+//   },
   src: 'client/src/',
   public: 'client/public/',
   browserReloadDelay: 1000,
@@ -307,11 +307,11 @@ gulp.task('compress', ['browserify'], function () {
       .pipe(gulp.dest(config.public + 'scripts'));
 });
 
-gulp.task('bower', function() {
-  log('Installing Dependencies');
-  return $.bower()
-    .pipe(gulp.dest(config.public + 'lib/'))
-});
+// gulp.task('bower', function() {
+//   log('Installing Dependencies');
+//   return $.bower()
+//     .pipe(gulp.dest(config.public + 'lib/'))
+// });
 
 gulp.task('test:client', function(done) {
   var server = new Karma({
@@ -338,7 +338,7 @@ gulp.task('test:server', function() {
 });
 
 gulp.task('setup', $.shell.task([
-  'bower install',
+//   'bower install',
   'npm install'
 ]));
 

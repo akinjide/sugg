@@ -1,0 +1,22 @@
+language: node_js
+node_js:
+  - "lts/*"
+test:
+ - "gulp nsp"
+
+before_install:
+  - "npm install gulp -g"
+
+before_deploy: "echo 'ready?'"
+
+deploy:
+  provider: heroku
+  api_key:
+    secure: Kg4DI+Ef054AXw9dlA1mxYZ66+VSwmFhp+B8gPs1MbzE+ZJB2BsR7NPU6rkyqEqUFnOCxF5EyO+wIPIXBGvCO3Ponj66Ddk7h9l28pXS24Zu0lvHbrhiofZMnFeDTP8sACE5MifV6kq/D5Mr52jmmow7lHaM5NN28CgHOK3+MhslLHNK5z55B+craBQPsVcfVmvFZFcyUPkrr2g3SQqD0/bBYXlI1zdSe6M0B1N5F/FvhKS3ZSBdQlshhRqV4JmQJ/5BJxBgAASvvgRqudbqoHktocR9cFdOT6lsfGISaH5Fb+DEwZYYhiGBKed0uN1ANnM6XTqvP1d7uRFjrT3KdpsyaulTehKwU8wfZO1vQtd6B7kf3KHy0wIfqrHNwRuI570taK0K1m+gGgNu/jq2Gmm7Kgw/XdJG/ARazOKj/PtEJtTiTy7s+JHT9/WpGjKrrQZ4S9uPKQGb47DZMsy8VIxTrp8ep4xhJ2aXxFSi2bZL0Zes6cci7sgfmWRLts5CJX2mhLNS0IMgiZkKVf0Fy9GJZn1yukB5uVVH9FvdS8ehlxSTLjPZ7eaXgrThXs6F6hl9xF1MExBr5F1FDOzw9ztklYyVp8qDjN8SWa4NZL2h4TeIYsfo6gxYw1dof6gY9nvmwK6b4k1XcLMZ5SwaiTCvRYOohPbKUj+Af5k5XC0=
+  skip_cleanup: true
+  app: znote-dev
+  on: staging
+
+cache:
+  directories:
+    - "node_modules"

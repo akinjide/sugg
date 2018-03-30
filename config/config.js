@@ -9,7 +9,7 @@ function load(variable) {
 var test = {
   firebase: {
     rootRefUrl: "",
-    serverUID: "sugg",
+    serverUID: "sugg-test",
     secretKey: ""
   },
   port: 1336

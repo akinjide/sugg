@@ -49,7 +49,7 @@
           } else if (err.code == 'USER_DENIED') {
             Notification.notify('error', 'The user did not authorize the application.');
           } else {
-            console.error(err);
+            // console.error(err);
             Notification.notify('error', 'Login failed. Try again...(ツ)')
           }
         }

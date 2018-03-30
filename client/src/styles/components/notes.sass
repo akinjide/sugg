@@ -107,6 +107,9 @@
   &.selected
     :background #f3f3f3
 
+.sugg-checkbox.selected
+  :opacity 1
+
 label
   :cursor pointer
 
@@ -171,17 +174,16 @@ input[type=checkbox]
     :font-weight lighter
 
 .selected-notes-options
-  :height 70px
+  :height 80px
   :width 100%
   :background $white
   :z-index 1001
   :position fixed
-  :bottom 0
   :left 0
-  :transform translateY(20px)
+  :transform translateY(-20px)
   :transition opacity .218s ease-in, transform .218s ease-in
 
 .toolbar.selected-notes-toolbar
-  :padding-bottom 24px
+  :padding-top 30px
   :width 60%
   :margin 0 auto

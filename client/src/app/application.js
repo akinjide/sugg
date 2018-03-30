@@ -77,17 +77,31 @@ sugg
         }
       });
 
+//       $transitions.onStart({}, function(trans) {
+//         var isLoggedIn = Authentication.isLoggedIn();
+//
+//         if (!isLoggedIn) {
+//           $location.path('/login');
+//         }
+//       })
+
       $transitions.onSuccess({}, function(trans) {
         var $state = trans.router.stateService;
         var requireLogin = trans.to().data.requireLogin;
         var isLoggedIn = Authentication.isLoggedIn();
+        var loggedin = Authentication.authenticatedUser();
 
         if (requireLogin && isLoggedIn) {
-          console.log(trans, Authentication.authenticatedUser(), trans.params('to'), trans.params('from'), trans.to(), trans.from());
+          $rootScope.isLoggedIn = isLoggedIn;
+          $rootScope.$stateParams = trans.to();
         }
 
         if (!requireLogin && isLoggedIn) {
           $location.path('/notes');
+        }
+
+        if (!Boolean(loggedin.is_active)) {
+          $location.path('/');
         }
       });
 //

@@ -38,23 +38,25 @@ angular
         }
       },
 
-      confirm: function(type, message, description) {
+      confirm: function(type, message, description, callback) {
         if (type === 1) {
-          LxNotificationService.confirm(message, description, { cancel:'Disagree', ok:'Agree' },
-            function(answer) {
-              return answer;
-            });
+          LxNotificationService.confirm(message, description, {
+            cancel: 'Disagree',
+            ok: 'Agree'
+          }, function(answer) {
+            callback(answer);
+          });
         }
       },
 
-      alertBox: function(title, message, promptMessage, callbackMessage) {
+      alertBox: function(title, message, promptMessage, callbackMessage, callback) {
         LxNotificationService.alert(title, message, promptMessage, function(answer) {
             LxNotificationService.notify(callbackMessage);
-            return answer;
+            callback(answer);
         });
       },
 
-      confirmBox: function(title, message) {
+      confirmBox: function(title, message, callback) {
         LxNotificationService.confirm(title, message, {
           cancel: 'Disagree',
           ok: 'Agree'
@@ -64,6 +66,8 @@ angular
           } else {
             LxNotificationService.error('Disagree');
           }
+
+          callback(answer);
         });
       }
     };

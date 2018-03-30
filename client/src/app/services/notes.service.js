@@ -79,7 +79,7 @@ angular
           var qry1 = $firebaseArray(Refs.users.child(uid).child('metadata'));
           var self = this;
 
-          self.result = [];
+          self.result = null;
           self.note;
 
           qry1.$loaded()
@@ -93,6 +93,8 @@ angular
                 });
             })
             .then(function(data) {
+              self.result = [];
+
               if (data.notes.length > 0 && data.metadata.length > 0) {
                 _.each(data.metadata, function(metadata, key) {
                   self.note = _.find(data.notes, { $id: metadata.note_id });
@@ -161,8 +163,8 @@ angular
             self.findMetadata(uid, metadataId).then(function(metadata) {
 
               $q.all([metadata.$remove(), note.$remove()])
-                .then(function(metaRef, noteRef) {
-                  deferred.resolve([metaRef, noteRef])
+                .then(function(refs) {
+                  deferred.resolve(refs);
                 })
                 .catch(function(error) {
                   deferred.reject(error);
@@ -240,6 +242,7 @@ angular
             if (e.event === 'child_removed') {
               self.all(uid)
                 .then(function(notes) {
+                  //console.log(notes, 'line 243')
                   self.prepForBroadcast("syncedNotes", notes);
                 })
                 .catch(function(err) {
@@ -252,6 +255,7 @@ angular
             if (e.event === 'child_changed') {
               self.all(uid)
                 .then(function(notes) {
+                  //console.log(notes, 'line 256')
                   self.prepForBroadcast("syncedNotes", notes);
                 })
                 .catch(function(err) {

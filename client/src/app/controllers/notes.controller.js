@@ -11,13 +11,12 @@
     var vm = this;
 
     vm._main = $controller('MainController', {});
-    console.log(vm._main.filterSearch)
     vm.isLoggedIn = vm._main.isLoggedIn;
     vm.NoteColors = [
-      'white', 'blue', 'red', 'orange', 'yellow', 'grey', 'teal', 'green'
+      'white', 'blue', 'red', 'orange', 'yellow',
+      'pink', 'brown', 'grey', 'teal', 'green'
     ];
     vm.dialogId = 'dialog' + Math.floor((Math.random() * 6) + 1);
-    vm.isMarked = false;
     vm.removeQueue = [];
     var defaultNote = {
       title: '',
@@ -32,6 +31,7 @@
     vm.RemoveMarked = RemoveMarked;
     vm.Create = Create;
     vm.ChangeNoteColor = ChangeNoteColor;
+    vm.ColorMarkedNote = ColorMarkedNote;
     vm.Copy = Copy;
     vm.Edit = Edit;
     vm.MarkNote = MarkNote;
@@ -49,10 +49,16 @@
       // WATCHERS
       //////////////////////
       $scope.$on('handleBroadcast', function(e, args) {
-        console.log(e, Note, 'line 31', args);
-
         if (Note.syncedNotes) {
           vm.Notes = Note.syncedNotes;
+        }
+      });
+
+      $scope.$on('filterSearch', function(e, args) {
+        vm.Search = '';
+
+        if (args.text) {
+          vm.Search = args.text;
         }
       });
     }
@@ -133,6 +139,33 @@
     }
 
 
+    function ColorMarkedNote(color) {
+      var uid = vm.currentUser.$id;
+      var promises = [];
+
+      for (var i = 0; i < vm.removeQueue.length; i++) {
+        promises.push(
+          Note.edit(
+            uid,
+            vm.removeQueue[i].note.metadata.note_id,
+            vm.removeQueue[i].note.metadata.$id,
+            { color: color }
+          )
+        )
+      }
+
+      $q.all(promises)
+        .then(function(data) {
+          vm.removeQueue = [];
+          Note.sync(uid);
+          Reload();
+        })
+        .catch(function(error) {
+          Notification.notify('error', 'Notes not updated. Try again...(ツ)');
+        });
+    }
+
+
     function Remove(noteId, metadataId) {
       var uid = vm.currentUser.$id;
 
@@ -153,20 +186,55 @@
 
 
     function RemoveMarked() {
+      var uid = vm.currentUser.$id;
+      var promises = [];
+
       for (var i = 0; i < vm.removeQueue.length; i++) {
-        Remove(vm.removeQueue[i].metadata.note_id, vm.removeQueue[i].metadata.$id);
+        promises.push(
+          Note.remove(
+            uid,
+            vm.removeQueue[i].note.metadata.note_id,
+            vm.removeQueue[i].note.metadata.$id
+          )
+        )
       }
 
-      Reload();
+      $q.all(promises)
+        .then(function(data) {
+          vm.removeQueue = [];
+          Notification.notify('success', 'Notes deleted');
+          Note.sync(uid);
+          Reload();
+        })
+        .catch(function(error) {
+          Notification.notify('error', 'Notes not deleted. Try again...(ツ)');
+        });
     }
 
 
     function Reload() { $state.reload(); }
 
-    function ClearMarked() { vm.removeQueue = []; }
 
-    function MarkNote(note) {
-      vm.removeQueue.push(note);
+    function ClearMarked() {
+      for (var i = 0; i < vm.removeQueue.length; i++) {
+        vm.removeQueue[i].note.Selected = false;
+      }
+
+      vm.removeQueue = [];
+    }
+
+
+    function MarkNote(note, state) {
+      if (state) {
+        vm.removeQueue.push({
+          id: note.metadata.note_id,
+          note: note
+        });
+      } else {
+        vm.removeQueue = vm.removeQueue.filter(function(singleQueue) {
+          return singleQueue.id !== note.metadata.note_id
+        });
+      }
     }
 
 
@@ -183,6 +251,7 @@
         Notification.notify('error', 'Nothing to copy...(ツ)');
       }
     }
+
 
     function Edit(previousNote, state, nowNote) {
       var uid = vm.currentUser.$id;
@@ -221,7 +290,6 @@
             content: nowNote.content
           })
           .then(function(data) {
-              console.log(data);
               Notification.notify('success', 'Note Updated');
               Note.sync(uid);
               Reload();
@@ -279,7 +347,7 @@
         $timeout(function() {
             document.getElementById('trix-attachment-add').className = '';
         }, 500);
-        console.log(e);
+//         console.log(e);
         var attachment;
         attachment = e.attachment;
         if (attachment.file) {
