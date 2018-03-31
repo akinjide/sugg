@@ -38,8 +38,9 @@ function run(appDir, rootRef) {
   // perform an operation on each request to the server
   app.use(function(req, res, next) {
     // write each log request in development environment to a file
-    if (env !== 'production')
+    if (env !== 'production') {
       writeLog(req);
+    }
 
     // Tell the client what firebase to use
     res.cookie('sugg-ref', rootRef.toString());

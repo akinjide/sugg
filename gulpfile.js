@@ -206,7 +206,7 @@ gulp.task('js-vendor-combined', function() {
 
 
 // copy assets
-gulp.task('assets', ['images', 'fonts', 'videos', 'lib']);
+gulp.task('assets', ['images', 'fonts', 'videos']);
 
 gulp.task('images', function() {
   var out = config.public + 'images';
@@ -244,7 +244,7 @@ gulp.task('lib', function() {
   var out = config.public + 'lib';
 
   log('Copying lib');
-  return gulp.src('node_modules/@bower_components')
+  return gulp.src('node_modules/@bower_components/**/**')
     .pipe($.cleanDest(out))
     .pipe(gulp.dest(out));
 });
@@ -363,7 +363,7 @@ gulp.task('build', ['jade', 'sass', 'assets', 'compress', 'js'], function() {
   log(msg);
 });
 
-gulp.task('production', ['build']);
+gulp.task('production', ['build', 'lib']);
 gulp.task('serve', ['build', 'nodemon']);
 gulp.task('test', ['test:client', 'test:server']);
 
