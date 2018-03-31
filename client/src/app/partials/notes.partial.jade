@@ -1,4 +1,4 @@
-div.selected-notes-options(ng-show="vm.removeQueue.length")
+div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiNoteColors = false")
   div.toolbar.selected-notes-toolbar
     div(class="mr++ toolbar__left")
       lx-button(
@@ -10,13 +10,21 @@ div.selected-notes-options(ng-show="vm.removeQueue.length")
 
     span.toolbar__label.fs-title {{vm.removeQueue.length}} selected
 
+    .colors(ng-class="{active: multiNoteColors}" ng-mouseleave="multiNoteColors = false")
+      .color(
+        ng-repeat="multiNoteColor in vm.NoteColors"
+        class="{{multiNoteColor}} color-{{$index}}"
+        ng-click="vm.ColorMarkedNote(multiNoteColor)"
+        lx-tooltip="{{multiNoteColor | capitalize : true}}"
+        lx-tooltip-position="bottom")
+
     div.toolbar__right
       lx-button.mr8(
         lx-type="icon"
         lx-color="black"
         lx-tooltip="Change color"
         lx-tooltip-position="bottom"
-        ng-click="vm.ColorMarkedNote('blue')")
+        ng-click="multiNoteColors =! multiNoteColors")
 
         i.mdi.mdi-palette
 
@@ -175,7 +183,7 @@ lx-dialog(id="{{ vm.dialogId }}" lx-size="m" class="{{vm.editNote.settings.color
           ng-model="vm.edited.title")
 
   lx-dialog-content
-    div.editor-wrap.note-container
+    div.editor-wrap.note-container(style="min-height:200px")
       trix-editor.trix-content(
         angular-trix
         ng-model="vm.edited.content"

@@ -100,7 +100,7 @@ sugg
           $location.path('/notes');
         }
 
-        if (!Boolean(loggedin.is_active)) {
+        if (loggedin && !Boolean(loggedin.is_active)) {
           $location.path('/');
         }
       });

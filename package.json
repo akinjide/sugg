@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "test": "gulp nsp",
-    "postinstall": "node -e \"try { require('fs').symlinkSync(require('path').resolve('node_modules/@bower_components'), 'client/public/lib', 'junction') } catch (e) { }\"",
+    "postinstall_x": "node -e \"try { require('fs').symlinkSync(require('path').resolve('node_modules/@bower_components'), 'client/public/lib', 'junction') } catch (e) { }\"",
     "heroku-prebuild": "",
     "heroku-postbuild": "gulp production"
   },
@@ -51,6 +51,7 @@
     "@bower_components/matches-selector": "desandro/matches-selector#^2.0.1",
     "@bower_components/mdi": "Templarian/MaterialDesign-Webfont#2.0.46",
     "@bower_components/mockfirebase": "katowulf/mockfirebase#^0.11.0",
+    "@bower_components/moment": "moment/moment#^2.12.0",
     "@bower_components/ng-file-upload": "danialfarid/angular-file-upload-bower#^12.2.13",
     "@bower_components/ngstorage": "gsklee/ngStorage#^0.3.11",
     "@bower_components/outlayer": "metafizzy/outlayer#~2.0.0",
