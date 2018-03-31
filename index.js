@@ -65,7 +65,7 @@ function run(appDir, rootRef) {
   // Use helmet to secure Express Headers
   app.use(helmet.xframe());
   app.use(helmet.xssFilter());
-  app.use(helmet.nosniff());
+//   app.use(helmet.nosniff());
   app.use(helmet.ienoopen());
   app.disable('x-powered-by');
 
