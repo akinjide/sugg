@@ -24,6 +24,7 @@
     :min-width 100%
     :min-height 100%
     :z-index -1
+    :pointer-events none
   .overlay
     :z-index 2
     :position absolute
@@ -52,7 +53,9 @@
         :padding 12px
     h4
       :font 400 22px $defaultFF
-      :margin-bottom 60px
+
+    .sugg__login
+      :height 360px
 
     .login-social-link
       h4.signin

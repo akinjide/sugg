@@ -88,6 +88,8 @@ angular
          * @return {Object} containing filter logged-in user data
          */
         buildUserObjectFromProviders: function(authData) {
+          if (!authData) return;
+
           var socialProvider = getName(authData);
 
           function getName(authData) {
