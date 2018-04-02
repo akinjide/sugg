@@ -26,8 +26,7 @@
                 ng-src="{{ vm.currentUser.image_url || '../../images/default.jpg' }}"
                 alt="{{ vm.currentUser.name }} Picture"
                 lx-ripple
-                lx-tooltip="{{ vm.currentUser.name }}"
-                lx-tooltip-position="bottom")
+                title="{{ vm.currentUser.name }}")
           lx-dropdown-menu
             ul
               - var classes = ['dropdown-link', 'text']

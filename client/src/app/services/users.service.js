@@ -18,6 +18,8 @@ angular
                 newUser.email = authData.email;
               }
 
+//               newUser = Object.assign(newUser, authData);
+
               newUser.access_token  = authData.access_token;
               newUser.created = authData.created;
               newUser.image_url = authData.image_URL;
@@ -29,8 +31,7 @@ angular
 
               // save user to firebase collection under the user node
               user.$ref().set(newUser);
-            }
-            else {
+            } else {
               this.update(authData);
             }
 

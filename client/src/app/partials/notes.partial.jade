@@ -10,7 +10,7 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
 
     span.toolbar__label.fs-title {{vm.removeQueue.length}} selected
 
-    .colors(ng-class="{active: multiNoteColors}" ng-mouseleave="multiNoteColors = false")
+    .colors(ng-class="{active: multiNoteColors}" ng-mouseleave="multiNoteColors = false" style="position: absolute;")
       .color(
         ng-repeat="multiNoteColor in vm.NoteColors"
         class="{{multiNoteColor}} color-{{$index}}"
@@ -22,8 +22,6 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
       lx-button.mr8(
         lx-type="icon"
         lx-color="black"
-        lx-tooltip="Change color"
-        lx-tooltip-position="bottom"
         ng-click="multiNoteColors =! multiNoteColors")
 
         i.mdi.mdi-palette
@@ -32,8 +30,6 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
         lx-type="flat"
         lx-color="black"
         lx-size="s"
-        lx-tooltip="Delete note"
-        lx-tooltip-position="bottom"
         ng-click="vm.RemoveMarked()")
 
         ng-pluralize(
@@ -78,8 +74,7 @@ div.main-content
       lx-button.mr10(
         lx-type="icon"
         lx-color="black"
-        lx-tooltip="Change color"
-        lx-tooltip-position="bottom"
+        title="Change color"
         ng-click="Colors =! Colors"
         ng-mousemove="Colors = true")
 
@@ -88,9 +83,8 @@ div.main-content
       lx-button.mr10(
         lx-type="icon"
         lx-color="black"
-        lx-tooltip="Add Image"
-        lx-tooltip-position="bottom"
-        ng-click="")
+        title="Add Image"
+        disabled)
 
         i.mdi.mdi-image
 
@@ -98,8 +92,7 @@ div.main-content
         lx-type="flat"
         lx-color="black"
         lx-size="s"
-        lx-tooltip="Add Note"
-        lx-tooltip-position="bottom"
+        title="Add Note"
         ng-click="vm.Create(vm.note)") Done
 
 .sugg-notes.row-masonry(class="{{vm.View}}" masonry)
@@ -124,7 +117,7 @@ div.main-content
       h5.text-muted
         strong.italic(
           lx-tooltip="Created {{Note.metadata.created | date : 'MMM d, h:mm a'}}"
-          lx-tooltip-position="bottom") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }} {{Note.metadata.note_id}}
+          lx-tooltip-position="bottom") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }}
       p(ng-bind-html="Note.content")
 
       .colors(ng-class="{active: noteColors}" ng-mouseleave="noteColors = false")
@@ -141,8 +134,7 @@ div.main-content
           lx-button.mr8(
             lx-type="icon"
             lx-color="black"
-            lx-tooltip="Change color"
-            lx-tooltip-position="bottom"
+            title="Change color"
             ng-click="noteColors =! noteColors")
 
             i.mdi.mdi-palette
@@ -150,8 +142,7 @@ div.main-content
           lx-button.mr8(
             lx-type="icon"
             lx-color="black"
-            lx-tooltip="Get link"
-            lx-tooltip-position="bottom"
+            title="Get link"
             disabled)
 
             i.mdi.mdi-link
@@ -161,8 +152,7 @@ div.main-content
               lx-button(
                 lx-color="black"
                 lx-type="icon"
-                lx-tooltip="More"
-                lx-tooltip-position="bottom")
+                title="More")
 
                 i.mdi.mdi-dots-vertical
 
@@ -204,6 +194,5 @@ lx-dialog(id="{{ vm.dialogId }}" lx-size="m" class="{{vm.editNote.settings.color
       lx-type="flat"
       lx-size="s"
       lx-dialog-close
-      lx-tooltip="Save Note"
-      lx-tooltip-position="bottom"
+      title="Save Note"
       ng-click="vm.Edit(vm.editNote, true, vm.edited)") Done
