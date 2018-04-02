@@ -10,7 +10,7 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
 
     span.toolbar__label.fs-title {{vm.removeQueue.length}} selected
 
-    .colors(ng-class="{active: multiNoteColors}" ng-mouseleave="multiNoteColors = false" style="position: absolute;")
+    .colors(ng-class="{active: multiNoteColors}" ng-mouseleave="multiNoteColors = false" style="position: absolute; right: 168px;")
       .color(
         ng-repeat="multiNoteColor in vm.NoteColors"
         class="{{multiNoteColor}} color-{{$index}}"
