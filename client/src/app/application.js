@@ -187,7 +187,7 @@ sugg
           }
         })
         .state('share', {
-          url: '/note/:note_id?uid&meta_id&shared=true',
+          url: '/note/d/:note_id?uid&meta_id&shared=true',
           templateUrl : 'views/share.partial.html',
           controller: 'ShareController',
           controllerAs: 'vm',
