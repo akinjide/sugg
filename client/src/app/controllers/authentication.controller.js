@@ -27,8 +27,8 @@
                 defaultNoteColor: 'white'
               });
 
-              if (data && Boolean(data.is_active) === true) {
-                Notification.notify('success', 'Hi, ' + payload.name + '.');
+              if (data && Boolean(data.is_active)) {
+                Notification.notify('sticky', 'Hi, ' + payload.name + '.', 'account', true);
                 $state.go('notes');
               } else {
                 Authentication.logout();
@@ -49,7 +49,6 @@
           } else if (err.code == 'USER_DENIED') {
             Notification.notify('error', 'The user did not authorize the application.');
           } else {
-            // console.error(err);
             Notification.notify('error', 'Login failed. Try again...(ツ)')
           }
         }

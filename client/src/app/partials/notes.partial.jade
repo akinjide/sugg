@@ -10,7 +10,7 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
 
     span.toolbar__label.fs-title {{vm.removeQueue.length}} selected
 
-    .colors(ng-class="{active: multiNoteColors}" ng-mouseleave="multiNoteColors = false" style="position: absolute; right: 168px;")
+    .colors(ng-class="{active: multiNoteColors}" ng-mouseleave="multiNoteColors = false" style="position: absolute; right: 100px;")
       .color(
         ng-repeat="multiNoteColor in vm.NoteColors"
         class="{{multiNoteColor}} color-{{$index}}"
@@ -22,27 +22,26 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
       lx-button.mr8(
         lx-type="icon"
         lx-color="black"
+        title="Change color"
         ng-click="multiNoteColors =! multiNoteColors")
 
         i.mdi.mdi-palette
 
       lx-button.mr8(
-        lx-type="flat"
+        lx-type="icon"
         lx-color="black"
-        lx-size="s"
+        title="{{(vm.removeQueue.length > 1) ? 'Delete notes' : 'Delete note'}}"
         ng-click="vm.RemoveMarked()")
 
-        ng-pluralize(
-          count="vm.removeQueue.length"
-          when="{ '0': 'Delete note', 'one': 'Delete note', 'other': 'Delete notes'}")
+        i.mdi.mdi-delete
 
 div.main-content
   .card.card-content(ng-mouseleave="Colors = false" class="{{vm.note.settings.color}}")
     div
-      .toolbar.card(style={margin: 0} ng-click="vm.show = true")
+      .toolbar.card.no-mr(ng-click="vm.show = true")
         input.sugg-input(type="text" ng-model="vm.note.title" placeholder="Take a note ...")
 
-      .toolbar(style="padding: 0; height: auto; max-height: 600px;" ng-show="vm.show" ng-init="vm.show = false; Colors = false" data-slide-toggle="vm.show" data-slide-toggle-duration="100")
+      .toolbar.no-pd(style="height: auto; max-height: 600px;" ng-show="vm.show" ng-init="vm.show = false; Colors = false" data-slide-toggle="vm.show" data-slide-toggle-duration="100")
 
         div.editor-wrap.note-container
           trix-editor.trix-content(
@@ -96,7 +95,15 @@ div.main-content
         ng-click="vm.Create(vm.note)") Done
 
 .sugg-notes.row-masonry(class="{{vm.View}}" masonry)
-  div.col-masonry(ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
+  div.col-masonry( style="position: relative;" ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
+    div.sugg-note-status
+      lx-icon(
+        lx-id="earth"
+        lx-size="xs"
+        lx-type="flat"
+        ng-show="Note.metadata.is_public"
+        title="Public")
+
     .sugg-checkbox(class="{{(vm.isMarked && Note.Selected) ?'selected' :''}}")
       input(
         type="checkbox"
@@ -118,7 +125,10 @@ div.main-content
         strong.italic(
           lx-tooltip="Created {{Note.metadata.created | date : 'MMM d, h:mm a'}}"
           lx-tooltip-position="bottom") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }}
-      p(ng-bind-html="Note.content")
+      p(ng-text-truncate="Note.content"
+        ng-tt-chars-threshold="755"
+        ng-tt-more-label="show more"
+        ng-tt-less-label="show less")
 
       .colors(ng-class="{active: noteColors}" ng-mouseleave="noteColors = false")
         .color(
@@ -142,8 +152,8 @@ div.main-content
           lx-button.mr8(
             lx-type="icon"
             lx-color="black"
-            title="Get link"
-            disabled)
+            title="Share"
+            ng-click="vm.GetShareLink(Note, Note.metadata.is_public)")
 
             i.mdi.mdi-link
 

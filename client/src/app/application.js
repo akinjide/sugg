@@ -28,11 +28,13 @@ require('./directives/preloader.directive.js');
 require('./directives/slideToggle.directive.js');
 require('./directives/masonry.directive.js');
 require('./directives/contenteditable.directive.js');
+require('./directives/texttruncate.directive.js');
 
 require('./controllers/authentication.controller.js');
 require('./controllers/notes.controller.js');
 require('./controllers/main.controller.js');
 require('./controllers/profile.controller.js');
+require('./controllers/share.controller.js');
 
 require('./filters/word.filter.js');
 require('./filters/capitalize.filter.js');
@@ -169,7 +171,7 @@ sugg
       $stateProvider
         .state('404', {
           url: '/404/notfound',
-          templateUrl: 'views/404.html',
+          templateUrl: '404.html',
           data: {
             title: '404 - Not Found'
           }
@@ -182,6 +184,42 @@ sugg
           data: {
             title: 'Login',
             requireLogin: false
+          }
+        })
+        .state('share', {
+          url: '/note/:note_id?uid&meta_id&shared=true',
+          templateUrl : 'views/share.partial.html',
+          controller: 'ShareController',
+          controllerAs: 'vm',
+          data: {
+            title: 'Shared Note',
+            requireLogin: false
+          },
+          onEnter: ['$transition$', '$state$', function($transition$, $state$) {
+            // $state$.data.title = $transition$.params('to').note_od + ' Note';
+          }],
+          resolve: {
+            shareNote: ['$transition$', '$q', '$state', 'Note', function($transition$, $q, $state, Note) {
+              var params = $transition$.params('to');
+
+              if (!(params.uid && params.note_id && params.meta_id)) {
+                $state.go('404');
+                return;
+              }
+
+              var promises = [
+                Note.findNote(params.note_id),
+                Note.findMetadata(params.uid, params.meta_id)
+              ];
+
+              return $q.all(promises)
+                .then(function(response) {
+                  return response;
+                })
+                .catch(function(error) {
+                  $state.go('404');
+                });
+            }]
           }
         })
         .state('notes', {

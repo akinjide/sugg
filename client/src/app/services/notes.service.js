@@ -14,7 +14,9 @@ angular
           notes.$add({
             'content': body,
             'lang': 'html',
-            'settings': settings
+            'settings': Object.assign(settings, {
+              'is_public': false
+            })
           }).then(function(ref) {
             var noteId = ref.key();
 
@@ -30,15 +32,15 @@ angular
               }).then(function(ref) {
                 deferred.resolve({ metadataId: ref.key(), noteId: noteId });
               })
-              .catch(function(err) {
-                deferred.reject(err);
+              .catch(function(error) {
+                deferred.reject(error);
               });
             } else {
               deferred.reject(new Error('Error occurred'));
             }
           })
-          .catch(function(err) {
-            deferred.reject(err);
+          .catch(function(error) {
+            deferred.reject(error);
           });
 
           return deferred.promise;
@@ -52,8 +54,8 @@ angular
             .then(function(data) {
               deferred.resolve(data);
             })
-            .catch(function(err) {
-              deferred.reject(err);
+            .catch(function(error) {
+              deferred.reject(error);
             });
 
           return deferred.promise;
@@ -67,8 +69,8 @@ angular
             .then(function(data) {
               deferred.resolve(data);
             })
-            .catch(function(err) {
-              deferred.reject(err);
+            .catch(function(error) {
+              deferred.reject(error);
             });
 
           return deferred.promise;
@@ -126,8 +128,8 @@ angular
               .then(function(note) {
                 deferred.resolve(note);
               })
-              .catch(function(err) {
-                deferred.reject(err);
+              .catch(function(error) {
+                deferred.reject(error);
               });
           } else {
             deferred.reject('Note not found.');
@@ -189,6 +191,11 @@ angular
             self.findMetadata(uid, metadataId).then(function(metadata) {
               if (options.content) note.content = options.content;
               if (options.color) note.settings.color = options.color;
+              if (options.type == 'share') {
+                note.settings.is_public = options.isPublic;
+                metadata.is_public = options.isPublic;
+              }
+
               metadata.updated = time;
 
               $q.all([note.$save(), metadata.$save()])
@@ -245,7 +252,7 @@ angular
                   //console.log(notes, 'line 243')
                   self.prepForBroadcast("syncedNotes", notes);
                 })
-                .catch(function(err) {
+                .catch(function(error) {
                   self.prepForBroadcast("syncedNotes", []);
                 });
             }
@@ -258,7 +265,7 @@ angular
                   //console.log(notes, 'line 256')
                   self.prepForBroadcast("syncedNotes", notes);
                 })
-                .catch(function(err) {
+                .catch(function(error) {
                   self.prepForBroadcast("syncedNotes", []);
                 });
             }

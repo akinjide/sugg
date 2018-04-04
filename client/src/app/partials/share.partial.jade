@@ -1,0 +1,14 @@
+.share
+
+  .sugg-notes.row-masonry(class="pt+ list-view" masonry)
+    div.col-masonry
+      .box-placeholder.m0(class="{{vm.Share.note.settings.color}}")
+        h3.text-muted
+          strong(ng-bind-html="vm.Share.note.title")
+        h5.text-muted
+          strong.italic(
+            lx-tooltip="Created {{vm.Share.note.metadata.created | date : 'MMM d, h:mm a'}}"
+            lx-tooltip-position="bottom") Edited {{ vm.Share.note.metadata.updated | date : 'MMM d, h:mm a' }}
+        p(ng-bind-html="vm.Share.note.content")
+
+  h1 sugg.

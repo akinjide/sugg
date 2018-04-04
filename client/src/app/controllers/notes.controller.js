@@ -5,9 +5,9 @@
     .module('sugg.controllers')
     .controller('NotesController', NotesController)
 
-  NotesController.$inject = ['$q', '$state', '$controller', '$transitions', '$rootScope', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Authentication', 'filterFilter'];
+  NotesController.$inject = ['$location', '$q', '$state', '$window', '$controller', '$transitions', '$rootScope', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Authentication', 'filterFilter'];
 
-  function NotesController ($q, $state, $controller, $transitions, $rootScope, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Authentication, filterFilter) {
+  function NotesController ($location, $q, $state, $window, $controller, $transitions, $rootScope, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Authentication, filterFilter) {
     var vm = this;
 
     vm._main = $controller('MainController', {});
@@ -36,7 +36,8 @@
     vm.Edit = Edit;
     vm.MarkNote = MarkNote;
     vm.ClearMarked = ClearMarked;
-    vm.AttachmentAdd = vm.AttachmentAdd;
+    vm.AttachmentAdd = AttachmentAdd;
+    vm.GetShareLink = GetShareLink;
 
     if (vm.isLoggedIn) {
       vm.currentUser = vm._main.currentUser;
@@ -70,7 +71,10 @@
 
 
     function activate() {
-      var promises = [init(), Settings.find(vm.currentUser.$id)];
+      var promises = [
+        init(),
+        Settings.find(vm.currentUser.$id)
+      ];
 
       return $q.all(promises)
         .then(function(response) {
@@ -109,7 +113,7 @@
           .then(function(id) {
             cfpLoadingBar.complete();
             Note.sync(uid);
-            Notification.notify('success', 'Note added');
+            Notification.notify('simple', 'Note added');
             vm.note = defaultNote;
             vm.show = false;
             Reload();
@@ -172,7 +176,7 @@
       if (uid && noteId && metadataId) {
         Note.remove(uid, noteId, metadataId)
           .then(function(data) {
-            Notification.notify('success', 'Note deleted');
+            Notification.notify('simple', 'Note deleted');
             Note.sync(uid);
             Reload();
           })
@@ -202,7 +206,7 @@
       $q.all(promises)
         .then(function(data) {
           vm.removeQueue = [];
-          Notification.notify('success', 'Notes deleted');
+          Notification.notify('simple', 'Notes deleted');
           Note.sync(uid);
           Reload();
         })
@@ -246,7 +250,7 @@
 
       try {
         clipboard.copyText(angular.element(note).text());
-        Notification.notify('success', 'Note copied to clipboard');
+        Notification.notify('simple', 'Note copied to clipboard');
       } catch(error) {
         Notification.notify('error', 'Nothing to copy...(ツ)');
       }
@@ -274,7 +278,7 @@
         if (nowNote && nowNote.title) {
           Note.rename(uid, previousNote.metadata.$id, nowNote.title)
             .then(function(data) {
-              Notification.notify('success', 'Note Renamed');
+              Notification.notify('simple', 'Note Renamed');
               Note.sync(uid);
               Reload();
             })
@@ -290,7 +294,7 @@
             content: nowNote.content
           })
           .then(function(data) {
-              Notification.notify('success', 'Note Updated');
+              Notification.notify('simple', 'Note Updated');
               Note.sync(uid);
               Reload();
             })
@@ -309,7 +313,7 @@
                 content: nowNote.content
               })
               .then(function(data) {
-                  Notification.notify('success', 'Note Updated');
+                  Notification.notify('simple', 'Note Updated');
                   Note.sync(uid);
                   Reload();
                 })
@@ -325,6 +329,31 @@
           return;
         }
       }
+    }
+
+    function GetShareLink(note, noteIsPublic) {
+      var uid = vm.currentUser.$id;
+      var shareLink = $location.host() + '/note/' + note.$id + '?uid=' + uid + '&meta_id=' + note.metadata.$id + '&shared=true';
+
+      Note.edit(uid, note.metadata.note_id, note.metadata.$id, {
+        isPublic: !noteIsPublic,
+        type: 'share'
+      })
+      .then(function(data) {
+        if (!noteIsPublic) {
+          Notification.alertBox('Copy Share Link', shareLink, 'Copy Link', 'Share Link Generated', function(response) {
+            Notification.notify('simple', shareLink);
+          });
+        } else {
+          Notification.notify('simple', 'Note Share Disabled');
+        }
+
+        Note.sync(uid);
+        Reload();
+      })
+      .catch(function(error) {
+        Notification.notify('error', 'Note not updated. Try again...(ツ)');
+      });
     }
 
 //     var events = ['trixInitialize', 'trixChange', 'trixSelectionChange', 'trixFocus', 'trixBlur', 'trixFileAccept', 'trixAttachmentAdd', 'trixAttachmentRemove'];
