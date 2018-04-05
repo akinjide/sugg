@@ -95,14 +95,10 @@ div.main-content
         ng-click="vm.Create(vm.note)") Done
 
 .sugg-notes.row-masonry(class="{{vm.View}}" masonry)
-  div.col-masonry( style="position: relative;" ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
-    div.sugg-note-status
-      lx-icon(
-        lx-id="earth"
-        lx-size="xs"
-        lx-type="flat"
-        ng-show="Note.metadata.is_public"
-        title="Public")
+  div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
+    div.sugg-note-status(ng-show="Note.metadata.is_public")
+      span
+        a(title="Shared 'Public'") Public
 
     .sugg-checkbox(class="{{(vm.isMarked && Note.Selected) ?'selected' :''}}")
       input(
@@ -152,10 +148,10 @@ div.main-content
           lx-button.mr8(
             lx-type="icon"
             lx-color="black"
-            title="Share"
+            title="{{Note.metadata.is_public ? 'Disable' : 'Enable'}} Share"
             ng-click="vm.GetShareLink(Note, Note.metadata.is_public)")
 
-            i.mdi.mdi-link
+            i.mdi(class="mdi-account-multiple-{{Note.metadata.is_public ? 'minus' : 'plus'}}")
 
           lx-dropdown(lx-position="left" lx-over-toggle="true" lx-width="120")
             lx-dropdown-toggle

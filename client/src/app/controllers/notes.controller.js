@@ -333,7 +333,7 @@
 
     function GetShareLink(note, noteIsPublic) {
       var uid = vm.currentUser.$id;
-      var shareLink = $location.host() + '/note/' + note.$id + '?uid=' + uid + '&meta_id=' + note.metadata.$id + '&shared=true';
+      var shareLink = $location.host() + '/note/d/' + note.$id + '?uid=' + uid + '&meta_id=' + note.metadata.$id + '&shared=true';
 
       Note.edit(uid, note.metadata.note_id, note.metadata.$id, {
         isPublic: !noteIsPublic,
