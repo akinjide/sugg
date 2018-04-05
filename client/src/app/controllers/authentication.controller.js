@@ -28,6 +28,7 @@
               });
 
               if (data && Boolean(data.is_active)) {
+                // FIXME: change login to run
                 Notification.notify('sticky', 'Hi, ' + payload.name + '.', 'account', true);
                 $state.go('notes');
               } else {

@@ -36,8 +36,9 @@
     vm.Edit = Edit;
     vm.MarkNote = MarkNote;
     vm.ClearMarked = ClearMarked;
-    vm.AttachmentAdd = AttachmentAdd;
+//     vm.AttachmentAdd = AttachmentAdd;
     vm.GetShareLink = GetShareLink;
+    vm.CopyShareLink = CopyShareLink;
 
     if (vm.isLoggedIn) {
       vm.currentUser = vm._main.currentUser;
@@ -331,9 +332,30 @@
       }
     }
 
+    function CopyShareLink(noteId, metaId) {
+      var uid = vm.currentUser.$id;
+      var shareLink = $location.host() + '/note/d/' + noteId + '?uid=' + uid + '&meta_id=' + metaId + '&shared=true';
+
+      if (!clipboard.supported) {
+        vm.CopyNotSupported = true;
+        Notification.notify('error', 'Note not copied Copy to clipboard not supported');
+      }
+
+      try {
+        clipboard.copyText(shareLink);
+        Notification.notify('simple', 'Note copied to clipboard');
+      } catch(error) {
+        console.log(error)
+        Notification.notify('error', 'Nothing to copy...(ツ)');
+      }
+    }
+
     function GetShareLink(note, noteIsPublic) {
       var uid = vm.currentUser.$id;
-      var shareLink = $location.host() + '/note/d/' + note.$id + '?uid=' + uid + '&meta_id=' + note.metadata.$id + '&shared=true';
+
+      if (!noteIsPublic) {
+        CopyShareLink(note.metadata.note_id, note.metadata.$id);
+      }
 
       Note.edit(uid, note.metadata.note_id, note.metadata.$id, {
         isPublic: !noteIsPublic,
@@ -341,9 +363,7 @@
       })
       .then(function(data) {
         if (!noteIsPublic) {
-          Notification.alertBox('Copy Share Link', shareLink, 'Copy Link', 'Share Link Generated', function(response) {
-            Notification.notify('simple', shareLink);
-          });
+          Notification.notify('simple', 'Share Link Generated');
         } else {
           Notification.notify('simple', 'Note Share Disabled');
         }
@@ -369,58 +389,58 @@
 //         }
 //     };
 
-    var host = "https://d13txem1unpe48.cloudfront.net/";
-
-    function AttachmentAdd(e) {
-        document.getElementById('trix-attachment-add').className = 'active';
-        $timeout(function() {
-            document.getElementById('trix-attachment-add').className = '';
-        }, 500);
-//         console.log(e);
-        var attachment;
-        attachment = e.attachment;
-        if (attachment.file) {
-            return uploadAttachment(attachment);
-        }
-    }
-
-    function createStorageKey(file) {
-      var date, day, time;
-      date = new Date();
-      day = date.toISOString().slice(0, 10);
-      time = date.getTime();
-      return "tmp/" + day + "/" + time + "-" + file.name;
-    }
-
-    function uploadAttachment(attachment) {
-      var file, form, key, xhr;
-      file = attachment.file;
-      key = createStorageKey(file);
-      form = new FormData;
-      form.append("key", key);
-      form.append("Content-Type", file.type);
-      form.append("file", file);
-      xhr = new XMLHttpRequest;
-      xhr.open("POST", host, true);
-
-      xhr.upload.onprogress = function(event) {
-          var progress;
-          progress = event.loaded / event.total * 100;
-          return attachment.setUploadProgress(progress);
-      }
-
-      xhr.onload = function() {
-          var href, url;
-          if (xhr.status === 204) {
-              url = href = host + key;
-              return attachment.setAttributes({
-                  url: url,
-                  href: href
-              });
-          }
-      }
-
-      return xhr.send(form);
-    }
+ //    var host = "https://d13txem1unpe48.cloudfront.net/";
+//
+//     function AttachmentAdd(e) {
+//         document.getElementById('trix-attachment-add').className = 'active';
+//         $timeout(function() {
+//             document.getElementById('trix-attachment-add').className = '';
+//         }, 500);
+// //         console.log(e);
+//         var attachment;
+//         attachment = e.attachment;
+//         if (attachment.file) {
+//             return uploadAttachment(attachment);
+//         }
+//     }
+//
+//     function createStorageKey(file) {
+//       var date, day, time;
+//       date = new Date();
+//       day = date.toISOString().slice(0, 10);
+//       time = date.getTime();
+//       return "tmp/" + day + "/" + time + "-" + file.name;
+//     }
+//
+//     function uploadAttachment(attachment) {
+//       var file, form, key, xhr;
+//       file = attachment.file;
+//       key = createStorageKey(file);
+//       form = new FormData;
+//       form.append("key", key);
+//       form.append("Content-Type", file.type);
+//       form.append("file", file);
+//       xhr = new XMLHttpRequest;
+//       xhr.open("POST", host, true);
+//
+//       xhr.upload.onprogress = function(event) {
+//           var progress;
+//           progress = event.loaded / event.total * 100;
+//           return attachment.setUploadProgress(progress);
+//       }
+//
+//       xhr.onload = function() {
+//           var href, url;
+//           if (xhr.status === 204) {
+//               url = href = host + key;
+//               return attachment.setAttributes({
+//                   url: url,
+//                   href: href
+//               });
+//           }
+//       }
+//
+//       return xhr.send(form);
+//     }
   }
 })()

@@ -98,7 +98,8 @@ div.main-content
   div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
     div.sugg-note-status(ng-show="Note.metadata.is_public")
       span
-        a(title="Shared 'Public'") Public
+        a(title="Shared 'Public'"
+          ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id)") Public
 
     .sugg-checkbox(class="{{(vm.isMarked && Note.Selected) ?'selected' :''}}")
       input(
@@ -164,9 +165,9 @@ div.main-content
 
             lx-dropdown-menu
               ul
-                li: a.dropdown-link(ng-click="vm.Remove(Note.metadata.note_id, Note.metadata.$id)") Delete note
-                li: a.dropdown-link(ng-click="vm.Edit(Note, false)") Edit note
                 li(ng-hide="vm.CopyNotSupported"): a.dropdown-link(ng-click="vm.Copy(Note.content)") Copy content
+                li: a.dropdown-link(ng-click="vm.Edit(Note, false)") Edit note
+                li: a.dropdown-link(ng-click="vm.Remove(Note.metadata.note_id, Note.metadata.$id)") Delete note
 
 
 lx-dialog(id="{{ vm.dialogId }}" lx-size="m" class="{{vm.editNote.settings.color}}")
