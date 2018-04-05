@@ -79,13 +79,16 @@ sugg
         }
       });
 
-//       $transitions.onStart({}, function(trans) {
-//         var isLoggedIn = Authentication.isLoggedIn();
-//
-//         if (!isLoggedIn) {
-//           $location.path('/login');
-//         }
-//       })
+      $transitions.onStart({}, function(trans) {
+        var isLoggedIn = Authentication.isLoggedIn();
+        var loggedin = Authentication.authenticatedUser();
+
+        if (isLoggedIn && loggedin && !Boolean(loggedin.is_active)) {
+          Authentication.logout();
+          $state.go('login');
+          Notification.notify('error', 'Login failed. This account has been deactivated. :( Contact Support.');
+        }
+      });
 
       $transitions.onSuccess({}, function(trans) {
         var $state = trans.router.stateService;

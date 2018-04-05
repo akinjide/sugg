@@ -27,15 +27,11 @@
                 defaultNoteColor: 'white'
               });
 
-              if (data && Boolean(data.is_active)) {
-                // FIXME: change login to run
+              if (data.is_active) {
                 Notification.notify('sticky', 'Hi, ' + payload.name + '.', 'account', true);
-                $state.go('notes');
-              } else {
-                Authentication.logout();
-                $state.go('login');
-                Notification.notify('error', 'Login failed. This account has been deactivated. :( Contact Support.');
               }
+
+              $state.go('notes');
             }
           });
         } else {
