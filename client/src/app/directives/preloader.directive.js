@@ -7,14 +7,14 @@ angular
       return {
         restrict: 'A',
         link: function(scope, element) {
-          $transitions.onStart({}, function(trans) {
+          $transitions.onStart({}, function() {
             $('#ui-view').html('');
-            element.removeClass("hidden");
+            element.removeClass('hidden');
           });
 
-          $transitions.onSuccess({}, function(trans) {
+          $transitions.onSuccess({}, function() {
             $timeout(function() {
-              element.addClass("hidden");
+              element.addClass('hidden');
             }, 800);
           });
 

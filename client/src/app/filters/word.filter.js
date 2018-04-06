@@ -11,7 +11,7 @@ angular
             ? (wordsArr[position])
               ? wordsArr[position]
               : ''
-            : wordsArr[0]
+            : wordsArr[0];
         }
       };
     }]);

@@ -2,17 +2,17 @@
 
 angular
   .module('sugg.directives')
-  .directive("ngTextTruncate", ["$compile", "ValidationServices", "CharBasedTruncation",
+  .directive('ngTextTruncate', ['$compile', 'ValidationServices', 'CharBasedTruncation',
     function($compile, ValidationServices, CharBasedTruncation) {
       return {
-          restrict: "A",
+          restrict: 'A',
           scope: {
-            text: "=ngTextTruncate",
-            charsThreshould: "@ngTtCharsThreshold",
-            customMoreLabel: "@ngTtMoreLabel",
-            customLessLabel: "@ngTtLessLabel"
+            text: '=ngTextTruncate',
+            charsThreshould: '@ngTtCharsThreshold',
+            customMoreLabel: '@ngTtMoreLabel',
+            customLessLabel: '@ngTtLessLabel'
           },
-          controller: function( $scope, $element, $attrs ) {
+          controller: function($scope, $element, $attrs) {
             $scope.toggleShow = function() {
               $scope.open = !$scope.open;
             };
@@ -26,7 +26,7 @@ angular
 
             var CHARS_THRESHOLD = parseInt( $scope.charsThreshould );
 
-            $scope.$watch("text", function() {
+            $scope.$watch('text', function() {
               $element.empty();
 
               if (CHARS_THRESHOLD) {
@@ -40,16 +40,16 @@ angular
           }
       };
   }])
-  .factory("ValidationServices", function() {
+  .factory('ValidationServices', function() {
     return {
       failIfWrongThreshouldConfig: function( firstThreshould, secondThreshould ) {
         if ( (! firstThreshould && ! secondThreshould) || (firstThreshould && secondThreshould) ) {
-          throw "You must specify one, and only one, type of threshould (chars or words)";
+          throw 'You must specify one, and only one, type of threshould (chars or words)';
         }
       }
     };
   })
-  .factory( "CharBasedTruncation", [ "$compile", function( $compile ) {
+  .factory('CharBasedTruncation', ['$compile', function($compile) {
     return {
       truncationApplies: function( $scope, threshould ) {
         return $scope.text.length > threshould;

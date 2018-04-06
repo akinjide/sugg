@@ -6,7 +6,7 @@ angular
     return {
       restrict: 'A',
       scope:{
-        isOpen: "=slideToggle" // 'data-slide-toggle' in our html
+        isOpen: '=slideToggle' // 'data-slide-toggle' in our html
       },
       link: function(scope, element, attr) {
         var slideDuration = parseInt(attr.slideToggleDuration, 10) || 200;

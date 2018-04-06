@@ -5,7 +5,7 @@ angular
   .directive('contenteditable', [function() {
     return {
       restrict: 'A',
-      require: "?ngModel",
+      require: '?ngModel',
       link: function(scope, element, attr, ngModel) {
         function read() {
           ngModel.$setViewValue(element.html());
@@ -13,8 +13,8 @@ angular
 
         // model -> view
         ngModel.$render = function() {
-          element.html(ngModel.$viewValue || "");
-        }
+          element.html(ngModel.$viewValue || '');
+        };
 
         // view -> model
         element.bind('blur keyup change', function() {

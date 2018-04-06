@@ -21,6 +21,8 @@ require('./services/notification.service.js');
 require('./services/refs.service.js');
 require('./services/users.service.js');
 require('./services/settings.service.js');
+require('./services/response.service.js');
+require('./services/labels.service.js');
 
 require('./directives/dragnote.directive.js');
 require('./directives/pagetitle.directive.js');
@@ -57,13 +59,13 @@ window.sugg = angular.module('sugg', [
 ]);
 
 sugg
-  .run(['$rootScope', '$transitions', '$state', '$stateParams', '$location', 'Notification', 'Authentication',
-    function($rootScope, $transitions, $state, $stateParams, $location, Notification, Authentication) {
+  .run(['$rootScope', '$transitions', '$state', '$stateParams', '$location', 'Notification', 'Authentication', 'Response',
+    function($rootScope, $transitions, $state, $stateParams, $location, Notification, Authentication, Response) {
 //       $rootScope.$on("$stateChangeError", function(event, toState, toParams, fromState, fromParams, error) {
 //         // We can catch the error thrown when the $requireAuth promise is rejected
 //         // and redirect the user back to the home page
 //         if (error === "AUTH_REQUIRED") {
-//           Notification.notify('error', 'Please Login And Try again... (ツ)');
+//           Notification.notify('error', Response.warn['auth.required']);
 //           $state.go("login");
 //         }
 //       });
@@ -73,25 +75,24 @@ sugg
         var $state = trans.router.stateService;
         // We can catch the error thrown when the $requireAuth promise is rejected
         // and redirect the user back to the home page
-        if (trans.error().detail === "AUTH_REQUIRED") {
-          Notification.notify('error', 'Please Login And Try again... (ツ)');
-          $state.go("login");
+        if (trans.error().detail === 'AUTH_REQUIRED') {
+          Notification.notify('error', Response.warn['auth.required']);
+          $state.go('login');
         }
       });
 
-      $transitions.onStart({}, function(trans) {
+      $transitions.onStart({}, function() {
         var isLoggedIn = Authentication.isLoggedIn();
         var loggedin = Authentication.authenticatedUser();
 
         if (isLoggedIn && loggedin && !Boolean(loggedin.is_active)) {
           Authentication.logout();
           $state.go('login');
-          Notification.notify('error', 'Login failed. This account has been deactivated. :( Contact Support.');
+          Notification.notify('error', Response.error['auth.deactivated']);
         }
       });
 
       $transitions.onSuccess({}, function(trans) {
-        var $state = trans.router.stateService;
         var requireLogin = trans.to().data.requireLogin;
         var isLoggedIn = Authentication.isLoggedIn();
         var loggedin = Authentication.authenticatedUser();
@@ -199,7 +200,7 @@ sugg
             requireLogin: false
           },
           onEnter: ['$transition$', '$state$', function($transition$, $state$) {
-            // $state$.data.title = $transition$.params('to').note_od + ' Note';
+            $state$.data.title = 'Shared ' + $transition$.params('to').note_id + ' Note';
           }],
           resolve: {
             shareNote: ['$transition$', '$q', '$state', 'Note', function($transition$, $q, $state, Note) {
@@ -219,7 +220,7 @@ sugg
                 .then(function(response) {
                   return response;
                 })
-                .catch(function(error) {
+                .catch(function() {
                   $state.go('404');
                 });
             }]
@@ -246,13 +247,13 @@ sugg
           resolve: {
             // controller will not be loaded until $requireAuth resolves
             // Auth refers to our $firebaseAuth wrapper above
-            "currentAuth": ['$firebaseAuth', 'Refs', function($firebaseAuth, Refs) {
+            'currentAuth': ['$firebaseAuth', 'Refs', function($firebaseAuth, Refs) {
               // $requireAuth returns a promise so the resolve waits for it to complete
               // If the promise is rejected, it will throw a $stateChangeError (see above)
               var Auth = $firebaseAuth(Refs.root);
               return Auth.$requireAuth();
             }],
-            "isLoggedIn": ['Authentication', function(Authentication) {
+            'isLoggedIn': ['Authentication', function(Authentication) {
               return Authentication.isLoggedIn();
             }]
           }
@@ -276,18 +277,18 @@ sugg
           requireLogin: true
         },
         resolve: {
-          "currentAuth": ['$firebaseAuth', 'Refs', function($firebaseAuth, Refs) {
+          'currentAuth': ['$firebaseAuth', 'Refs', function($firebaseAuth, Refs) {
             var Auth = $firebaseAuth(Refs.root);
             return Auth.$requireAuth();
           }],
-          "isLoggedIn": ['Authentication', function(Authentication) {
+          'isLoggedIn': ['Authentication', function(Authentication) {
             return Authentication.isLoggedIn();
           }]
         },
         onEnter: ['$transition$', '$state$', function($transition$, $state$) {
           $state$.data.title = $transition$.params('to').name + ' Profile';
         }]
-      })
+      });
   }])
   .provider('exceptionHandler', function exceptionHandlerProvider() {
       /**
