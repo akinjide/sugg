@@ -1,12 +1,6 @@
 (function() {
   "use strict";
 
-  angular
-    .module('sugg.controllers')
-    .controller('ShareController', ShareController)
-
-  ShareController.$inject = ['$transition$', 'shareNote'];
-
   function ShareController ($transition$, shareNote) {
     var vm = this;
     vm.Share = {
@@ -34,4 +28,10 @@
       };
     }
   }
-})()
+
+  angular
+    .module('sugg.controllers')
+    .controller('ShareController', ShareController);
+
+  ShareController.$inject = ['$transition$', 'shareNote'];
+})();

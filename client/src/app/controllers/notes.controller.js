@@ -1,13 +1,7 @@
 (function() {
   "use strict";
 
-  angular
-    .module('sugg.controllers')
-    .controller('NotesController', NotesController)
-
-  NotesController.$inject = ['$location', '$q', '$state', '$window', '$controller', '$transitions', '$rootScope', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Authentication', 'filterFilter'];
-
-  function NotesController ($location, $q, $state, $window, $controller, $transitions, $rootScope, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Authentication, filterFilter) {
+  function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Label) {
     var vm = this;
 
     vm._main = $controller('MainController', {});
@@ -18,6 +12,8 @@
     ];
     vm.dialogId = 'dialog' + Math.floor((Math.random() * 6) + 1);
     vm.removeQueue = [];
+    vm.labelChoices = [];
+    vm.ShowLabels = false;
     var defaultNote = {
       title: '',
       content: '',
@@ -36,9 +32,12 @@
     vm.Edit = Edit;
     vm.MarkNote = MarkNote;
     vm.ClearMarked = ClearMarked;
-//     vm.AttachmentAdd = AttachmentAdd;
-    vm.GetShareLink = GetShareLink;
+    vm.AttachmentAdd = AttachmentAdd;
     vm.CopyShareLink = CopyShareLink;
+    vm.GetShareLink = GetShareLink;
+    vm.MakeCopy = MakeCopy;
+    vm.transformNewLabel = transformNewLabel;
+    vm.LookupLabel = LookupLabel;
 
     if (vm.isLoggedIn) {
       vm.currentUser = vm._main.currentUser;
@@ -50,7 +49,7 @@
       ///////////////////////
       // WATCHERS
       //////////////////////
-      $scope.$on('handleBroadcast', function(e, args) {
+      $scope.$on('handleBroadcast', function(e) {
         if (Note.syncedNotes) {
           vm.Notes = Note.syncedNotes;
         }
@@ -74,19 +73,27 @@
     function activate() {
       var promises = [
         init(),
-        Settings.find(vm.currentUser.$id)
+        Settings.find(vm.currentUser.$id),
+        Label.all()
       ];
 
       return $q.all(promises)
         .then(function(response) {
           var userSettings = response[1];
+          var labels = response[2];
 
           cfpLoadingBar.complete();
           vm.note.settings.color = userSettings.defaultNoteColor;
           vm.View = $localStorage.view || userSettings.defaultLayout;
+          vm.Labels = labels.map(function(label) {
+            return {
+              'label_id': label.$id,
+              'title': label.title
+            }
+          });
         })
-        .catch(function(err) {
-          Notification.notify('error', 'Error while loading. Try again...(ツ)');
+        .catch(function() {
+          Notification.notify('error', Response.error['page']);
         })
     }
 
@@ -100,7 +107,7 @@
         })
         .catch(function(err) {
           vm.Notes = [];
-          Notification.notify('error', 'An error occurred while loading notes. Try again...(ツ)');
+          Notification.notify('error', Response.error['note.loading']);
         });
     }
 
@@ -110,20 +117,20 @@
       var uid = vm.currentUser.$id;
 
       if (uid) {
-        Note.create(uid, note.title, note.content, note.settings)
+        Note.create(uid, note.title, note.content, note.settings) // TODO: add labels
           .then(function(id) {
             cfpLoadingBar.complete();
             Note.sync(uid);
-            Notification.notify('simple', 'Note added');
+            Notification.notify('simple', Response.success['note.create']);
             vm.note = defaultNote;
             vm.show = false;
             Reload();
           })
           .catch(function(err) {
-            Notification.notify('error', 'Note not created. Try again...(ツ)');
+            Notification.notify('error', Response.error['note.create']);
           });
       } else {
-          Notification.notify('error', 'Note not created. Try again...(ツ)');
+          Notification.notify('error', Response.error['note.create']);
       }
     }
 
@@ -139,7 +146,7 @@
         Reload();
       })
       .catch(function(error) {
-        Notification.notify('error', 'Note not updated. Try again...(ツ)');
+        Notification.notify('error', Response.error['note.update']);
       });
     }
 
@@ -166,7 +173,7 @@
           Reload();
         })
         .catch(function(error) {
-          Notification.notify('error', 'Notes not updated. Try again...(ツ)');
+          Notification.notify('error', Response.error['note.bulk.update']);
         });
     }
 
@@ -177,15 +184,15 @@
       if (uid && noteId && metadataId) {
         Note.remove(uid, noteId, metadataId)
           .then(function(data) {
-            Notification.notify('simple', 'Note deleted');
+            Notification.notify('simple', Response.success['note.delete']);
             Note.sync(uid);
             Reload();
           })
           .catch(function(error) {
-            Notification.notify('error', 'Note not deleted. Try again...(ツ)');
+            Notification.notify('error', Response.error['note.delete']);
           });
       } else {
-          Notification.notify('error', 'Note not deleted. Try again...(ツ)');
+          Notification.notify('error', Response.error['note.delete']);
       }
     }
 
@@ -207,12 +214,12 @@
       $q.all(promises)
         .then(function(data) {
           vm.removeQueue = [];
-          Notification.notify('simple', 'Notes deleted');
+          Notification.notify('simple', Response.success['note.bulk.delete']);
           Note.sync(uid);
           Reload();
         })
         .catch(function(error) {
-          Notification.notify('error', 'Notes not deleted. Try again...(ツ)');
+          Notification.notify('error', Response.error['note.bulk.delete']);
         });
     }
 
@@ -237,7 +244,7 @@
         });
       } else {
         vm.removeQueue = vm.removeQueue.filter(function(singleQueue) {
-          return singleQueue.id !== note.metadata.note_id
+          return singleQueue.id !== note.metadata.note_id;
         });
       }
     }
@@ -246,14 +253,14 @@
     function Copy(note) {
       if (!clipboard.supported) {
         vm.CopyNotSupported = true;
-        Notification.notify('error', 'Note not copied Copy to clipboard not supported');
+        Notification.notify('error', Response.warn['copy.not_supported']);
       }
 
       try {
         clipboard.copyText(angular.element(note).text());
-        Notification.notify('simple', 'Note copied to clipboard');
+        Notification.notify('simple', Response.success['copy']);
       } catch(error) {
-        Notification.notify('error', 'Nothing to copy...(ツ)');
+        Notification.notify('error', Response.error['copy']);
       }
     }
 
@@ -279,12 +286,12 @@
         if (nowNote && nowNote.title) {
           Note.rename(uid, previousNote.metadata.$id, nowNote.title)
             .then(function(data) {
-              Notification.notify('simple', 'Note Renamed');
+              Notification.notify('simple', Response.success['note.rename']);
               Note.sync(uid);
               Reload();
             })
             .catch(function(error) {
-              Notification.notify('error', 'Note not renamed. Try again...(ツ)');
+              Notification.notify('error', Response.error['note.rename']);
             });
 
           return;
@@ -295,12 +302,12 @@
             content: nowNote.content
           })
           .then(function(data) {
-              Notification.notify('simple', 'Note Updated');
+              Notification.notify('simple', Response.success['note.update']);
               Note.sync(uid);
               Reload();
             })
             .catch(function(error) {
-              Notification.notify('error', 'Note not updated. Try again...(ツ)');
+              Notification.notify('error', Response.error['note.update']);
             });
 
           return;
@@ -314,17 +321,17 @@
                 content: nowNote.content
               })
               .then(function(data) {
-                  Notification.notify('simple', 'Note Updated');
+                  Notification.notify('simple', Response.success['note.update']);
                   Note.sync(uid);
                   Reload();
                 })
                 .catch(function(error) {
-                  Notification.notify('error', 'Note not updated. Try again...(ツ)');
+                  Notification.notify('error', Response.error['note.update']);
                 });
 
             })
             .catch(function(error) {
-              Notification.notify('error', 'Note not updated. Try again...(ツ)');
+              Notification.notify('error', Response.error['note.update']);
             });
 
           return;
@@ -338,15 +345,14 @@
 
       if (!clipboard.supported) {
         vm.CopyNotSupported = true;
-        Notification.notify('error', 'Note not copied Copy to clipboard not supported');
+        Notification.notify('error', Response.warn['copy.not_supported']);
       }
 
       try {
         clipboard.copyText(shareLink);
-        Notification.notify('simple', 'Note copied to clipboard');
+        Notification.notify('simple', Response.success['copy']);
       } catch(error) {
-        console.log(error)
-        Notification.notify('error', 'Nothing to copy...(ツ)');
+        Notification.notify('error', Response.error['copy']);
       }
     }
 
@@ -363,84 +369,120 @@
       })
       .then(function(data) {
         if (!noteIsPublic) {
-          Notification.notify('simple', 'Share Link Generated');
+          Notification.notify('simple', Response.success['share.generated']);
         } else {
-          Notification.notify('simple', 'Note Share Disabled');
+          Notification.notify('simple', Response.success['share.disabled']);
         }
 
         Note.sync(uid);
         Reload();
       })
       .catch(function(error) {
-        Notification.notify('error', 'Note not updated. Try again...(ツ)');
+        Notification.notify('error', Response.error['note.update']);
       });
+    }
+
+    function MakeCopy(note) {
+      Create({
+        'title': note.metadata.title,
+        'content': note.content,
+        'settings': {
+          'color': note.settings.color
+        }
+      });
+    }
+
+    function LookupLabel(labels) {
+//       console.log(labels)
+//       for (var i = 0; i < labels.length; i++) {
+//         if (typeof labels[i].label_id == "object") {
+//           labels[i].label_id.then(function(data) {
+//             labels[i].label_id = data.labelId;
+//           });
+//         }
+//       }
+    }
+
+    function transformNewLabel(_newValue) {
+      return {
+        title: _newValue,
+        label_id: Label.add(_newValue)
+      };
     }
 
 //     var events = ['trixInitialize', 'trixChange', 'trixSelectionChange', 'trixFocus', 'trixBlur', 'trixFileAccept', 'trixAttachmentAdd', 'trixAttachmentRemove'];
 //
 //     for (var i = 0; i < events.length; i++) {
-//         vm[events[i]] = function(e) {
-// //           console.log(e.type)
-//             document.getElementById(e.type).className = 'active';
-//             $timeout(function() {
-//                 document.getElementById(e.type).className = '';
-//             }, 500);
-// //             console.info('Event type:', e.type, vm.trix, vm.noteTitle);
-//         }
+//       vm[events[i]] = function(e) {
+//         console.log(e.type)
+//         document.getElementById(e.type).className = 'active';
+//         $timeout(function() {
+//             document.getElementById(e.type).className = '';
+//         }, 500);
+//
+//         console.info('Event type:', e.type, vm.trix, vm.noteTitle);
+//       }
 //     };
 
- //    var host = "https://d13txem1unpe48.cloudfront.net/";
-//
-//     function AttachmentAdd(e) {
-//         document.getElementById('trix-attachment-add').className = 'active';
-//         $timeout(function() {
-//             document.getElementById('trix-attachment-add').className = '';
-//         }, 500);
-// //         console.log(e);
-//         var attachment;
-//         attachment = e.attachment;
-//         if (attachment.file) {
-//             return uploadAttachment(attachment);
-//         }
-//     }
-//
-//     function createStorageKey(file) {
-//       var date, day, time;
-//       date = new Date();
-//       day = date.toISOString().slice(0, 10);
-//       time = date.getTime();
-//       return "tmp/" + day + "/" + time + "-" + file.name;
-//     }
-//
-//     function uploadAttachment(attachment) {
-//       var file, form, key, xhr;
-//       file = attachment.file;
-//       key = createStorageKey(file);
-//       form = new FormData;
-//       form.append("key", key);
-//       form.append("Content-Type", file.type);
-//       form.append("file", file);
-//       xhr = new XMLHttpRequest;
-//       xhr.open("POST", host, true);
-//
-//       xhr.upload.onprogress = function(event) {
-//           var progress;
-//           progress = event.loaded / event.total * 100;
-//           return attachment.setUploadProgress(progress);
-//       }
-//
-//       xhr.onload = function() {
-//           var href, url;
-//           if (xhr.status === 204) {
-//               url = href = host + key;
-//               return attachment.setAttributes({
-//                   url: url,
-//                   href: href
-//               });
-//           }
-//       }
-//
-//       return xhr.send(form);
-//     }
+    function AttachmentAdd(event) {
+        var attachment = event.attachment;
+
+        document.getElementById('trix-attachment-add').className = 'active';
+        $timeout(function() {
+          document.getElementById('trix-attachment-add').className = '';
+        }, 500);
+
+        if (attachment.file) {
+          return uploadAttachment(attachment);
+        }
+    }
+
+    function createStorageKey(file) {
+      var date, day, time;
+      date = new Date();
+      day = date.toISOString().slice(0, 10);
+      time = date.getTime();
+      return "tmp/" + day + "/" + time + "-" + file.name;
+    }
+
+    function uploadAttachment(attachment) {
+      var host = "https://d13txem1unpe48.cloudfront.net/";
+      var file = attachment.file;
+      var key = createStorageKey(file);
+      var form = new FormData;
+      var xhr = new XMLHttpRequest;
+
+      form.append("key", key);
+      form.append("Content-Type", file.type);
+      form.append("file", file);
+      xhr.open("POST", host, true);
+
+      xhr.upload.onprogress = function(event) {
+        var progress;
+        progress = event.loaded / event.total * 100;
+        return attachment.setUploadProgress(progress);
+      }
+
+      xhr.onload = function() {
+        var href, url;
+
+        if (xhr.status === 204) {
+          url = href = host + key;
+
+          return attachment.setAttributes({
+            url: url,
+            href: href
+          });
+        }
+      }
+
+      return xhr.send(form);
+    }
   }
-})()
+
+  angular
+    .module('sugg.controllers')
+    .controller('NotesController', NotesController);
+
+  NotesController.$inject = ['$location', '$q', '$state', '$controller', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Response', 'Label'];
+})();

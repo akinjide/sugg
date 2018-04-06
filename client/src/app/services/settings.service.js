@@ -2,8 +2,8 @@
 
 angular
   .module('sugg.services')
-  .factory('Settings', ['Refs', '$q', '$firebaseArray', '$firebaseObject', '$firebaseAuth',
-    function(Refs, $q, $firebaseArray, $firebaseObject, $firebaseAuth) {
+  .factory('Settings', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
+    function(Refs, $q, $firebaseArray, $firebaseObject) {
       var time = Firebase.ServerValue.TIMESTAMP;
       var newOptions = {};
       var userSettings;
@@ -49,18 +49,13 @@ angular
           var deferred = $q.defer();
           var data = $firebaseObject(Refs.settings.child(uid));
 
-          if (!_.isEmpty(data)) {
-            data.$loaded()
-              .then(function(settings) {
-                deferred.resolve(settings);
-              })
-              .catch(function(error) {
-                deferred.reject(error);
-              });
-
-          } else {
-            deferred.reject('Settings not found.');
-          }
+          data.$loaded()
+            .then(function(settings) {
+              deferred.resolve(settings);
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
 
           return deferred.promise;
         }

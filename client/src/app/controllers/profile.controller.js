@@ -1,13 +1,7 @@
 (function() {
   "use strict";
 
-  angular
-    .module('sugg.controllers')
-    .controller('ProfileController', ProfileController)
-
-  ProfileController.$inject = ['$rootScope', '$q', '$state', '$window', '$controller', 'Authentication', 'Notification', 'User'];
-
-  function ProfileController ($rootScope, $q, $state, $window, $controller, Authentication, Notification, User) {
+  function ProfileController ($rootScope, $q, $state, $window, $controller, Authentication, Notification, User, Response) {
     var vm = this;
 
     vm._main = $controller('MainController', {});
@@ -30,8 +24,8 @@
       return $q.all(promises)
         .then(function() {
         })
-        .catch(function(err) {
-          Notification.notify('error', 'Error while loading. Try again...(ツ)');
+        .catch(function() {
+          Notification.notify('error', Response.error['page']);
         });
     }
 
@@ -40,11 +34,11 @@
 
     function Deactivate(uid) {
       User.remove(uid)
-        .then(function(data) {
-          Notification.notify('simple', 'Account Deactivate Successfully :( Sad to see you leave');
+        .then(function() {
+          Notification.notify('simple', Response.warn['auth.deactivated']);
         })
-        .catch(function(err) {
-          Notification.notify('error', 'It\'s our fault. Please try again.');
+        .catch(function() {
+          Notification.notify('error', Response.error['server.internal']);
         });
 
         $state.go('login');
@@ -52,9 +46,15 @@
 
 
     function Logout() {
-      Notification.notify('sticky', 'Successfully Signed Out! :)');
+      Notification.notify('sticky', Response.success['auth.logout']);
       Authentication.logout();
       $state.go('login');
     }
   }
-})()
+
+  angular
+    .module('sugg.controllers')
+    .controller('ProfileController', ProfileController);
+
+  ProfileController.$inject = ['$rootScope', '$q', '$state', '$window', '$controller', 'Authentication', 'Notification', 'User', 'Response'];
+})();

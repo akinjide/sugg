@@ -10,6 +10,7 @@ angular
         root: rootRef,
         notes: rootRef.child('notes'),
         users: rootRef.child('users'),
-        settings: rootRef.child('settings')
+        settings: rootRef.child('settings'),
+        labels: rootRef.child('labels')
       };
   }]);

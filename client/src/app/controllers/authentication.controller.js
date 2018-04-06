@@ -1,13 +1,7 @@
 (function() {
   "use strict";
 
-  angular
-    .module('sugg.controllers')
-    .controller('AuthenticationController', AuthenticationController)
-
-  AuthenticationController.$inject = ['$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings'];
-
-  function AuthenticationController ($state, $localStorage, Authentication, Notification, User, Settings) {
+  function AuthenticationController ($state, $localStorage, Authentication, Notification, User, Settings, Response) {
     var vm = this;
     vm.Login = Login;
 
@@ -20,7 +14,7 @@
             $localStorage.cachedUser = data;
 
             if (err) {
-              Notification.notify('error', 'Login failed. Try again...(ツ)');
+              Notification.notify('error', Response.error['auth.login']);
             } else {
               Settings.add(data.$id, {
                 defaultLayout: 'list-view',
@@ -36,20 +30,26 @@
           });
         } else {
           if (err == 'Error: The user cancelled authentication.' || err.code == 'USER_CANCELLED' ) {
-            Notification.notify('error', 'You cancelled authentication...');
+            Notification.notify('error', Response.error['auth.cancel']);
           } else if (err == 'Error: Invalid authentication credentials provided.' || err.code == 'INVALID_CREDENTIALS') {
-            Notification.notify('error', 'Invalid credentials');
+            Notification.notify('error', Response.error['auth.invalid']);
           } else if (err.code == 'NETWORK_ERROR') {
-            Notification.notify('error', 'An error occurred while attempting to contact the authentication server.');
+            Notification.notify('error', Response.error['auth.server']);
           } else if (err.code == 'UNKNOWN_ERROR') {
-            Notification.notify('error', 'Unknown error. Try again...(ツ)');
+            Notification.notify('error', Response.error['auth.unknown']);
           } else if (err.code == 'USER_DENIED') {
-            Notification.notify('error', 'The user did not authorize the application.');
+            Notification.notify('error', Response.error['auth.unauthorized']);
           } else {
-            Notification.notify('error', 'Login failed. Try again...(ツ)')
+            Notification.notify('error', Response.error['auth.login']);
           }
         }
       });
     }
   }
-})()
+
+  angular
+    .module('sugg.controllers')
+    .controller('AuthenticationController', AuthenticationController);
+
+  AuthenticationController.$inject = ['$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings', 'Response'];
+})();

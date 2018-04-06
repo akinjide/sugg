@@ -4,7 +4,7 @@ angular
   .module('sugg.services')
   .factory('Authentication', ['Refs', '$firebaseAuth', '$rootScope', '$localStorage',
     function(Refs, $firebaseAuth, $rootScope, $localStorage) {
-      var e, authObj;
+      var authObj;
 
       return {
         /**
@@ -13,22 +13,20 @@ angular
          * @return {Object} AuthData from Firebase or Error if any occurs
          */
         login: function(provider, cb) {
-          var authObj = $firebaseAuth(Refs.root),
-          fb_option = {
-            remember : "sessionOnly",
-            scope    : "email,user_likes,user_friends"
-          },
-          google_option = {
-            remember : "sessionOnly",
-            scope    : "email"
-          },
-          query = provider == "facebook"
+          var authObj = $firebaseAuth(Refs.root);
+          var fb_option = {
+            remember: 'sessionOnly',
+            scope: 'email,user_likes,user_friends'
+          };
+          var google_option = {
+            remember: 'sessionOnly',
+            scope: 'email'
+          };
+          var query = provider == 'facebook'
             ? fb_option
-            : provider == "google"
+            : provider == 'google'
               ? google_option
-              : {
-                  remember : "sessionOnly"
-                };
+              : { remember : 'sessionOnly' };
 
           /**
            * Authenticates the client using a popup-based OAuth flow
@@ -36,50 +34,47 @@ angular
            * @return {authData} object containing authentication data about the logged-in user
            */
           authObj.$authWithOAuthPopup(provider, query).then(function(authData) {
-            e = null;
-
-            if (cb) cb(e, authData);
+            cb(null, authData);
           })
           //  If unsuccessful, the promise will be rejected with an Error object
-          .catch(function(e) {
-            if (e) {
-              if (e.code === 'TRANSPORT_UNAVAILABLE') {
+          .catch(function(error) {
+            if (error) {
+              if (error.code === 'TRANSPORT_UNAVAILABLE') {
                 /**
                  * fall-back to browser redirects, and pick up the session
                  * automatically when we come back to the origin page
                  */
                 authObj.$authWithOAuthRedirect(provider).then(function(authData) {
-                  if (cb) cb(e, authData);
+                  cb(error, authData);
                 })
-                .catch(function(e) {
-                  if (cb) cb(e)
-                })
-              }
-              else {
-                if (cb) cb(e)
+                .catch(function(error) {
+                  cb(error);
+                });
+              } else {
+                cb(error);
               }
             }
-          })
+          });
         },
 
         isAdmin: function (userEmail, cb) {
-          e = null;
-          if (!userEmail) cb(e);
-
-          if (!cb) return 'A callback function is needed.';
+          if (!userEmail) {
+            cb(null);
+          }
 
           Refs.admin.once('value', function (snap) {
             var admins = snap.val();
 
             for (var email in admins) {
               if (admins.hasOwnProperty(email)) {
-                if (admins[email] == usersEmail) {
-                  cb(e, true)
+                if (admins[email] == userEmail) {
+                  cb(null, true);
                   return true;
                 }
               }
             }
-            cb(e, false)
+
+            cb(null, false);
           });
         },
 
@@ -88,24 +83,22 @@ angular
          * @return {Object} containing filter logged-in user data
          */
         buildUserObjectFromProviders: function(authData) {
-          if (!authData) return;
-
-          var socialProvider = getName(authData);
+          if (!authData) {
+            return;
+          }
 
           function getName(authData) {
             switch(authData.provider) {
              case 'facebook':
-              return "facebook";
-              break;
+              return 'facebook';
              case 'twitter':
-              return "twitter";
-              break;
+              return 'twitter';
              case 'google':
-              return "google";
-              break;
+              return 'google';
             }
           }
 
+          var socialProvider = getName(authData);
           return {
             uid: authData.uid,
             provider: authData.provider,
@@ -118,7 +111,7 @@ angular
             is_active: true,
             is_new: true,
             suspended: null
-          }
+          };
         },
 
         /**
@@ -132,14 +125,12 @@ angular
         },
 
         isLoggedIn: function() {
-          var authObj = $firebaseAuth(Refs.root);
-
+          authObj = $firebaseAuth(Refs.root);
           return authObj.$getAuth() ? true : false;
         },
 
         authenticatedUser: function() {
-          var authObj = $firebaseAuth(Refs.root);
-
+          authObj = $firebaseAuth(Refs.root);
           return $localStorage.cachedUser || this.buildUserObjectFromProviders(authObj.$getAuth());
         }
       };

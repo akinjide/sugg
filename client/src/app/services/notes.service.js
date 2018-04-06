@@ -123,17 +123,13 @@ angular
           var deferred = $q.defer();
           var data = $firebaseObject(Refs.notes.child(noteId));
 
-          if (!_.isEmpty(data)) {
-            data.$loaded()
-              .then(function(note) {
-                deferred.resolve(note);
-              })
-              .catch(function(error) {
-                deferred.reject(error);
-              });
-          } else {
-            deferred.reject('Note not found.');
-          }
+          data.$loaded()
+            .then(function(note) {
+              deferred.resolve(note);
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
 
           return deferred.promise;
         },
@@ -142,17 +138,13 @@ angular
           var deferred = $q.defer();
           var data = $firebaseObject(Refs.users.child(uid).child('metadata').child(metadataId));
 
-          if (!_.isEmpty(data)) {
-            data.$loaded()
-              .then(function(metadata) {
-                deferred.resolve(metadata);
-              })
-              .catch(function(error) {
-                deferred.reject(error);
-              });
-          } else {
-            deferred.reject('Metadata not found.');
-          }
+          data.$loaded()
+            .then(function(metadata) {
+              deferred.resolve(metadata);
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
 
           return deferred.promise;
         },
@@ -189,8 +181,14 @@ angular
 
           self.findNote(noteId).then(function(note) {
             self.findMetadata(uid, metadataId).then(function(metadata) {
-              if (options.content) note.content = options.content;
-              if (options.color) note.settings.color = options.color;
+              if (options.content) {
+                note.content = options.content;
+              }
+
+              if (options.color) {
+                note.settings.color = options.color;
+              }
+
               if (options.type == 'share') {
                 note.settings.is_public = options.isPublic;
                 metadata.is_public = options.isPublic;
@@ -250,10 +248,10 @@ angular
               self.all(uid)
                 .then(function(notes) {
                   //console.log(notes, 'line 243')
-                  self.prepForBroadcast("syncedNotes", notes);
+                  self.prepForBroadcast('syncedNotes', notes);
                 })
-                .catch(function(error) {
-                  self.prepForBroadcast("syncedNotes", []);
+                .catch(function() {
+                  self.prepForBroadcast('syncedNotes', []);
                 });
             }
           });
@@ -263,10 +261,10 @@ angular
               self.all(uid)
                 .then(function(notes) {
                   //console.log(notes, 'line 256')
-                  self.prepForBroadcast("syncedNotes", notes);
+                  self.prepForBroadcast('syncedNotes', notes);
                 })
-                .catch(function(error) {
-                  self.prepForBroadcast("syncedNotes", []);
+                .catch(function() {
+                  self.prepForBroadcast('syncedNotes', []);
                 });
             }
           });

@@ -15,8 +15,7 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
         ng-repeat="multiNoteColor in vm.NoteColors"
         class="{{multiNoteColor}} color-{{$index}}"
         ng-click="vm.ColorMarkedNote(multiNoteColor)"
-        lx-tooltip="{{multiNoteColor | capitalize : true}}"
-        lx-tooltip-position="bottom")
+        title="{{multiNoteColor | capitalize : true}}")
 
     div.toolbar__right
       lx-button.mr8(
@@ -34,6 +33,7 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
         ng-click="vm.RemoveMarked()")
 
         i.mdi.mdi-delete
+
 
 div.main-content
   .card.card-content(ng-mouseleave="Colors = false" class="{{vm.note.settings.color}}")
@@ -55,10 +55,29 @@ div.main-content
             trix-focus="vm.trixFocus(e, editor);"
             trix-blur="vm.trixBlur(e, editor);"
             trix-file-accept="vm.trixFileAccept(e, editor);"
-            trix-attachment-add="vm.trixAttachmentAdd(e, editor);"
+            trix-attachment-add="vm.AttachmentAdd(e, editor);"
             trix-attachment-remove="vm.trixAttachmentRemove(e, editor);"
-            prevent-trix-file-accept = "true"
+            prevent-trix-file-accept="false"
             placeholder="sugg!, do you?")
+
+        lx-select(
+          disabled
+          ng-show="vm.ShowLabels"
+          style="padding: 0.4em 1.4em 0;"
+          ng-model="vm.labelChoices"
+          lx-choices="vm.Labels"
+          lx-display-filter="true"
+          lx-helper-message="No label found. Type enter key to add a label."
+          lx-label="Label note"
+          lx-multiple="true"
+          lx-view-mode="chips"
+          lx-autocomplete="true"
+          lx-allow-new-value="true"
+          lx-new-value-transform="vm.transformNewLabel"
+          ng-change="vm.LookupLabel(vm.labelChoices)")
+
+          lx-select-selected {{ $selected.title }}
+          lx-select-choices {{ $choice.title }}
 
     .colors(ng-class="{active: Colors}" ng-mouseleave="Colors = false")
       .color(
@@ -74,8 +93,7 @@ div.main-content
         lx-type="icon"
         lx-color="black"
         title="Change color"
-        ng-click="Colors =! Colors"
-        ng-mousemove="Colors = true")
+        ng-click="Colors =! Colors")
 
         i.mdi.mdi-palette
 
@@ -87,12 +105,22 @@ div.main-content
 
         i.mdi.mdi-image
 
+      lx-button.mr10(
+        lx-type="icon"
+        lx-color="black"
+        title="Add Label"
+        ng-click="vm.ShowLabels = !vm.ShowLabels"
+        disabled)
+
+        i.mdi.mdi-label
+
       lx-button.add-note(
         lx-type="flat"
         lx-color="black"
         lx-size="s"
         title="Add Note"
-        ng-click="vm.Create(vm.note)") Done
+        ng-click="vm.Create(vm.note, vm.labelChoices)") Done
+
 
 .sugg-notes.row-masonry(class="{{vm.View}}" masonry)
   div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
@@ -132,8 +160,7 @@ div.main-content
           ng-repeat="noteColor in vm.NoteColors"
           class="{{noteColor}} color-{{$index}} {{((Note.settings.color == noteColor) == true) ?'active' :''}}"
           ng-click="vm.ChangeNoteColor(Note.metadata.note_id, Note.metadata.$id, noteColor); Note.settings.color = noteColor"
-          lx-tooltip="{{noteColor | capitalize : true}}"
-          lx-tooltip-position="bottom")
+          title="{{noteColor | capitalize : true}}")
 
       .sugg-icons-container
 
@@ -154,7 +181,7 @@ div.main-content
 
             i.mdi(class="mdi-account-multiple-{{Note.metadata.is_public ? 'minus' : 'plus'}}")
 
-          lx-dropdown(lx-position="left" lx-over-toggle="true" lx-width="120")
+          lx-dropdown(lx-position="left" lx-over-toggle="true" lx-width="130")
             lx-dropdown-toggle
               lx-button(
                 lx-color="black"
@@ -165,8 +192,11 @@ div.main-content
 
             lx-dropdown-menu
               ul
-                li(ng-hide="vm.CopyNotSupported"): a.dropdown-link(ng-click="vm.Copy(Note.content)") Copy content
+                li(ng-hide="vm.CopyNotSupported"): a.dropdown-link(ng-click="vm.Copy(Note.content)") Copy to Clipboard
+                li: a.dropdown-link Add Label
+                li: a.dropdown-link(ng-click="vm.MakeCopy(Note)") Make a Copy
                 li: a.dropdown-link(ng-click="vm.Edit(Note, false)") Edit note
+                li: a.dropdown-link Archive note
                 li: a.dropdown-link(ng-click="vm.Remove(Note.metadata.note_id, Note.metadata.$id)") Delete note
 
 

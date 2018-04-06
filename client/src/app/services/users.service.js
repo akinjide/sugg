@@ -38,7 +38,7 @@ angular
             // ...and we return the user when done
             return cb(null, user);
           }.bind(this)).catch(function(error) {
-            cb(null);
+            cb(error);
           });
         },
 
@@ -67,7 +67,10 @@ angular
 
             user.$save().then(function(ref) {
               if (ref.key() === user.$id) {
-                deferred.resolve({ id: ref.key() + ' updated', message: 'Data has been deleted locally and in the database' } );
+                deferred.resolve({
+                  id: ref.key(),
+                  message: 'User deleted locally and database'
+                });
               }
             })
             .catch(function(error) {
@@ -85,17 +88,13 @@ angular
           var deferred = $q.defer();
           var data = $firebaseArray(Refs.users);
 
-          if (!_.isEmpty(data)) {
-            data.$loaded()
-              .then(function(users) {
-                deferred.resolve(users);
-              })
-              .catch(function(error) {
-                deferred.reject(error);
-              });
-          } else {
-            deferred.reject([]);
-          }
+          data.$loaded()
+            .then(function(users) {
+              deferred.resolve(users);
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
 
           return deferred.promise;
         },
@@ -104,17 +103,13 @@ angular
           var deferred = $q.defer();
           var data = Refs.users.child(uid);
 
-          if (!_.isEmpty(data)) {
-            data.$loaded()
-              .then(function(user) {
-                deferred.resolve(user);
-              })
-              .catch(function(error) {
-                deferred.reject(error);
-              });
-          } else {
-            deferred.reject('User not found.');
-          }
+          data.$loaded()
+            .then(function(user) {
+              deferred.resolve(user);
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
 
           return deferred.promise;
         }

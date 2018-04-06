@@ -1,13 +1,7 @@
 (function() {
   "use strict";
 
-  angular
-    .module('sugg.controllers')
-    .controller('MainController', MainController)
-
-  MainController.$inject = ['$rootScope', '$q', '$state', '$window', '$localStorage', 'Authentication', 'Notification', 'User'];
-
-  function MainController ($rootScope, $q, $state, $window, $localStorage, Authentication, Notification, User) {
+  function MainController ($rootScope, $q, $state, $window, $localStorage, Authentication, Notification, User, Response) {
     var vm = this;
 
     vm.isLoggedIn = Authentication.isLoggedIn();
@@ -33,7 +27,7 @@
       return $q.all(promises)
         .then(function() {})
         .catch(function(err) {
-          Notification.notify('error', 'Error while loading. Try again...(ツ)');
+          Notification.notify('error', Response.error['page']);
         })
     }
 
@@ -42,10 +36,10 @@
 
     function changeView(viewType) {
       if (viewType === 'list-view') {
-        vm.View = 'masonry-brick'
+        vm.View = 'masonry-brick';
         $localStorage.view = 'masonry-brick';
       } else {
-        vm.View = 'list-view'
+        vm.View = 'list-view';
         $localStorage.view = 'list-view';
       }
 
@@ -59,9 +53,15 @@
     }
 
     function Logout() {
-      Notification.notify('sticky', 'Successfully Signed Out :)');
+      Notification.notify('sticky', Response.success['auth.logout']);
       Authentication.logout();
       $state.go('login');
     }
   }
-})()
+
+  angular
+    .module('sugg.controllers')
+    .controller('MainController', MainController);
+
+  MainController.$inject = ['$rootScope', '$q', '$state', '$window', '$localStorage', 'Authentication', 'Notification', 'User', 'Response'];
+})();

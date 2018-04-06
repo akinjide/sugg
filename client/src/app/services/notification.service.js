@@ -2,7 +2,7 @@
 
 angular
   .module('sugg.services')
-  .factory('Notification', ['LxNotificationService', '$log', function(LxNotificationService, $log) {
+  .factory('Notification', ['LxNotificationService', function(LxNotificationService) {
     return {
       /**
         * type: notification type.
