@@ -179,7 +179,7 @@ div.main-content
           div(style="display: inline-block; align-items: center; padding: 3px 5px; text-align: left;")
             span(style="font-size: 11px; padding: 1px;") {{ label | labelParse }}
 
-      .sugg-icons-container(ng-if="!Note.is_shared_with")
+      .sugg-icons-container(ng-hide="Note.is_shared_with")
 
         div(class="mt8" flex-container="row" flex-align="flex-start center")
           lx-button.mr8(
@@ -276,13 +276,6 @@ lx-dialog(id="{{ vm.dialogShareId }}" lx-size="m" class="multi-share")
         lx-size="s"
         title="Make Public Note"
         ng-click="vm.GetShareLink(vm.currentNote, vm.currentNote.metadata.is_public)") {{ vm.currentNote.metadata.is_public ? 'Disable' : 'Enable' }} Public Share
-
-    lx-button(
-      lx-color="black"
-      lx-type="flat"
-      lx-size="s"
-      lx-dialog-close
-      title="Done Sharing") Cancel
 
     lx-button(
       lx-color="black"

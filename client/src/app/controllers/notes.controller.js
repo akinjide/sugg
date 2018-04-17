@@ -401,6 +401,10 @@
 
 
     function ShareWithUser(user, note) {
+      if (!user) {
+        return;
+      }
+
       var uid = vm.currentUser.$id;
 
       CopyShareLink(note.metadata.note_id, note.metadata.$id, true);
