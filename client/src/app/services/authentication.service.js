@@ -16,7 +16,8 @@ angular
           var authObj = $firebaseAuth(Refs.root);
           var fb_option = {
             remember: 'sessionOnly',
-            scope: 'email,user_likes,user_friends'
+            scope: 'email'
+//             scope: 'email,user_likes,user_friends'
           };
           var google_option = {
             remember: 'sessionOnly',

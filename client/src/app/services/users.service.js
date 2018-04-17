@@ -5,20 +5,18 @@ angular
   .factory('User', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
     function(Refs, $q, $firebaseArray, $firebaseObject) {
       var time = Firebase.ServerValue.TIMESTAMP;
-      var user, newUser = {};
+      var user;
 
       return {
         create: function(authData, cb) {
+          var newUser = {};
           user = $firebaseObject(Refs.users.child(authData.uid));
 
           user.$loaded().then(function() {
             if (user.id === undefined) {
-              // create user record depending on available field
               if (authData.email) {
                 newUser.email = authData.email;
               }
-
-//               newUser = Object.assign(newUser, authData);
 
               newUser.access_token  = authData.access_token;
               newUser.created = authData.created;
@@ -28,6 +26,7 @@ angular
               newUser.is_active = authData.is_active;
               newUser.is_new = authData.is_new;
               newUser.suspended = authData.suspended;
+              newUser.provider = authData.provider;
 
               // save user to firebase collection under the user node
               user.$ref().set(newUser);
@@ -46,13 +45,18 @@ angular
           // update user access token
           if (authData.provider) {
             user.access_token = authData.access_token;
+            user.image_url = authData.image_URL;
             user.updated = authData.created;
             user.is_new = false;
+
+            if (!user.provider) {
+              user.provider = authData.provider;
+            }
           }
 
           user.$save().then(function(ref) {
             if (ref.key() === user.$id) {
-//               console.info(ref.key() + ' updated');
+              // console.info(ref.key() + ' updated');
             }
           });
         },
@@ -69,7 +73,7 @@ angular
               if (ref.key() === user.$id) {
                 deferred.resolve({
                   id: ref.key(),
-                  message: 'User deleted locally and database'
+                  message: 'user deleted locally and database'
                 });
               }
             })
@@ -101,7 +105,7 @@ angular
 
         find: function(uid) {
           var deferred = $q.defer();
-          var data = Refs.users.child(uid);
+          var data = $firebaseObject(Refs.users.child(uid));
 
           data.$loaded()
             .then(function(user) {

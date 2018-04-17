@@ -2,12 +2,12 @@
 
 angular
   .module('sugg.services')
-  .factory('Note', ['Refs', '$q', '$rootScope', '$firebaseArray', '$firebaseObject',
-    function(Refs, $q, $rootScope, $firebaseArray, $firebaseObject) {
+  .factory('Note', ['Refs', 'User', '$q', '$rootScope', '$firebaseArray', '$firebaseObject',
+    function(Refs, User, $q, $rootScope, $firebaseArray, $firebaseObject) {
       var time = Firebase.ServerValue.TIMESTAMP;
 
       return {
-        create: function(uid, title, body, settings) {
+        create: function(uid, title, body, settings, labels) {
           var deferred = $q.defer();
           var notes = $firebaseArray(Refs.notes);
 
@@ -28,7 +28,8 @@ angular
                 'title': title,
                 'created': time,
                 'updated': time,
-                'is_public': false
+                'is_public': false,
+                'labels': labels.map(function(label) { return label.label_id; })
               }).then(function(ref) {
                 deferred.resolve({ metadataId: ref.key(), noteId: noteId });
               })
@@ -36,7 +37,7 @@ angular
                 deferred.reject(error);
               });
             } else {
-              deferred.reject(new Error('Error occurred'));
+              deferred.reject('error occurred');
             }
           })
           .catch(function(error) {
@@ -93,7 +94,7 @@ angular
                 .then(function(notes) {
                   return { 'metadata': metadata, 'notes': notes };
                 });
-            })
+            }) // TODO: loop through metadata labels and add label title
             .then(function(data) {
               self.result = [];
 
@@ -141,6 +142,36 @@ angular
           data.$loaded()
             .then(function(metadata) {
               deferred.resolve(metadata);
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
+
+          return deferred.promise;
+        },
+
+        findMetadataShare: function(uid, metadataId, shareUID) {
+          var deferred = $q.defer();
+          var data = $firebaseObject(Refs.users.child(uid).child('metadata').child(metadataId).child('share_with').child(shareUID));
+
+          data.$loaded()
+            .then(function(metadataShare) {
+              deferred.resolve(metadataShare);
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
+
+          return deferred.promise;
+        },
+
+        findNoteShare: function(noteId, shareUID) {
+          var deferred = $q.defer();
+          var data = $firebaseObject(Refs.notes.child(noteId).child('settings').child('share_with').child(shareUID));
+
+          data.$loaded()
+            .then(function(noteShare) {
+              deferred.resolve(noteShare);
             })
             .catch(function(error) {
               deferred.reject(error);
@@ -215,6 +246,113 @@ angular
           return deferred.promise;
         },
 
+        share: function(uid, noteId, metadataId, shareUID) {
+          var deferred = $q.defer();
+          var noteShare = $firebaseArray(Refs.notes.child(noteId).child('settings').child('share_with').child(shareUID));
+          var metadataShare = $firebaseArray(Refs.users.child(uid).child('metadata').child(metadataId).child('share_with').child(shareUID));
+          var sharedWith = $firebaseArray(Refs.users.child(shareUID).child('shared_with_me'));
+
+          sharedWith.$add({
+            shared_at: time,
+            read: true,
+            write: true,
+            note_id: noteId,
+            metadata_id: metadataId,
+            shared_by: uid
+          }).then(function(ref) {
+
+              $q.all([
+                noteShare.$ref().set({
+                  shared_at: time,
+                  share_id: ref.key(),
+                  read: true,
+                  write: true
+                }),
+                metadataShare.$ref().set({
+                  shared_at: time,
+                  share_id: ref.key(),
+                  read: true,
+                  write: true
+                })
+              ])
+              .then(function(data) {
+                deferred.resolve();
+              })
+              .catch(function(error) {
+                deferred.reject(error);
+              });
+
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
+
+          return deferred.promise;
+        },
+
+        allShare: function(uid, metadataId) {
+          var deferred = $q.defer();
+          var data = $firebaseArray(Refs.users.child(uid).child('metadata').child(metadataId).child('share_with'));
+          var self = this;
+
+          self.shareUsers = null;
+
+          data.$loaded()
+            .then(function(metadata) {
+              if (metadata.length) {
+                self.shareUsers = [];
+
+                _.each(metadata, function(meta, key) {
+                  User.find(meta.$id)
+                    .then(function(user) {
+                      self.shareUsers.push(user);
+                    })
+                    .catch(function(error) {
+                      deferred.reject(error);
+                    })
+
+                    if ((key + 1) === metadata.length) {
+                      deferred.resolve(self.shareUsers);
+                    }
+                });
+              } else {
+                deferred.resolve([]);
+              }
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
+
+          return deferred.promise;
+        },
+
+        removeShare: function(uid, noteId, metadataId, shareUID, sharedWithMeId) {
+          var sharedWithMeData = $firebaseObject(Refs.users.child(shareUID).child('shared_with_me').child(sharedWithMeId));
+          var deferred = $q.defer();
+          var self = this;
+
+          self.findMetadataShare(uid, metadataId, shareUID).then(function(metadataShare) {
+            self.findNoteShare(noteId, shareUID).then(function(noteShare) {
+
+              $q.all([metadataShare.$remove(), noteShare.$remove(), sharedWithMeData.$remove()])
+                .then(function(refs) {
+                  deferred.resolve();
+                })
+                .catch(function(error) {
+                  deferred.reject(error);
+                });
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
+          })
+          .catch(function(error) {
+            deferred.reject(error);
+          });
+
+          return deferred.promise;
+        },
+
         rename: function(uid, metadataId, title) {
           var deferred = $q.defer();
           var self = this;
@@ -247,7 +385,6 @@ angular
             if (e.event === 'child_removed') {
               self.all(uid)
                 .then(function(notes) {
-                  //console.log(notes, 'line 243')
                   self.prepForBroadcast('syncedNotes', notes);
                 })
                 .catch(function() {
@@ -260,7 +397,6 @@ angular
             if (e.event === 'child_changed') {
               self.all(uid)
                 .then(function(notes) {
-                  //console.log(notes, 'line 256')
                   self.prepForBroadcast('syncedNotes', notes);
                 })
                 .catch(function() {

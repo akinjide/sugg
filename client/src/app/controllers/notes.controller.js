@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Label) {
+  function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Label, User, sharedWithMe) {
     var vm = this;
 
     vm._main = $controller('MainController', {});
@@ -10,16 +10,24 @@
       'white', 'blue', 'red', 'orange', 'yellow',
       'pink', 'brown', 'grey', 'teal', 'green'
     ];
-    vm.dialogId = 'dialog' + Math.floor((Math.random() * 6) + 1);
+    vm.dialogEditId = 'dialog-edit' + Math.floor((Math.random() * 6) + 1);
+    vm.dialogShareId = 'dialog-share' + Math.floor((Math.random() * 6) + 1);
     vm.removeQueue = [];
     vm.labelChoices = [];
+    vm.currentNote = null;
+    vm.ShareWith = [];
+    vm.Owner = null;
+    vm.Users = [];
     vm.ShowLabels = false;
+    vm.shareLoading = true;
+
     var defaultNote = {
       title: '',
       content: '',
       settings: {
         color: ''
-      }
+      },
+      labels: []
     };
 
     vm.note = defaultNote;
@@ -34,6 +42,9 @@
     vm.ClearMarked = ClearMarked;
     vm.AttachmentAdd = AttachmentAdd;
     vm.CopyShareLink = CopyShareLink;
+    vm.ShareNote = ShareNote;
+    vm.ShareWithUser = ShareWithUser;
+    vm.RemoveShareWithUser = RemoveShareWithUser;
     vm.GetShareLink = GetShareLink;
     vm.MakeCopy = MakeCopy;
     vm.transformNewLabel = transformNewLabel;
@@ -51,7 +62,7 @@
       //////////////////////
       $scope.$on('handleBroadcast', function(e) {
         if (Note.syncedNotes) {
-          vm.Notes = Note.syncedNotes;
+          vm.Notes = _.concat(Note.syncedNotes, sharedWithMe);
         }
       });
 
@@ -103,10 +114,10 @@
     function init() {
       return Note.all(vm.currentUser.$id)
         .then(function(notes) {
-          vm.Notes = notes;
+          vm.Notes = _.concat(notes, sharedWithMe);
         })
         .catch(function(err) {
-          vm.Notes = [];
+          vm.Notes = _.concat([], sharedWithMe);
           Notification.notify('error', Response.error['note.loading']);
         });
     }
@@ -117,7 +128,7 @@
       var uid = vm.currentUser.$id;
 
       if (uid) {
-        Note.create(uid, note.title, note.content, note.settings) // TODO: add labels
+        Note.create(uid, note.title, note.content, note.settings, note.labels)
           .then(function(id) {
             cfpLoadingBar.complete();
             Note.sync(uid);
@@ -270,7 +281,7 @@
 
       if (!state) {
         vm.editNote = previousNote;
-        LxDialogService.open(vm.dialogId, previousNote);
+        LxDialogService.open(vm.dialogEditId);
 
         (function() {
           vm.initializeEdit = function(e, editor) {
@@ -314,34 +325,30 @@
         }
 
         if (nowNote && (nowNote.title && nowNote.content)) {
-          Note.rename(uid, previousNote.metadata.$id, nowNote.title)
-            .then(function(data) {
-
-              Note.edit(uid, previousNote.metadata.note_id, previousNote.metadata.$id, {
-                content: nowNote.content
-              })
-              .then(function(data) {
-                  Notification.notify('simple', Response.success['note.update']);
-                  Note.sync(uid);
-                  Reload();
-                })
-                .catch(function(error) {
-                  Notification.notify('error', Response.error['note.update']);
-                });
-
+          $q.all([
+            Note.rename(uid, previousNote.metadata.$id, nowNote.title),
+            Note.edit(uid, previousNote.metadata.note_id, previousNote.metadata.$id, {
+              content: nowNote.content
             })
-            .catch(function(error) {
-              Notification.notify('error', Response.error['note.update']);
-            });
+          ])
+          .then(function(data) {
+            Notification.notify('simple', Response.success['note.update']);
+            Note.sync(uid);
+            Reload();
+          })
+          .catch(function(error) {
+            Notification.notify('error', Response.error['note.update']);
+          });
 
           return;
         }
       }
     }
 
-    function CopyShareLink(noteId, metaId) {
+
+    function CopyShareLink(noteId, metaId, isSharedWithUser) {
       var uid = vm.currentUser.$id;
-      var shareLink = $location.host() + '/note/d/' + noteId + '?uid=' + uid + '&meta_id=' + metaId + '&shared=true';
+      var shareLink = $location.host() + '/note/d/' + noteId + '?uid=' + uid + '&meta_id=' + metaId + '&shared=' + isSharedWithUser;
 
       if (!clipboard.supported) {
         vm.CopyNotSupported = true;
@@ -356,11 +363,79 @@
       }
     }
 
+
+    function ShareNote(note) {
+      vm.currentNote = note;
+      var uid = vm.currentUser.$id;
+      var promises = [
+        User.find(uid),
+        Note.allShare(uid, note.metadata.$id),
+        User.all()
+      ];
+
+      function filterFunc(users) {
+        return users.map(function(user) {
+          return {
+            email: user.email,
+            name: user.name,
+            image_url: user.image_url,
+            uid: user.$id
+          }
+        });
+      }
+
+      $q.all(promises).then(function(responses) {
+        vm.Owner = responses[0];
+        vm.ShareWith = filterFunc(responses[1]);
+        vm.Users = filterFunc(responses[2]).filter(function(user) {
+          return user.uid != uid;
+        });
+        vm.shareLoading = false;
+      })
+      .catch(function() {
+        Notification.notify('error', Response.error['note.loading']);
+      });
+
+      LxDialogService.open(vm.dialogShareId);
+    }
+
+
+    function ShareWithUser(user, note) {
+      var uid = vm.currentUser.$id;
+
+      CopyShareLink(note.metadata.note_id, note.metadata.$id, true);
+      Note.share(uid, note.metadata.note_id, note.metadata.$id, user.uid)
+        .then(function(data) {
+          Notification.notify('simple', Response.success['share.generated']);
+          Note.sync(uid);
+          Reload();
+        })
+        .catch(function(error) {
+          Notification.notify('error', Response.error['note.update']);
+        });
+    }
+
+
+    function RemoveShareWithUser(user, note) {
+      var uid = vm.currentUser.$id;
+      var shareWithMe = _.pick(note.metadata.share_with, [user.uid])
+
+      Note.removeShare(uid, note.metadata.note_id, note.metadata.$id, user.uid, shareWithMe[user.uid].share_id)
+        .then(function(data) {
+          Note.sync(uid);
+          Reload();
+        })
+        .catch(function(error) {
+          Notification.notify('error', Response.error['note.update']);
+        });
+    }
+
+
     function GetShareLink(note, noteIsPublic) {
       var uid = vm.currentUser.$id;
 
       if (!noteIsPublic) {
-        CopyShareLink(note.metadata.note_id, note.metadata.$id);
+        CopyShareLink(note.metadata.note_id, note.metadata.$id, false);
       }
 
       Note.edit(uid, note.metadata.note_id, note.metadata.$id, {
@@ -382,26 +457,32 @@
       });
     }
 
+
     function MakeCopy(note) {
       Create({
         'title': note.metadata.title,
         'content': note.content,
         'settings': {
           'color': note.settings.color
-        }
+        },
+        'labels': note.metadata.labels
       });
     }
 
+
     function LookupLabel(labels) {
-//       console.log(labels)
+//       console.log(labels, 'line 396s')
 //       for (var i = 0; i < labels.length; i++) {
 //         if (typeof labels[i].label_id == "object") {
 //           labels[i].label_id.then(function(data) {
 //             labels[i].label_id = data.labelId;
 //           });
 //         }
+//Software Craftsman
+
 //       }
     }
+
 
     function transformNewLabel(_newValue) {
       return {
@@ -484,5 +565,5 @@
     .module('sugg.controllers')
     .controller('NotesController', NotesController);
 
-  NotesController.$inject = ['$location', '$q', '$state', '$controller', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Response', 'Label'];
+  NotesController.$inject = ['$location', '$q', '$state', '$controller', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Response', 'Label', 'User', 'sharedWithMe'];
 })();

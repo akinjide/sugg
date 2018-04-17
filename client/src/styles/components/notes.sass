@@ -97,6 +97,7 @@
   :z-index 201
 
   span a
+    :margin-left 4px
     :padding 2px 5px
     :font-size 12px
     :cursor pointer
@@ -121,35 +122,37 @@
   &.selected
     :background #f3f3f3
 
-.sugg-checkbox.selected
-  :opacity 1
+.sugg-checkbox
 
-label
-  :cursor pointer
+  .selected
+    :opacity 1
 
-  &:before
-    :content "\F12C"
-    :display inline-block
-    :font-family "Material Design Icons"
-    :font-size 18px;
-    :text-rendering auto
-    :-webkit-font-smoothing antialiased
-    :-moz-osx-font-smoothing grayscale
-    :transform translate(0, 0)
-    :width 24px
-    :height 24px
-    :border 2px solid transparent
-    :box-shadow 0 1px 1px 1px rgba(0, 0, 0, .1)
-    :border-radius 100%
-    :vertical-align middle
-    :color #000
-    :text-align center
-    :line-height 1.10em
-    :transition transform 0.2s ease-in-out
-    :position absolute
-    :top 0
-    :left 0
-    :background-color $white
+  label
+    :cursor pointer
+
+    &:before
+      :content "\F12C"
+      :display inline-block
+      :font-family "Material Design Icons"
+      :font-size 18px;
+      :text-rendering auto
+      :-webkit-font-smoothing antialiased
+      :-moz-osx-font-smoothing grayscale
+      :transform translate(0, 0)
+      :width 24px
+      :height 24px
+      :border 2px solid transparent
+      :box-shadow 0 1px 1px 1px rgba(0, 0, 0, .1)
+      :border-radius 100%
+      :vertical-align middle
+      :color #000
+      :text-align center
+      :line-height 1.10em
+      :transition transform 0.2s ease-in-out
+      :position absolute
+      :top 0
+      :left 0
+      :background-color $white
 
 input[type=checkbox]:checked + label:before
   :background #6f6f6f
@@ -207,5 +210,5 @@ input[type=checkbox]
 
 .dropdown-link
   :padding 0 16px
-  :font-size 13px
-  :height 32px !important
+  :font-size .875rem
+  :height 34px !important

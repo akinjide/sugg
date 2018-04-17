@@ -6,7 +6,9 @@ html(lang="en" ng-app="sugg" ng-strict-di)
     include shared/header
     include shared/head
   body(ng-cloak)
-    double-bounce-spinner(preloader)
+    div.preloader-overlay(preloader)
+      lx-progress(lx-color="grey" lx-type="circular" lx-diameter="95")
+
     div#ui-view(ui-view)
     // include shared/footer
     include shared/foot

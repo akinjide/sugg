@@ -1,4 +1,4 @@
-double-bounce-spinner
+.preloader-overlay
   :position fixed
   :top 0
   :left 0
@@ -8,25 +8,11 @@ double-bounce-spinner
   :width 100%
   :height 100%
   :transition all .5s ease-in-out
-  &:after
-    :content ''
-    :position fixed
-    :background rgb(38, 61, 83)
-    :opacity 0.8
-    :z-index -1
-    :top 0
-    :left 0
-    :right 0
-    :bottom 0
-    :width 100%
-    :height 100%
-    :transition all .5s ease-in-out
+  :background rgba(255, 255, 255, 0.8)
 
-.double-bounce-spinner
-  :margin 0
+.progress-container
   :top 50%
+  :position fixed
   :left 50%
   :transform translate(-50%, -50%)
-
-  .double-bounce1, .double-bounce2
-    :background-color #58728a
+  :z-index 10001

@@ -40,11 +40,11 @@ require('./controllers/share.controller.js');
 
 require('./filters/word.filter.js');
 require('./filters/capitalize.filter.js');
+require('./filters/label.filter.js');
 
 window.sugg = angular.module('sugg', [
   'angular-clipboard',
   'angular-loading-bar',
-  'angular-spinkit',
   'angularTrix',
   'lumx',
   'ngAnimate',
@@ -59,18 +59,8 @@ window.sugg = angular.module('sugg', [
 ]);
 
 sugg
-  .run(['$rootScope', '$transitions', '$state', '$stateParams', '$location', 'Notification', 'Authentication', 'Response',
-    function($rootScope, $transitions, $state, $stateParams, $location, Notification, Authentication, Response) {
-//       $rootScope.$on("$stateChangeError", function(event, toState, toParams, fromState, fromParams, error) {
-//         // We can catch the error thrown when the $requireAuth promise is rejected
-//         // and redirect the user back to the home page
-//         if (error === "AUTH_REQUIRED") {
-//           Notification.notify('error', Response.warn['auth.required']);
-//           $state.go("login");
-//         }
-//       });
-
-
+  .run(['$rootScope', '$transitions', '$location', 'Notification', 'Authentication', 'Response',
+    function($rootScope, $transitions, $location, Notification, Authentication, Response) {
       $transitions.onError({}, function(trans) {
         var $state = trans.router.stateService;
         // We can catch the error thrown when the $requireAuth promise is rejected
@@ -96,7 +86,6 @@ sugg
         var requireLogin = trans.to().data.requireLogin;
         var isLoggedIn = Authentication.isLoggedIn();
         var loggedin = Authentication.authenticatedUser();
-
         if (requireLogin && isLoggedIn) {
           $rootScope.isLoggedIn = isLoggedIn;
           $rootScope.$stateParams = trans.to();
@@ -110,19 +99,6 @@ sugg
           $location.path('/');
         }
       });
-//
-//       $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams, options) {
-//           var requireLogin = toState.data.requireLogin;
-//           var isLoggedIn = Authentication.isLoggedIn();
-//
-//           if (!requireLogin && isLoggedIn === true) {
-//             // Set reference to access them from any scope
-//             $rootScope.currentUser = Authentication.authenticatedUser();
-//             $rootScope.$stateParams = $stateParams;
-//             $rootScope.isLoggedIn = isLoggedIn;
-//             $location.path('/notes');
-//           }
-//       });
   }])
   .config(['$stateProvider', '$urlRouterProvider', '$locationProvider', '$logProvider', '$provide', 'cfpLoadingBarProvider',
     function($stateProvider, $urlRouterProvider, $locationProvider, $logProvider, $provide, cfpLoadingBarProvider) {
@@ -191,7 +167,7 @@ sugg
           }
         })
         .state('share', {
-          url: '/note/d/:note_id?uid&meta_id&shared=true',
+          url: '/note/d/:note_id?uid&meta_id&shared',
           templateUrl : 'views/share.partial.html',
           controller: 'ShareController',
           controllerAs: 'vm',
@@ -203,7 +179,7 @@ sugg
             $state$.data.title = 'Shared ' + $transition$.params('to').note_id + ' Note';
           }],
           resolve: {
-            shareNote: ['$transition$', '$q', '$state', 'Note', function($transition$, $q, $state, Note) {
+            'shareNote': ['$transition$', '$q', '$state', 'Note', function($transition$, $q, $state, Note) {
               var params = $transition$.params('to');
 
               if (!(params.uid && params.note_id && params.meta_id)) {
@@ -255,6 +231,45 @@ sugg
             }],
             'isLoggedIn': ['Authentication', function(Authentication) {
               return Authentication.isLoggedIn();
+            }],
+            'sharedWithMe': ['User', 'Authentication', 'Note', '$q', function(User, Authentication, Note, $q) {
+              var deferred = $q.defer();
+              var user = Authentication.authenticatedUser();
+              var shares = user && user.shared_with_me && Object.keys(user.shared_with_me).length;
+
+              if (shares) {
+                var step = 0;
+                var cached = [];
+
+                _.each(user.shared_with_me, function(share, key) {
+                  $q.all([
+                    Note.findNote(share.note_id),
+                    Note.findMetadata(share.shared_by, share.metadata_id),
+                    User.find(share.shared_by)
+                  ])
+                  .then(function(response) {
+                    var note = response[0];
+                    note['metadata'] = response[1];
+                    note['props'] = share;
+                    note['sharer'] = response[2];
+                    note['is_shared_with'] = true;
+
+                    cached.push(note);
+                  })
+                  .catch(function(error) {
+                    cached.push({});
+                  });
+
+                  step++;
+                  if (step === shares) {
+                    deferred.resolve(cached);
+                  }
+                });
+              } else {
+                deferred.resolve([]);
+              }
+
+              return deferred.promise;
             }]
           }
       })

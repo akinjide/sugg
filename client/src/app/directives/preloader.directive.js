@@ -17,7 +17,6 @@ angular
               element.addClass('hidden');
             }, 800);
           });
-
         }
       };
     }

@@ -35,10 +35,6 @@
   version "1.6.5"
   resolved "https://codeload.github.com/angular/bower-angular-sanitize/tar.gz/b3948967f3f50e6100a44034d0a2645f509beaf7"
 
-"@bower_components/angular-spinkit@Urigo/angular-spinkit#~0.3.3":
-  version "0.3.4"
-  resolved "https://codeload.github.com/Urigo/angular-spinkit/tar.gz/71d6197e681f86970ff4917ab593159090cd47c3"
-
 "@bower_components/angular-trix@sachinchoolur/angular-trix#^1.0.2":
   version "1.0.2"
   resolved "https://codeload.github.com/sachinchoolur/angular-trix/tar.gz/3eee4444e2b9b9505ae299d888c7e2363b1c9e3c"
@@ -110,8 +106,8 @@
   resolved "https://codeload.github.com/lodash/lodash/tar.gz/97e9edc53d2cc55df7adf765a003c800c54a6bda"
 
 "@bower_components/lumx@lumapps/lumX#^1.5.0":
-  version "1.7.19"
-  resolved "https://codeload.github.com/lumapps/lumX/tar.gz/794451d32a4e01ee09aaa5065dc7ff93c7f39f7d"
+  version "1.7.26"
+  resolved "https://codeload.github.com/lumapps/lumX/tar.gz/8a38e82eb9c494244919f55797684c02dcc6a28d"
   dependencies:
     angular latest
     bourbon "~4.2.7"
@@ -5930,9 +5926,13 @@ module-deps@^6.0.0:
     through2 "^2.0.0"
     xtend "^4.0.0"
 
-moment@2.x.x, moment@^2.14.1, moment@latest:
+moment@2.x.x, moment@^2.14.1:
   version "2.21.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.21.0.tgz#2a114b51d2a6ec9e6d83cf803f838a878d8a023a"
+
+moment@latest:
+  version "2.22.1"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.22.1.tgz#529a2e9bf973f259c9643d237fda84de3a26e8ad"
 
 morgan@^1.7.0:
   version "1.9.0"

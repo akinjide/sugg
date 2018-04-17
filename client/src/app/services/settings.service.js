@@ -5,12 +5,12 @@ angular
   .factory('Settings', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
     function(Refs, $q, $firebaseArray, $firebaseObject) {
       var time = Firebase.ServerValue.TIMESTAMP;
-      var newOptions = {};
       var userSettings;
 
       return {
         add: function(uid, options) {
           var deferred = $q.defer();
+          var newOptions = {};
           userSettings = $firebaseObject(Refs.settings.child(uid));
 
           userSettings.$loaded().then(function() {
@@ -40,7 +40,7 @@ angular
 
           userSettings.$save().then(function(ref) {
             if (ref.key() === userSettings.$id) {
-//               console.info(ref.key() + ' updated');
+              // console.info(ref.key() + ' updated');
             }
           });
         },
