@@ -2,9 +2,10 @@ div.profile-main(flex-container="row" flex-column="12" flex-align="center center
 
   div(flex-item="1")
     div.profile-img-container
+      span(ng-if="!vm.currentUser.image_url" style="font-size: 80px; padding: 8px 25px; box-shadow: 0 0 0 1px rgba(31,53,78,0.11), 0 2px 5px rgba(0,0,0,0.05);") {{ vm.currentUser.name | initials }}
       img(
-        class="img-round"
-        ng-src="{{ vm.currentUser.image_url || '../../images/default.jpg' }}"
+        ng-if="vm.currentUser.image_url"
+        ng-src="{{ vm.currentUser.image_url }}"
         alt="{{ vm.currentUser.name }} Profile Picture"
         lx-ripple
         title="{{ vm.currentUser.name }}")
@@ -15,12 +16,12 @@ div.profile-main(flex-container="row" flex-column="12" flex-align="center center
 
       div(class="pt")
         span Joined
-          strong  {{ vm.currentUser.created | date : 'MMM d, yyyy'}}
+          strong  {{ vm.currentUser.created | date : "MMM d, yyyy 'at' h:mm a"}}
 
         br
 
         span Last Seen
-          strong(ng-if="vm.currentUser.updated")  {{ vm.currentUser.updated | date : 'MMM d, yyyy'}}
+          strong(ng-if="vm.currentUser.updated")  {{ vm.currentUser.updated | date : "MMM d, yyyy 'at' h:mm a"}}
           strong(ng-if="!vm.currentUser.updated")  Today
 
       div(class="pt+")
