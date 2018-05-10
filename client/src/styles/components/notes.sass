@@ -78,16 +78,17 @@
     :max-width 100%
     :height auto
 
-.list-view
+.list
   :margin 0 auto
   :min-width 240px
-  :max-width 500px
+  :max-width 632px
   :width auto
 
-.masonry-brick
+.brick
   :margin 0 auto
   :min-width 240px
-  :max-width 70vw
+  :max-width 632px
+  :column-count 2
   :width auto
 
 .sugg-note-status
@@ -113,18 +114,14 @@
   :position absolute
   :opacity 0
   :transition opacity .218s linear
-  :z-index 201
+  :z-index 2001
   :transform translate(-10px, -10px)
 
   &:hover
     :cursor pointer
 
   &.selected
-    :background #f3f3f3
-
-.sugg-checkbox
-
-  .selected
+    // :background #f3f3f3
     :opacity 1
 
   label
@@ -138,7 +135,6 @@
       :text-rendering auto
       :-webkit-font-smoothing antialiased
       :-moz-osx-font-smoothing grayscale
-      :transform translate(0, 0)
       :width 24px
       :height 24px
       :border 2px solid transparent

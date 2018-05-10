@@ -1,5 +1,9 @@
 // desk
-// @media screen and (min-width: 1024px)
+@media screen and (min-width: 1024px)
+  .brick
+    :max-width 1040px
+    :column-count 3
+
 @media screen and (max-width: 1024px)
   [flex-gutter="24"]
     margin: 0;
@@ -26,36 +30,12 @@
       li
         :margin: 10px 0 20px 0 !important
 
-//   [flex-gutter="24"]
-//     margin: 0;
-//
-//   .login-wrap
-//     .overlay
-//       a
-//         img.logo
-//           :margin-top 40px
-//         h1
-//           :font
-//             :family $defaultFF
-//             :size 34px
-//             :weight lighter
-//
-//           :border-color $white
-//           :border 1px solid
-//           :margin 30px 34% 0px
-//           :padding 12px
-//
-//   .sugg__login__divider, #about__section, .footer
-//     :display none
-//   .login-social-link
-//     ul
-//       :margin-top 40px
-//       li
-//         :margin: 10px 0 20px 0 !important
-
 // palm
 @media screen and (max-width: 480px)
-  trix-toolbar
+  .brick
+    :column-count 1
+
+  trix-toolbar, .add-tag, .change-view
     :display none;
 
   .sugg_navcontainer
@@ -88,4 +68,3 @@
 
 // retina
 // @media screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi), (min-resolution: 2dppx)
-
