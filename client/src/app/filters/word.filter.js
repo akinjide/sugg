@@ -14,4 +14,4 @@ angular
             : wordsArr[0];
         }
       };
-    }]);
+  }]);
