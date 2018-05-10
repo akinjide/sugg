@@ -1,17 +1,12 @@
 #!/usr/bin/env node
 
-/**
- * Module dependencies.
- */
-var app = require('../index'),
-    cluster = require('cluster'),
-    http = require('http'),
-    debug = require('debug')('sugg:server'),
-    env = process.env.NODE_ENV || 'development',
-    config = require('../config/config')[env];
+var app = require('../index');
+var cluster = require('cluster');
+var http = require('http');
+var debug = require('debug')('sugg:server');
+var env = process.env.NODE_ENV || 'development';
+var config = require('../config/config')[env];
 
-
-// Get port from environment and store in Express.
 var port = normalizePort(process.env.PORT || config.port);
 app.set('port', port);
 
@@ -21,18 +16,19 @@ app.set('port', port);
 var server = http.createServer(app);
 
 // scale-up application
-// if (cluster.isMaster) {
-//     var numWorkers = require('os').cpus().length;
-//     console.log('Master cluster setting up ' + numWorkers + ' workers...');
-
-// }
-// else {
+if (cluster.isMaster) {
+  var numWorkers = require('os').cpus().length;
+  console.log('Master cluster setting up ' + numWorkers + ' workers...');
+  for (let i = 0; i < numWorkers; i++) {
+    cluster.fork();
+  }
+} else {
   // Listen on provided port, on all network interfaces.
   // Cook up server
   server.listen(port);
   server.on('error', onError);
   server.on('listening', onListening);
-// }
+}
 
 /**
  * Normalize a port into a number, string, or false.
@@ -92,3 +88,8 @@ function onListening() {
     '\nPLATFORM=' + process.platform+
     '\nPORT=' + app.get('port'));
 }
+
+cluster.on('exit', (worker) => {
+  console.log('mayday! mayday! worker', worker.id, ' is no more!');
+  cluster.fork();
+});

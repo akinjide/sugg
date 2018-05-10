@@ -1,11 +1,10 @@
 (function() {
   "use strict";
 
-  function MainController ($rootScope, $q, $state, $window, $localStorage, Authentication, Notification, User, Response) {
+  function MainController ($rootScope, $q, $state, $window, $localStorage, Authentication, Notification, User, Response, Settings) {
     var vm = this;
 
     vm.isLoggedIn = Authentication.isLoggedIn();
-    vm.View = $localStorage.view || 'list-view';
 
     if (vm.isLoggedIn) {
       vm.currentUser = Authentication.authenticatedUser();
@@ -20,28 +19,36 @@
 
     activate();
 
-
     function activate() {
-      var promises = [];
+      var promises = [
+        Settings.find(vm.currentUser.$id)
+      ];
 
       return $q.all(promises)
-        .then(function() {})
-        .catch(function(err) {
+        .then(function(response) {
+          var userSettings = response[0];
+
+          vm.View = userSettings.default_layout || $localStorage.view || 'list';
+        })
+        .catch(function() {
           Notification.notify('error', Response.error['page']);
         })
     }
 
     /////////////////////
 
-
     function changeView(viewType) {
-      if (viewType === 'list-view') {
-        vm.View = 'masonry-brick';
-        $localStorage.view = 'masonry-brick';
+      if (viewType == 'list') {
+        vm.View = 'brick';
+        $localStorage.view = 'brick';
       } else {
-        vm.View = 'list-view';
-        $localStorage.view = 'list-view';
+        vm.View = 'list';
+        $localStorage.view = 'list';
       }
+
+      Settings.update(vm.currentUser.$id, {
+        default_layout: vm.View
+      });
 
       Reload();
     }
@@ -63,5 +70,5 @@
     .module('sugg.controllers')
     .controller('MainController', MainController);
 
-  MainController.$inject = ['$rootScope', '$q', '$state', '$window', '$localStorage', 'Authentication', 'Notification', 'User', 'Response'];
+  MainController.$inject = ['$rootScope', '$q', '$state', '$window', '$localStorage', 'Authentication', 'Notification', 'User', 'Response', 'Settings'];
 })();

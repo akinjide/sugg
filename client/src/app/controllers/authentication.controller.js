@@ -16,13 +16,16 @@
             if (err) {
               Notification.notify('error', Response.error['auth.login']);
             } else {
-              Settings.add(data.$id, {
-                defaultLayout: 'list-view',
-                defaultNoteColor: 'white'
-              });
+
+              if (data.is_new) {
+                Settings.add(data.$id, {
+                  default_layout: 'list',
+                  default_note_color: 'white'
+                });
+              }
 
               if (data.is_active) {
-                Notification.notify('sticky', 'Hi, ' + payload.name + '.', 'account', true);
+                Notification.notify('simple', 'Hi, ' + payload.name + '.', 'account', true);
               }
 
               $state.go('notes');
