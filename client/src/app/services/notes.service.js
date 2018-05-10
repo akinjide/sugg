@@ -7,7 +7,7 @@ angular
       var time = Firebase.ServerValue.TIMESTAMP;
 
       return {
-        create: function(uid, title, body, settings, labels) {
+        create: function(uid, title, body, settings, tags) {
           var deferred = $q.defer();
           var notes = $firebaseArray(Refs.notes);
 
@@ -29,7 +29,7 @@ angular
                 'created': time,
                 'updated': time,
                 'is_public': false,
-                'labels': labels.map(function(label) { return label.label_id; })
+                'tags': tags.map(function(tag) { return tag.tag_id; })
               }).then(function(ref) {
                 deferred.resolve({ metadataId: ref.key(), noteId: noteId });
               })
@@ -94,7 +94,7 @@ angular
                 .then(function(notes) {
                   return { 'metadata': metadata, 'notes': notes };
                 });
-            }) // TODO: loop through metadata labels and add label title
+            }) // TODO: loop through metadata tags and add tag title
             .then(function(data) {
               self.result = [];
 

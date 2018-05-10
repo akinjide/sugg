@@ -11,6 +11,6 @@ angular
         notes: rootRef.child('notes'),
         users: rootRef.child('users'),
         settings: rootRef.child('settings'),
-        labels: rootRef.child('labels')
+        tags: rootRef.child('tags')
       };
   }]);

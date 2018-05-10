@@ -2,30 +2,30 @@
 
 angular
   .module('sugg.services')
-  .factory('Label', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
+  .factory('Tag', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
     function(Refs, $q, $firebaseArray, $firebaseObject) {
       var time = Firebase.ServerValue.TIMESTAMP;
 
       return {
-        add: function(title, label_id) {
+        add: function(title, tag_id) {
           var deferred = $q.defer();
-          var labels = $firebaseArray(Refs.labels);
+          var tags = $firebaseArray(Refs.tags);
           var self = this;
 
-          if (label_id) {
-            self.find(label_id).then(function(label) {
-              deferred.resolve(label);
+          if (tag_id) {
+            self.find(tag_id).then(function(tag) {
+              deferred.resolve(tag);
             })
             .catch(function(error) {
               deferred.reject(error);
             });
           } else {
-            labels.$add({
+            tags.$add({
               title: title,
               updated: time,
               created: time
             }).then(function(ref) {
-              deferred.resolve({ labelId: ref.key() });
+              deferred.resolve({ tagId: ref.key() });
             })
             .catch(function(error) {
               deferred.reject(error);
@@ -35,17 +35,17 @@ angular
           return deferred.promise;
         },
 
-        update: function(title, label_id) {
+        update: function(title, tag_id) {
           var deferred = $q.defer();
           var self = this;
 
-          self.find(label_id).then(function(label) {
-            label.title = title;
-            label.updated = time;
+          self.find(tag_id).then(function(tag) {
+            tag.title = title;
+            tag.updated = time;
 
-            label.$save()
+            tag.$save()
               .then(function(ref) {
-                deferred.resolve({ labelId: ref.key() });
+                deferred.resolve({ tagId: ref.key() });
               })
               .catch(function(error) {
                 deferred.reject(error);
@@ -58,13 +58,13 @@ angular
           return deferred.promise;
         },
 
-        find: function(label_id) {
+        find: function(tag_id) {
           var deferred = $q.defer();
-          var data = $firebaseObject(Refs.labels.child(label_id));
+          var data = $firebaseObject(Refs.tags.child(tag_id));
 
           data.$loaded()
-            .then(function(label) {
-              deferred.resolve(label);
+            .then(function(tag) {
+              deferred.resolve(tag);
             })
             .catch(function(error) {
               deferred.reject(error);
@@ -75,11 +75,11 @@ angular
 
         all: function() {
           var deferred = $q.defer();
-          var data = $firebaseArray(Refs.labels);
+          var data = $firebaseArray(Refs.tags);
 
           data.$loaded()
-            .then(function(labels) {
-              deferred.resolve(labels);
+            .then(function(tags) {
+              deferred.resolve(tags);
             })
             .catch(function(error) {
               deferred.reject(error);

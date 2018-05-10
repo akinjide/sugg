@@ -5,13 +5,12 @@ angular
   .factory('Settings', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
     function(Refs, $q, $firebaseArray, $firebaseObject) {
       var time = Firebase.ServerValue.TIMESTAMP;
-      var userSettings;
 
       return {
         add: function(uid, options) {
           var deferred = $q.defer();
           var newOptions = {};
-          userSettings = $firebaseObject(Refs.settings.child(uid));
+          var userSettings = $firebaseObject(Refs.settings.child(uid));
 
           userSettings.$loaded().then(function() {
             if (userSettings.id === undefined) {
@@ -22,7 +21,7 @@ angular
 
               userSettings.$ref().set(newOptions);
             } else {
-              this.update(options);
+              // this.update(userSettings.$id, options);
             }
 
             deferred.resolve(userSettings);
@@ -33,16 +32,31 @@ angular
           return deferred.promise;
         },
 
-        update: function(options) {
-          if (options) {
-            userSettings.updated = time;
-          }
+        update: function(uid, options) {
+          var deferred = $q.defer();
+          var data = $firebaseObject(Refs.settings.child(uid));
 
-          userSettings.$save().then(function(ref) {
-            if (ref.key() === userSettings.$id) {
-              // console.info(ref.key() + ' updated');
-            }
-          });
+          data.$loaded()
+            .then(function(settings) {
+              if (options.default_layout) {
+                settings.default_layout = options.default_layout;
+              }
+
+              if (options.default_note_color) {
+                settings.default_note_color = options.default_note_color;
+              }
+
+              settings.updated = time;
+              settings.$save().then(function(ref) {
+                deferred.resolve(ref);
+              })
+              .catch(function(error) {
+                deferred.reject(error);
+              });
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
         },
 
         find: function(uid) {
