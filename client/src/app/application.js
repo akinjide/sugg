@@ -22,7 +22,7 @@ require('./services/refs.service.js');
 require('./services/users.service.js');
 require('./services/settings.service.js');
 require('./services/response.service.js');
-require('./services/labels.service.js');
+require('./services/tags.service.js');
 
 require('./directives/dragnote.directive.js');
 require('./directives/pagetitle.directive.js');
@@ -40,7 +40,8 @@ require('./controllers/share.controller.js');
 
 require('./filters/word.filter.js');
 require('./filters/capitalize.filter.js');
-require('./filters/label.filter.js');
+require('./filters/tag.filter.js');
+require('./filters/initials.filter.js');
 
 window.sugg = angular.module('sugg', [
   'angular-clipboard',
