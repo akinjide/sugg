@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  function ProfileController ($rootScope, $q, $state, $window, $controller, Authentication, Notification, User, Response) {
+  function ProfileController ($q, $state, $controller, Authentication, Notification, User, Response) {
     var vm = this;
 
     vm._main = $controller('MainController', {});
@@ -56,5 +56,5 @@
     .module('sugg.controllers')
     .controller('ProfileController', ProfileController);
 
-  ProfileController.$inject = ['$rootScope', '$q', '$state', '$window', '$controller', 'Authentication', 'Notification', 'User', 'Response'];
+  ProfileController.$inject = ['$q', '$state', '$controller', 'Authentication', 'Notification', 'User', 'Response'];
 })();
