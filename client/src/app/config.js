@@ -1,7 +1,6 @@
 angular
   .module('sugg.config')
-  .constant('fb_uri', 'https://znote.firebaseio.com/')
   .constant('version', '0.14')
-  .constant('KEYS', {
+  .constant('keys', {
     firebase: 'https://znote.firebaseio.com/',
   });

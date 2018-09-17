@@ -7,7 +7,7 @@ angular
         success: {
           'share.generated': 'Share link generated',
           'share.disabled': 'Note share disabled',
-          'copy': 'Note copied',
+          'copy': 'Copied',
           'note.create': 'Note added',
           'note.update': 'Note updated',
           'note.rename': 'Note renamed',

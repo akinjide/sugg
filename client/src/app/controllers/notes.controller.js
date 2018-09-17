@@ -3,6 +3,7 @@
 
   function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Tag, User, sharedWithMe) {
     var vm = this;
+    var cachedUsers = [];
 
     vm._main = $controller('MainController', {});
     vm.isLoggedIn = vm._main.isLoggedIn;
@@ -18,7 +19,6 @@
     vm.currentNote = null;
     vm.ShareWith = [];
     vm.Owner = null;
-    vm.Users = [];
     vm.ShowTags = false;
     vm.shareLoading = true;
 
@@ -417,7 +417,7 @@
       $q.all(promises).then(function(responses) {
         vm.Owner = responses[0];
         vm.ShareWith = filterFunc(responses[1]);
-        vm.Users = filterFunc(responses[2]).filter(function(user) {
+        cachedUsers = filterFunc(responses[2]).filter(function(user) {
           return user.uid != uid;
         });
         vm.shareLoading = false;
@@ -430,13 +430,13 @@
     }
 
 
-    function findShareWithUser(user) {
-       vm.addUser = vm.Users.filter(function(u) {
-         if (u.email == user.trim()) {
-           Notification.notify('simple', u.name + ' will be added');
-	   return u;
-	 }
-       });
+    function findShareWithUser(userEmail) {
+      vm.addUser = cachedUsers.filter(function(user) {
+        if (user.email == userEmail.trim()) {
+          Notification.notify('simple', user.name + ' will be added');
+          return user;
+        }
+      });
     }
 
 
@@ -447,7 +447,7 @@
 
       if (user && !user.length) {
         Notification.notify('simple', 'No user to share with');
-	    return;
+        return;
       }
 
       var uid = vm.currentUser.$id;

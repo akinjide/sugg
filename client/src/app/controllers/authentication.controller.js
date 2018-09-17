@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  function AuthenticationController ($state, $localStorage, Authentication, Notification, User, Settings, Response) {
+  function AuthenticationController ($q, $state, $localStorage, Authentication, Notification, User, Settings, Response) {
     var vm = this;
     vm.Login = Login;
 
@@ -16,19 +16,28 @@
             if (err) {
               Notification.notify('error', Response.error['auth.login']);
             } else {
+              Settings.find(data.$id)
+                .then(function(response) {
+                  if ((response && !response.created) || data.is_new) {
+                    return Settings.add(data.$id, {
+                      default_layout: 'list',
+                      default_note_color: 'white'
+                    });
+                  }
 
-              if (data.is_new) {
-                Settings.add(data.$id, {
-                  default_layout: 'list',
-                  default_note_color: 'white'
+                  return $q.resolve();
+                })
+                .then(function(response) {
+                  if (data.is_active) {
+                    Notification.notify('simple', 'Hi, ' + payload.name + '.', 'account', true);
+                  }
+
+                  $state.go('notes');
+                })
+                .catch(function(err) {
+                  Notification.notify('error', Response.error['auth.unknown']);
+                  Authentication.logout();
                 });
-              }
-
-              if (data.is_active) {
-                Notification.notify('simple', 'Hi, ' + payload.name + '.', 'account', true);
-              }
-
-              $state.go('notes');
             }
           });
         } else {
@@ -54,5 +63,5 @@
     .module('sugg.controllers')
     .controller('AuthenticationController', AuthenticationController);
 
-  AuthenticationController.$inject = ['$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings', 'Response'];
+  AuthenticationController.$inject = ['$q', '$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings', 'Response'];
 })();

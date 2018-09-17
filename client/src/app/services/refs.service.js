@@ -2,9 +2,9 @@
 
 angular
   .module('sugg.services')
-  .factory('Refs', ['fb_uri',
-    function(fb_uri) {
-      var rootRef = new Firebase(fb_uri);
+  .factory('Refs', ['keys',
+    function(keys) {
+      var rootRef = new Firebase(keys.firebase);
 
       return {
         root: rootRef,

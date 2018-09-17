@@ -48,8 +48,6 @@ div.main-content
       .toolbar.no-pd(style="height: auto; max-height: 600px;"
         ng-show="vm.show"
         ng-init="vm.show = false; Colors = false"
-        data-slide-toggle="vm.show"
-        data-slide-toggle-duration="0"
       )
 
         div.editor-wrap.note-container
@@ -67,7 +65,6 @@ div.main-content
             trix-attachment-add="vm.AttachmentAdd(e, editor);"
             trix-attachment-remove="vm.trixAttachmentRemove(e, editor);"
             prevent-trix-file-accept="false"
-            placeholder="sugg!, do you?"
           )
 
         lx-select(style="padding: 1em 1.4em 0;"
@@ -105,21 +102,21 @@ div.main-content
       )
         i.mdi.mdi-palette
 
-      lx-button.mr10(
-        lx-type="icon"
-        lx-color="black"
-        title="Add Image"
-        disabled
-      )
-        i.mdi.mdi-image
+      //- lx-button.mr10(
+      //-   lx-type="icon"
+      //-   lx-color="black"
+      //-   title="Add Image"
+      //-   disabled
+      //- )
+      //-   i.mdi.mdi-image
 
-      lx-button.mr10.add-tag(
-        lx-type="icon"
-        lx-color="black"
-        title="Add Tag"
-        ng-click="vm.initTags = !vm.initTags"
-      )
-        i.mdi.mdi-label
+      //- lx-button.mr10.add-tag(
+      //-   lx-type="icon"
+      //-   lx-color="black"
+      //-   title="Add Tag"
+      //-   ng-click="vm.initTags = !vm.initTags"
+      //- )
+      //-   i.mdi.mdi-label
 
       lx-button.add-note(
         lx-type="flat"
@@ -134,20 +131,23 @@ div.main-content
   div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
     div.sugg-note-status(ng-if="Note.is_shared_with")
       span
-        a(title="Shared 'Private' by {{ Note.sharer.name }} at {{ Note.props.shared_at | date : 'MMM d, h:mm a' }}") Shared by {{ Note.sharer.name | splitWord }}
+        a(title="Shared 'Private' by {{ Note.sharer.name }} at {{ Note.props.shared_at | date : 'MMM d, h:mm a' }}")
+          strong {{ Note.sharer.name | splitWord }} shared with you
 
     div.sugg-note-status(ng-if="(Note.metadata.share_with || Note.metadata.is_public) && !Note.is_shared_with")
       span
         a(ng-if="Note.metadata.share_with"
           title="Shared 'Private'"
           ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, true)"
-        ) Shared
+        )
+          strong Only specific people
 
       span
         a(ng-if="Note.metadata.is_public"
           title="Shared 'Public'"
           ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, false)"
-        ) Public
+        )
+          strong Anyone with link can view
 
     .sugg-checkbox(class="{{ (vm.isMarked && Note.Selected) ?'selected' :'' }}" ng-if="!Note.is_shared_with")
       input(
@@ -223,7 +223,9 @@ div.main-content
             lx-dropdown-menu
               ul
                 li(ng-hide="vm.CopyNotSupported"): a.dropdown-link(ng-click="vm.Copy(Note.content)") Copy to Clipboard
-                li: a.dropdown-link.add-tag(ng-click="vm.ShowTags(Note, Note.metadata.tags)") Add Tag
+                //- li: a.dropdown-link.add-tag(ng-click="vm.ShowTags(Note, Note.metadata.tags)") Add Tag
+                li: a.dropdown-link(ng-if="Note.metadata.share_with" ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, true)") Get shareable link
+                li: a.dropdown-link(ng-if="Note.metadata.is_public" ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, false)") Get shareable link
                 li: a.dropdown-link(ng-click="vm.MakeCopy(Note)") Make a Copy
                 li: a.dropdown-link(ng-click="vm.Edit(Note, false)") Edit note
                 li: a.dropdown-link(ng-click="vm.Remove(Note, Note.metadata.note_id, Note.metadata.$id)") Delete note
