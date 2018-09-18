@@ -6,37 +6,29 @@ function load(variable) {
     : process.env[variable]
 }
 
-var test = {
-  firebase: {
-    rootRefUrl: "",
-    serverUID: "sugg-test",
-    secretKey: ""
+module.exports = {
+  test: {
+    firebase: {
+      rootRefUrl: "",
+      serverUID: "sugg-test",
+      secretKey: ""
+    },
+    port: 1336
   },
-  port: 1336
-};
-
-var development = {
-  firebase : {
-    rootRefUrl: load('fb_uri'),
-    serverUID: "sugg-dev" || load('server_uid'),
-    secretKey: load('secret_key')
+  development: {
+    firebase : {
+      rootRefUrl: load('fb_uri'),
+      serverUID: "sugg-dev" || load('server_uid'),
+      secretKey: load('secret_key')
+    },
+    port: 1338
   },
-  port: 1338
+  production: {
+    firebase: {
+      rootRefUrl: load('fb_uri'),
+      serverUID: load('server_uid'),
+      secretKey: load('secret_key')
+    },
+    port: load('PORT') || 1338
+  }
 };
-
-var production = {
-  firebase: {
-    rootRefUrl: load('fb_uri'),
-    serverUID: load('server_uid'),
-    secretKey: load('secret_key')
-  },
-  port: load('PORT') || 1338
-};
-
-var config = {
-  test: test,
-  development: development,
-  production: production
-};
-
-module.exports = config;

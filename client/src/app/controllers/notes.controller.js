@@ -133,10 +133,11 @@
       if (uid) {
         Note.create(uid, note.title, note.content, note.settings, note.tags)
           .then(function(id) {
-            Settings.update(vm.currentUser.$id, {
+            return Settings.update(vm.currentUser.$id, {
               default_note_color: note.settings.color
             });
-
+          })
+          .then(function() {
             cfpLoadingBar.complete();
             Note.sync(uid);
             vm.note = defaultNote;
@@ -147,7 +148,7 @@
             Notification.notify('error', Response.error['note.create']);
           });
       } else {
-          Notification.notify('error', Response.error['note.create']);
+        Notification.notify('error', Response.error['note.create']);
       }
     }
 

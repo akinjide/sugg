@@ -20,8 +20,8 @@ module.exports = function(router, rootRef) {
 
   router.get('/', function(req, res) {
     userRef.once('value', function(snap) {
-      var users = snap.val(),
-          result = [];
+      var users = snap.val();
+      var result = [];
 
       if (users) {
         async.each(Object.keys(users), function(userId, cb) {
@@ -39,23 +39,23 @@ module.exports = function(router, rootRef) {
     });
   });
 
-  router.get('/:id', function(req, res) {
-    if (req.params.id) {
+  router.post('/', function(req, res) {
+    if (req.query.uid) {
       userRef
-        .child(req.params.id)
+        .child(req.query.uid)
         .once('value', function(snap) {
           var user = snap.val();
 
-          if (!user) return res.status(404).json({error:'No user found at node `' + userId + '`'});
+          if (!user) return res.status(404).json({error:'no user found at node `' + userId + '`'});
 
-          res.status(200).json(userToJSON(user, req.params.id));
+          res.status(200).json(userToJSON(user, req.query.uid));
         });
     } else {
-      res.status(400).json({ error: 'No user Id' });
+      res.status(400).json({ error: 'no user uid' });
     }
   });
 
-  router.get('/*', four0four.notFoundMiddleware);
+  router.all('/*', four0four.notFoundMiddleware);
 
   return router;
 };
