@@ -7,9 +7,10 @@
 
   .overlay
     a(href="/")
-      span.logo sugg.
+      span.logo su
+        em(style="font-weight: 100;") gg.
     h4
-      | simpe. create. love it.
+      | simpe. create. note it.
     div.sugg__login(
       class="mt++"
       flex-container="column"
@@ -20,7 +21,7 @@
           | you can sign up via your social network
         ul
           each social_network in ['facebook', 'twitter', 'google']
-            li
+            li(ng-if="vm.flags['#{social_network}']")
               button(
                 class="btn btn--m btn--blue btn--raised #{social_network}"
                 lx-ripple

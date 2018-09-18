@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Tag, User, sharedWithMe) {
+  function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Tag, User, sharedWithMe, featureFlag) {
     var vm = this;
     var cachedUsers = [];
 
@@ -21,6 +21,7 @@
     vm.Owner = null;
     vm.ShowTags = false;
     vm.shareLoading = true;
+    vm.flags = featureFlag;
 
     var defaultNote = {
       title: '',
@@ -431,10 +432,10 @@
     }
 
 
-    function findShareWithUser(userEmail) {
+    function findShareWithUser(userField) {
       vm.addUser = cachedUsers.filter(function(user) {
-        if (user.email == userEmail.trim()) {
-          Notification.notify('simple', user.name + ' will be added');
+        if (user.email == userField.trim()) {
+          Notification.notify('simple', user.email + ' will be added');
           return user;
         }
       });
@@ -447,8 +448,7 @@
       }
 
       if (user && !user.length) {
-        Notification.notify('simple', 'No user to share with');
-        return;
+        return Notification.notify('simple', 'No user to share with');
       }
 
       var uid = vm.currentUser.$id;
@@ -660,5 +660,5 @@
     .module('sugg.controllers')
     .controller('NotesController', NotesController);
 
-  NotesController.$inject = ['$location', '$q', '$state', '$controller', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Response', 'Tag', 'User', 'sharedWithMe'];
+  NotesController.$inject = ['$location', '$q', '$state', '$controller', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Response', 'Tag', 'User', 'sharedWithMe', 'featureFlag'];
 })();

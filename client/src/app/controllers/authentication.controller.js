@@ -1,9 +1,10 @@
 (function() {
   "use strict";
 
-  function AuthenticationController ($q, $state, $localStorage, Authentication, Notification, User, Settings, Response) {
+  function AuthenticationController ($q, $state, $localStorage, Authentication, Notification, User, Settings, Response, featureFlag) {
     var vm = this;
     vm.Login = Login;
+    vm.flags = featureFlag.social;
 
     function Login(provider) {
       Authentication.login(provider, function(err, authData) {
@@ -63,5 +64,5 @@
     .module('sugg.controllers')
     .controller('AuthenticationController', AuthenticationController);
 
-  AuthenticationController.$inject = ['$q', '$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings', 'Response'];
+  AuthenticationController.$inject = ['$q', '$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings', 'Response', 'featureFlag'];
 })();

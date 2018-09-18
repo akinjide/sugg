@@ -2,7 +2,8 @@
   nav.bgc(ng-cloak)
     div
       a(href="/")
-        span.logo sugg.
+        span.logo su
+          em(style="font-weight: 100;") gg.
 
       .sugg-search
         lx-search-filter
@@ -10,7 +11,9 @@
             type="text"
             ng-model="vm.searchFilter.text"
             placeholder="Search"
-            ng-change="vm.searchFilterChange(vm.searchFilter)")
+            ng-change="vm.searchFilterChange(vm.searchFilter)"
+            ng-if="vm.flags.search"
+          )
 
       .sugg-profile-nav
 
@@ -20,6 +23,7 @@
           lx-color="grey"
           ng-click="vm.changeView(vm.View)"
           title="Change view"
+          ng-if="vm.flags.layout"
         )
           i.mdi.mdi-view-agenda(ng-if="vm.View == 'brick'")
           i.mdi.mdi-view-dashboard(ng-if="vm.View == 'list'")
@@ -47,7 +51,11 @@
                 span Signed in as <strong>{{ vm.currentUser.name | splitWord }}</strong>
               li.dropdown-divider
               li
-                a(class=classes ui-sref="profile({ name: vm.currentUser.name, uid: vm.currentUser.$id })")
+                a(
+                  class=classes
+                  ui-sref="profile({ name: vm.currentUser.name, uid: vm.currentUser.$id })"
+                  ng-if="vm.flags.profile.view"
+                )
                   span Your Profile
               li
                 a(class=classes ui-sref="notes")
