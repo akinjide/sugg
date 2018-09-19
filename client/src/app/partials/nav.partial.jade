@@ -1,9 +1,23 @@
 .sugg_navcontainer
   nav.bgc(ng-cloak)
     div
-      a(href="/")
+      a(
+        href="/"
+        ng-if="vm.isNotePage"
+      )
         span.logo su
           em(style="font-weight: 100;") gg.
+
+      lx-button.mr8(
+        lx-type="icon"
+        lx-color="black"
+        title="Your Notes"
+        lx-size="l"
+        style="left: -20px;"
+        ng-if="!vm.isNotePage"
+      )
+        a(ui-sref="notes" style="color: #000;")
+          i.mdi(class="mdi-arrow-left")
 
       .sugg-search
         lx-search-filter
@@ -28,7 +42,24 @@
           i.mdi.mdi-view-agenda(ng-if="vm.View == 'brick'")
           i.mdi.mdi-view-dashboard(ng-if="vm.View == 'list'")
 
-        lx-dropdown(lx-position="right" lx-width="160" lx-offset="6")
+        lx-button(
+          lx-type="fab"
+          lx-size="m"
+          lx-color="white"
+          class="--is-mobile"
+          style="display: none;"
+          ng-if="vm.flags.profile.view"
+        )
+          a(ui-sref="profile({ name: vm.currentUser.name, uid: vm.currentUser.$id })")
+            span(ng-if="!vm.currentUser.image_url" style="font-weight: 600;") {{ vm.currentUser.name | initials }}
+            img(class="img-round"
+              ng-if="vm.currentUser.image_url"
+              ng-src="{{ vm.currentUser.image_url }}"
+              alt="{{ vm.currentUser.name }} Picture"
+              lx-ripple
+              title="{{ vm.currentUser.name }}")
+
+        lx-dropdown(class="--is-desktop" lx-position="right" lx-width="160" lx-offset="6")
           lx-dropdown-toggle
             lx-button(
               lx-type="fab"

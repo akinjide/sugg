@@ -129,7 +129,7 @@ div.main-content
       ) Done
 
 
-.sugg-notes.row-masonry(class="{{ vm.View }}" masonry)
+.sugg-notes.row-masonry(class="{{ vm.View }}")
   div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
     div.sugg-note-status(ng-if="Note.is_shared_with")
       span
@@ -195,7 +195,55 @@ div.main-content
 
       .sugg-icons-container(ng-hide="Note.is_shared_with")
 
-        div(class="mt8" flex-container="row" flex-align="flex-start center")
+        div(class="--is-mobile" flex-container="row" flex-align="flex-start center" style="margin-top: 20px; display: none;")
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="Change color"
+            ng-click="noteColors =! noteColors"
+            lx-size="l"
+          )
+            i.mdi.mdi-palette
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'Disable' : 'Enable' }} Share"
+            ng-click="vm.ShareNote(Note)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-account-multiple-{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'minus' : 'plus' }}")
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="Get shareable link"
+            ng-if="Note.metadata.share_with"
+            ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, true)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-link")
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="Get shareable link"
+            ng-if="Note.metadata.is_public"
+            ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, false)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-link")
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="Edit note"
+            ng-click="vm.Edit(Note, false)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-pencil")
+
+        div(class="mt8 --is-desktop" flex-container="row" flex-align="flex-start center")
           lx-button.mr8(
             lx-type="icon"
             lx-color="black"

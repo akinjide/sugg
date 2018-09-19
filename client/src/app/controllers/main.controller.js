@@ -5,6 +5,7 @@
     var vm = this;
 
     vm.isLoggedIn = Authentication.isLoggedIn();
+    vm.isNotePage = $state.is('notes');
 
     if (vm.isLoggedIn) {
       vm.currentUser = Authentication.authenticatedUser();
