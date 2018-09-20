@@ -311,57 +311,30 @@
     }
 
 
-    function Edit(previousNote, state, nowNote) {
+    function Edit(previousNote, state, currentNote) {
       var uid = vm.currentUser.$id;
 
       if (!state) {
         vm.editNote = previousNote;
         LxDialogService.open(vm.dialogEditId);
 
-        (function() {
+        return (function() {
           vm.initializeEdit = function(e, editor) {
             editor.setSelectedRange([0, previousNote.content.length]);
             editor.insertHTML(previousNote.content || '');
           };
         })();
-
-        return;
       }
 
       if (state) {
-        if (nowNote && nowNote.title) {
-          Note.rename(uid, previousNote.metadata.$id, nowNote.title)
-            .then(function(data) {
-              Note.sync(uid);
-              Reload();
-            })
-            .catch(function(error) {
-              Notification.notify('error', Response.error['note.rename']);
-            });
+        if (currentNote.content.length == previousNote.content.length
+          && !currentNote.title) return Reload();
 
-          return;
-        }
-
-        if (nowNote && nowNote.content) {
-          Note.edit(uid, previousNote.metadata.note_id, previousNote.metadata.$id, {
-            content: nowNote.content
-          })
-          .then(function(data) {
-              Note.sync(uid);
-              Reload();
-            })
-            .catch(function(error) {
-              Notification.notify('error', Response.error['note.update']);
-            });
-
-          return;
-        }
-
-        if (nowNote && (nowNote.title && nowNote.content)) {
-          $q.all([
-            Note.rename(uid, previousNote.metadata.$id, nowNote.title),
+        if (currentNote && (currentNote.title && currentNote.content)) {
+          return $q.all([
+            Note.rename(uid, previousNote.metadata.$id, currentNote.title),
             Note.edit(uid, previousNote.metadata.note_id, previousNote.metadata.$id, {
-              content: nowNote.content
+              content: currentNote.content
             })
           ])
           .then(function(data) {
@@ -371,8 +344,30 @@
           .catch(function(error) {
             Notification.notify('error', Response.error['note.update']);
           });
+        }
 
-          return;
+        if (currentNote && currentNote.title) {
+          return Note.rename(uid, previousNote.metadata.$id, currentNote.title)
+            .then(function(data) {
+              Note.sync(uid);
+              Reload();
+            })
+            .catch(function(error) {
+              Notification.notify('error', Response.error['note.rename']);
+            });
+        }
+
+        if (currentNote && currentNote.content) {
+          return Note.edit(uid, previousNote.metadata.note_id, previousNote.metadata.$id, {
+            content: currentNote.content
+          })
+          .then(function(data) {
+              Note.sync(uid);
+              Reload();
+            })
+            .catch(function(error) {
+              Notification.notify('error', Response.error['note.update']);
+            });
         }
       }
     }

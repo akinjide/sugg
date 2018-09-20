@@ -154,7 +154,7 @@ sugg
           url: '/404/notfound',
           templateUrl: '404.html',
           data: {
-            title: '404 - Not Found'
+            title: '404 — Not Found'
           }
         })
         .state('login', {
@@ -177,15 +177,14 @@ sugg
             requireLogin: false
           },
           onEnter: ['$transition$', '$state$', function($transition$, $state$) {
-            $state$.data.title = 'Shared ' + $transition$.params('to').note_id + ' Note';
+            $state$.data.title = 'Shared Note — ' + $transition$.params('to').note_id;
           }],
           resolve: {
             'shareNote': ['$transition$', '$q', '$state', 'Note', function($transition$, $q, $state, Note) {
               var params = $transition$.params('to');
 
               if (!(params.uid && params.note_id && params.meta_id)) {
-                $state.go('404');
-                return;
+                return $state.go('404');
               }
 
               var promises = [
