@@ -68,12 +68,12 @@ module.exports = function(app, config) {
       .get(prepareRequest, function(req, res) {
         var ref = req.sugg.ref;
 
-        if (req.param.uid) {
-          ref.child('users').child(req.param.uid)
+        if (req.params.uid) {
+          ref.child('users').child(req.params.uid)
             .once('value', function(snap) {
               var user = snap.val();
               if (!user) return res.send(404);
-              res.status(200).json(middleware.userToJSON(user, req.param.uid));
+              res.status(200).json(middleware.userToJSON(user, req.params.uid));
             });
         } else {
           res.send(400);

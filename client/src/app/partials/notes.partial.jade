@@ -163,8 +163,9 @@ div.main-content
 
     .box-placeholder.m0(
       class="{{ Note.settings.color }}"
+      ng-class="{ pt40: (Note.is_shared_with || Note.metadata.is_public || Note.metadata.share_with) && vm.isMobile }"
       ng-mouseleave="noteColors = false"
-      ng-dblclick="vm.Edit(Note, false)"
+      ng-dblclick="!Note.is_shared_with && vm.Edit(Note, false)"
     )
 
       h3.text-muted

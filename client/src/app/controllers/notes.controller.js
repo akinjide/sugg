@@ -4,6 +4,7 @@
   function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Tag, User, sharedWithMe, featureFlag) {
     var vm = this;
     var cachedUsers = [];
+    var MAX_WIDTH_MOBILE = 480;
 
     vm._main = $controller('MainController', {});
     vm.isLoggedIn = vm._main.isLoggedIn;
@@ -22,6 +23,7 @@
     vm.ShowTags = false;
     vm.shareLoading = true;
     vm.flags = featureFlag;
+    vm.isMobile = (window.innerWidth <= MAX_WIDTH_MOBILE);
 
     var defaultNote = {
       title: '',

@@ -5,8 +5,8 @@ angular
   .factory('Response', [function() {
       return {
         success: {
-          'share.generated': 'Share link generated',
-          'share.disabled': 'Note share disabled',
+          'share.generated': 'Share enabled',
+          'share.disabled': 'Share disabled',
           'copy': 'Copied',
           'note.create': 'Note added',
           'note.update': 'Note updated',
