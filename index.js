@@ -12,15 +12,17 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var firebaseAuth = require('./bin/auth');
 var session = require('express-session');
-var routes = require('./routes');
+var routes = require('./config/routes');
 
 var app = express();
+
 
 console.log('About to crank up node');
 console.log('NODE_ENV=' + env);
 
 function run(appDir, rootRef) {
   app.dir = appDir;
+  app.sugg = app.sugg || {}
 
   // set the static files location client/public/img will be /img for users
   app.use(express.static(app.dir + '/client/public/'));
@@ -73,13 +75,21 @@ function run(appDir, rootRef) {
   app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-    // res.setHeader('Access-Control-Allow-Headers', 'Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization');
     res.setHeader('Access-Control-Allow-Credentials', true);
     next();
   });
 
-  routes(app, config, rootRef);
+  routes(app, config);
 
+  app.sugg.keepAlive = keepAlive;
+  function keepAlive() {
+    var PING_INTERVAL = 15 * 60 * 1000;
+
+    return setInterval(function() {
+      console.log('PING=%s', PING_INTERVAL);
+    }, PING_INTERVAL)
+  }
 
   // Error handling catch 404 and forward to error handler
   app.use(function(req, res, next) {
@@ -116,8 +126,6 @@ function run(appDir, rootRef) {
   });
 }
 
-firebaseAuth.authWithCustomToken(function(error, rootRef) {
-  run(process.cwd(), rootRef);
-});
+run(process.cwd(), firebaseAuth.rootRef);
 
 module.exports = app;
