@@ -1,32 +1,34 @@
 var Firebase = require('firebase');
+var moment = require('moment');
 var FirebaseTokenGenerator = require('firebase-token-generator');
 var env = process.env.NODE_ENV || 'development';
 var config = require('../config/config')[env];
+var rootRef = new Firebase(config.firebase.rootRefUrl);
 
-// Authenticate the server to Firebase
-exports.authWithCustomToken = function(cb) {
-  var rootRef = new Firebase(config.firebase.rootRefUrl);
+exports.authWithCustomToken = function(token, callback) {
+  rootRef.authWithCustomToken(token, function(error, data) {
+    if (error) return callback(error);
+    if (data.auth.uid != config.firebase.serverUID) return callback('invalid token');
+
+    callback(null, data, rootRef);
+  });
+};
+
+exports.generateToken = function(data, callback) {
   var tokenGenerator = new FirebaseTokenGenerator(config.firebase.secretKey);
   var token = tokenGenerator.createToken({
     uid: config.firebase.serverUID,
     isAdmin: true,
-    name: 'sugg:server'
+    name: 'sugg:server',
+    payload: data
   }, {
     debug: true,
     admin: false,
-    expires: setExpire(1)
+    expires: moment().add(1, 'days').unix()
   });
 
-  rootRef.authWithCustomToken(token, function(error) {
-    if (error) {
-      cb(error);
-    } else {
-      cb(null, rootRef);
-    }
-  });
-};
-
-function setExpire(exdays) {
-  var d = new Date();
-  return d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+  if (!token) return callback('error when generating token');
+  callback(null, token);
 }
+
+exports.rootRef = rootRef;
