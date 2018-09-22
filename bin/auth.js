@@ -3,6 +3,7 @@ var FirebaseTokenGenerator = require('firebase-token-generator');
 var env = process.env.NODE_ENV || 'development';
 var config = require('../config/config')[env];
 var rootRef = new Firebase(config.firebase.rootRefUrl);
+var tokenGenerator = new FirebaseTokenGenerator(config.firebase.secretKey);
 
 exports.authWithCustomToken = function(token, callback) {
   rootRef.authWithCustomToken(token, function(error, data) {
@@ -14,7 +15,6 @@ exports.authWithCustomToken = function(token, callback) {
 };
 
 exports.generateToken = function(data, callback) {
-  var tokenGenerator = new FirebaseTokenGenerator(config.firebase.secretKey);
   var token = tokenGenerator.createToken({
     uid: config.firebase.serverUID,
     isAdmin: true,

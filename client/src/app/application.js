@@ -154,7 +154,16 @@ sugg
           url: '/404/notfound',
           templateUrl: '404.html',
           data: {
-            title: '404 — Not Found'
+            title: '404 — Not Found',
+            requireLogin: false
+          }
+        })
+        .state('legal', {
+          url: '/legal',
+          templateUrl: 'views/legal.partial.html',
+          data: {
+            title: 'Legal',
+            requireLogin: false
           }
         })
         .state('login', {
