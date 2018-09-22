@@ -1,6 +1,5 @@
 var path = require('path');
 var async = require('async');
-var _ = require('lodash');
 var express = require('express');
 var firebaseAuth = require('../bin/auth');
 var middleware = require('./middleware');

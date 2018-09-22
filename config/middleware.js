@@ -1,4 +1,3 @@
-var _ = require('lodash');
 var firebaseAuth = require('../bin/auth');
 
 exports.addSugg = function(req, res, next) {

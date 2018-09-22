@@ -1,5 +1,4 @@
 var Firebase = require('firebase');
-var moment = require('moment');
 var FirebaseTokenGenerator = require('firebase-token-generator');
 var env = process.env.NODE_ENV || 'development';
 var config = require('../config/config')[env];
@@ -24,7 +23,7 @@ exports.generateToken = function(data, callback) {
   }, {
     debug: true,
     admin: false,
-    expires: moment().add(1, 'days').unix()
+    expires: t().add(1, 'days').unix()
   });
 
   if (!token) return callback('error when generating token');
