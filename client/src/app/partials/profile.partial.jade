@@ -14,6 +14,16 @@ div.profile-main(flex-container="row" flex-column="12" flex-align="center center
     div(class="p+")
       h1 {{ vm.currentUser.name }}
 
+      div.p10(ng-if="vm.currentUser.email")
+        h3 {{ vm.currentUser.email }}
+        span
+          em email allows sharing on sugg.
+
+      div.p10(ng-if="!vm.currentUser.email")
+        h3 {{ vm.invalidEmail }}
+        span
+          em sharing on sugg is disabled. :(
+
       div(class="pt")
         span Joined
           strong  {{ vm.currentUser.created | date : "MMM d, yyyy 'at' h:mm a"}}

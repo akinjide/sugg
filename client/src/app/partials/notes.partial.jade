@@ -211,6 +211,7 @@ div.main-content
             lx-color="black"
             title="{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'Disable' : 'Enable' }} Share"
             ng-click="vm.ShareNote(Note)"
+            ng-if="vm.currentUser.email"
             lx-size="l"
           )
             i.mdi(class="mdi-account-multiple-{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'minus' : 'plus' }}")
@@ -258,6 +259,7 @@ div.main-content
             lx-color="black"
             title="{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'Disable' : 'Enable' }} Share"
             ng-click="vm.ShareNote(Note)"
+            ng-if="vm.currentUser.email"
           )
             i.mdi(class="mdi-account-multiple-{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'minus' : 'plus' }}")
 

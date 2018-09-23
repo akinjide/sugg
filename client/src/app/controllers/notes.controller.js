@@ -8,6 +8,11 @@
 
     vm._main = $controller('MainController', {});
     vm.isLoggedIn = vm._main.isLoggedIn;
+
+    if (vm.isLoggedIn) {
+      vm.currentUser = vm._main.currentUser;
+    }
+
     vm.NoteColors = [
       'white', 'blue', 'red', 'orange', 'yellow', 'blueberry',
       'pink', 'brown', 'grey', 'teal', 'green', 'lavender'

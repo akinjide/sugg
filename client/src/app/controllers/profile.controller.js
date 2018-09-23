@@ -12,6 +12,7 @@
 
     vm.Deactivate = Deactivate;
     vm.Logout = Logout;
+    vm.invalidEmail = 'Your ' + vm.currentUser.provider + ' account has no email.';
 
     /////////////////////
 
