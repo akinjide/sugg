@@ -5,7 +5,7 @@ angular
     firebase: (function() {
       var hostname = window.location.host;
       var isLocal = /(^localhost)|(^znote-dev)/.test(hostname);
-      var isProd =  /(^sugg)/.test(hostname);
+      var isProd =  /(sugg)/.test(hostname);
       var domain = 'firebaseio.com';
       var subdomain;
 

@@ -22,7 +22,7 @@ console.log('NODE_ENV=' + env);
 
 function run(appDir, rootRef) {
   app.dir = appDir;
-  app.sugg = app.sugg || {}
+  app.sugg = app.sugg || {};
 
   // set the static files location client/public/img will be /img for users
   app.use(express.static(app.dir + '/client/public/'));
@@ -88,7 +88,7 @@ function run(appDir, rootRef) {
 
     return setInterval(function() {
       console.log('PING=%s', PING_INTERVAL);
-    }, PING_INTERVAL)
+    }, PING_INTERVAL);
   }
 
   // Error handling catch 404 and forward to error handler
