@@ -17,12 +17,12 @@ div.profile-main(flex-container="row" flex-column="12" flex-align="center center
       div.p10(ng-if="vm.currentUser.email")
         h3 {{ vm.currentUser.email }}
         span
-          em email allows sharing on sugg.
+          em email allows private sharing on sugg.
 
       div.p10(ng-if="!vm.currentUser.email")
         h3 {{ vm.invalidEmail }}
         span
-          em sharing on sugg is disabled. :(
+          em private sharing on sugg is disabled. :(
 
       div(class="pt")
         span Joined

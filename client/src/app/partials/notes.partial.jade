@@ -211,7 +211,6 @@ div.main-content
             lx-color="black"
             title="{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'Disable' : 'Enable' }} Share"
             ng-click="vm.ShareNote(Note)"
-            ng-if="vm.currentUser.email"
             lx-size="l"
           )
             i.mdi(class="mdi-account-multiple-{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'minus' : 'plus' }}")
@@ -259,7 +258,6 @@ div.main-content
             lx-color="black"
             title="{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'Disable' : 'Enable' }} Share"
             ng-click="vm.ShareNote(Note)"
-            ng-if="vm.currentUser.email"
           )
             i.mdi(class="mdi-account-multiple-{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'minus' : 'plus' }}")
 
@@ -294,7 +292,15 @@ lx-dialog(id="{{ vm.dialogShareId }}" lx-size="m" class="multi-share")
     lx-progress(lx-color="grey" lx-type="circular" lx-diameter="75" ng-if="vm.shareLoading")
 
     div(class="mt8" style="min-height: 100px !important")
-      ul.list(ng-if="!vm.shareLoading")
+
+      div.pt30(
+        ng-if="!vm.currentUser.email"
+        style="text-align: center; color: #000"
+       )
+        h2
+          em private sharing on sugg is disabled. :(
+
+      ul.list(ng-if="!vm.shareLoading && vm.currentUser.email")
         li.list-row
           div.list-row__primary
             lx-button(lx-type="icon" lx-size="l" lx-color="white")
