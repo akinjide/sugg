@@ -85,7 +85,7 @@ function run(appDir, rootRef) {
 
   app.sugg.keepAlive = keepAlive;
   function keepAlive() {
-    var PING_INTERVAL =  1 * 60 * 1000;
+    var PING_INTERVAL =  15 * 60 * 1000;
 
     return setInterval(function() {
       request('http://www.sugg.xyz/v1/ping', function(error, response, body) {
