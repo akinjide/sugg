@@ -39,7 +39,8 @@ var paths = {
     services_glob: config.src + 'app/services/*.js',
     filters_glob: config.src + 'app/filters/*.js',
     watcher_glob: config.src + 'app/**/*.js',
-    vendors_glob: config.src + 'scripts/**/*.js'
+    vendors_glob: config.src + 'scripts/**/*.js',
+    bower: config.src + 'scripts/bower.js'
   },
   sass: {
     root: config.src + 'styles/',
@@ -196,11 +197,11 @@ gulp.task('js-vendor-combined', function() {
   log('Compressing and copying third party scripts');
   var filename = 'vendor.js';
 
-  return gulp.src(paths.js.vendors_glob)
+  return gulp.src(require('./' + paths.js.bower))
     .pipe($.concat(filename))
     .pipe($.rename({ suffix: '.min' }))
-    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
-    .pipe($.if(argv.development, $.empty(), $.uglify()))
+//    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
+//    .pipe($.if(argv.development, $.empty(), $.uglify()))
     .pipe(gulp.dest(config.public + 'scripts'));
 });
 

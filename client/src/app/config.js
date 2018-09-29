@@ -4,13 +4,13 @@ angular
   .constant('keys', {
     firebase: (function() {
       var hostname = window.location.host;
-      var isLocal = /(^localhost)|(^znote-dev)/.test(hostname);
+      var isLocal = /(^localhost)/.test(hostname);
       var isProd =  /(sugg)/.test(hostname);
       var domain = 'firebaseio.com';
-      var subdomain;
+      var subdomain = 'znote';
 
-      if (isLocal) subdomain = 'znote';
-      if (isProd) subdomain = 'sugg-1312a';
+      if (isLocal) console.log('isLocal', isLocal);
+      if (isProd) console.log('isProd', isProd);
 
       return 'https://' + subdomain + '.' + domain + '/';
     }()),
@@ -30,4 +30,5 @@ angular
       view: true,
     },
     share: true,
+    notification: true
   });

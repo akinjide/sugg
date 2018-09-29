@@ -1,12 +1,20 @@
 var firebaseAuth = require('../bin/auth');
 
+exports.allowAccess = function(req, res, next) {
+  if (!process.env.lock) {
+    return next();
+  }
+
+  return res.send(403);
+}
+
 exports.addSugg = function(req, res, next) {
   req.sugg = req.sugg || {};
   res.sugg = res.sugg || {};
   next();
 }
 
-exports.extract = function(req, res, next)  {
+exports.bearer = function(req, res, next)  {
   if (req.headers && req.headers.authorization) {
     var token = req.headers.authorization.split(' ')[1];
 

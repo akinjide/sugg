@@ -7,8 +7,13 @@ var router = express.Router();
 
 
 module.exports = function(app, config) {
+  var suggStack = [
+    middleware.allowAccess,
+    middleware.addSugg
+  ]
+
   app.use('/v1', (function() {
-    router.post('/auth/token', middleware.addSugg, function(req, res) {
+    router.post('/auth/token', suggStack, function(req, res) {
       var valid = _.every(['email', 'scope'], function(required) {
         if (req.body[required]) return true;
         return false;
@@ -24,14 +29,12 @@ module.exports = function(app, config) {
       });
     });
 
-    var prepareRequest = [
-      middleware.addSugg,
-      middleware.extract
-    ];
-
+    var httpBearerStack = suggStack.concat([
+      middleware.bearer
+    ]);
 
     router.route('/users')
-      .get(prepareRequest, function(req, res) {
+      .get(httpBearerStack, function(req, res) {
         var ref = req.sugg.ref;
 
         ref.child('users').once('value', function(snap) {
@@ -56,47 +59,94 @@ module.exports = function(app, config) {
           }
         });
       })
-      .post(prepareRequest, function(req, res) {
+      .post(httpBearerStack, function(req, res) {
         res.send(501);
       })
-      .put(prepareRequest, function(req, res) {
+      .put(httpBearerStack, function(req, res) {
         res.send(501);
       });
 
     router.route('/users/:uid')
-      .get(prepareRequest, function(req, res) {
+      .get(httpBearerStack, function(req, res) {
         var ref = req.sugg.ref;
 
         if (req.params.uid) {
-          ref.child('users').child(req.params.uid)
-            .once('value', function(snap) {
-              var user = snap.val();
-              if (!user) return res.send(404);
-              res.status(200).json(middleware.userToJSON(user, req.params.uid));
-            });
+          async.waterfall([
+            function(callback) {
+              ref.child('users').child(req.params.uid)
+                .once('value', function(snap) {
+                  var user = snap.val();
+
+                  if (!user) return callback(user);
+                  callback(null, user);
+                }, function(error) {
+                  callback(error);
+                });
+            },
+            function(user, callback) {
+              var notes = [];
+              var step = 0;
+
+              _.each(user.metadata, function(metadata, key) {
+                ref.child('notes').child(metadata.note_id)
+                  .once('value', function(snap) {
+                    var note = snap.val();
+
+                    if (note) {
+                      notes.push({
+                        content: note.content,
+                        lang: note.lang,
+                        settings: note.settings,
+                        created: metadata.created,
+                        note_id: metadata.note_id,
+                        title: metadata.title,
+                        updated: metadata.updated,
+                      })
+                    }
+
+                    step++;
+
+                    if (_.keys(user.metadata).length == step) {
+                      callback(null, {
+                        user: user,
+                        notes: notes
+                      });
+                    }
+                  }, function(error) {
+                    callback(error);
+                  });
+              });
+            }
+          ], function(error, result) {
+            if (error) {
+              return res.send(204);
+            }
+
+            res.status(200).json({ user: middleware.userToJSON(result.user, req.params.uid), notes: result.notes });
+          });
         } else {
           res.send(400);
         }
       })
-      .post(prepareRequest, function(req, res) {
+      .post(httpBearerStack, function(req, res) {
         res.send(501);
       })
-      .put(prepareRequest, function(req, res) {
+      .put(httpBearerStack, function(req, res) {
         res.send(501);
       });
 
     router.route('/notes')
-      .get(prepareRequest, function(req, res) {
+      .get(httpBearerStack, function(req, res) {
         var ref = req.sugg.ref;
 
         ref.child('notes').once('value', function(snap) {
           res.status(200).json(snap.val());
         });
       })
-      .post(prepareRequest, function(req, res) {
+      .post(httpBearerStack, function(req, res) {
         res.send(501);
       })
-      .put(prepareRequest, function(req, res) {
+      .put(httpBearerStack, function(req, res) {
         res.send(501);
       });
 
