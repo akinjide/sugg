@@ -88,7 +88,7 @@ function run(appDir, rootRef) {
     var PING_INTERVAL =  1 * 60 * 1000;
 
     return setInterval(function() {
-      request('http://localhost:1338/v1/ping', function(error, response, body) {
+      request('http://www.sugg.xyz/v1/ping', function(error, response, body) {
         console.log('PING, %s=%s', PING_INTERVAL, body);
       });
     }, PING_INTERVAL);
