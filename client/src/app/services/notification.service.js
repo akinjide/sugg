@@ -2,7 +2,7 @@
 
 angular
   .module('sugg.services')
-  .factory('Notification', ['LxNotificationService', function(LxNotificationService) {
+  .factory('Notification', ['LxNotificationService', 'featureFlag', function(LxNotificationService, featureFlag) {
     return {
       /**
         * type: notification type.
@@ -12,6 +12,8 @@ angular
         * color: add color to icon.
         */
       notify: function(type, message, icon, sticky, color) {
+        if (!featureFlag.notification) return;
+
         if (type === 'simple') {
           LxNotificationService.notify(message);
         }
