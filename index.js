@@ -7,6 +7,7 @@ var config = require('./config/config')[env];
 var path = require('path');
 var fs = require('fs');
 var helmet = require('helmet');
+var request = require('request');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
@@ -84,10 +85,12 @@ function run(appDir, rootRef) {
 
   app.sugg.keepAlive = keepAlive;
   function keepAlive() {
-    var PING_INTERVAL = 15 * 60 * 1000;
+    var PING_INTERVAL =  1 * 60 * 1000;
 
     return setInterval(function() {
-      console.log('PING=%s', PING_INTERVAL);
+      request('http://localhost:1338/v1/ping', function(error, response, body) {
+        console.log('PING, %s=%s', PING_INTERVAL, body);
+      });
     }, PING_INTERVAL);
   }
 

@@ -143,7 +143,7 @@ gulp.task('jade-four0four', function() {
 
 
 // compile javascripts
-gulp.task('js', ['js-controllers-glob', 'js-directives-glob', 'js-services-glob', 'js-filters-glob', 'js-vendor-combined'])
+gulp.task('js', ['js-controllers-glob', 'js-directives-glob', 'js-services-glob', 'js-filters-glob'])
 
 gulp.task('js-controllers-glob', function() {
   log('Compressing and copying controllers');
@@ -364,8 +364,8 @@ gulp.task('build', ['jade', 'sass', 'assets', 'compress', 'js'], function() {
   log(msg);
 });
 
-gulp.task('production', ['build', 'lib']);
-gulp.task('serve', ['build', 'nodemon']);
+gulp.task('production', ['build', 'lib', 'js-vendor-combined']);
+gulp.task('serve', ['build', 'js-vendor-combined', 'nodemon']);
 gulp.task('test', ['test:client', 'test:server']);
 
 /**

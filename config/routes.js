@@ -13,6 +13,10 @@ module.exports = function(app, config) {
   ]
 
   app.use('/v1', (function() {
+    router.get('/ping', function(req, res) {
+      res.send('PONG');
+    });
+
     router.post('/auth/token', suggStack, function(req, res) {
       var valid = _.every(['email', 'scope'], function(required) {
         if (req.body[required]) return true;
