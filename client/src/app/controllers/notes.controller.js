@@ -14,8 +14,24 @@
     }
 
     vm.NoteColors = [
-      'white', 'blue', 'red', 'orange', 'yellow', 'blueberry',
-      'pink', 'brown', 'grey', 'teal', 'green', 'lavender'
+      'white',
+      'blue',
+      'red',
+      'orange',
+      'yellow',
+      'blueberry',
+      'pink',
+      'brown',
+      'grey',
+      'teal',
+      'green',
+      'lavender',
+      'thistle',
+      'pigeon',
+      'tangerine',
+      'sage',
+      'tomato',
+      'grape',
     ];
     vm.dialogEditId = 'dialog-edit' + Math.floor((Math.random() * 6) + 1);
     vm.dialogShareId = 'dialog-share' + Math.floor((Math.random() * 6) + 1);
