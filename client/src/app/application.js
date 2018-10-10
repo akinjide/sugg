@@ -260,7 +260,7 @@ sugg
                     var note = response[0];
                     note['metadata'] = response[1];
                     note['props'] = share;
-                    note['sharer'] = response[2];
+                    note['shared_by'] = response[2];
                     note['is_shared_with'] = true;
 
                     cached.push(note);

@@ -116,6 +116,33 @@ angular
             });
 
           return deferred.promise;
+        },
+
+        addEmail: function(uid, email) {
+          var deferred = $q.defer();
+          var data = $firebaseObject(Refs.users.child(uid));
+
+          data.$loaded()
+            .then(function(user) {
+              user.email = email;
+
+              user.$save().then(function(ref) {
+                if (ref.key() === user.$id) {
+                  deferred.resolve({
+                    id: ref.key(),
+                    message: 'user email added'
+                  });
+                }
+              })
+              .catch(function(error) {
+                deferred.reject(error);
+              });
+            })
+            .catch(function(error) {
+              deferred.reject(error);
+            });
+
+          return deferred.promise;
         }
       };
   }]);

@@ -132,7 +132,12 @@ angular
 
         authenticatedUser: function() {
           authObj = $firebaseAuth(Refs.root);
-          return $localStorage.cachedUser || this.buildUserObjectFromProviders(authObj.$getAuth());
+
+          if (this.isLoggedIn()) {
+            return $localStorage.cachedUser || this.buildUserObjectFromProviders(authObj.$getAuth());
+          }
+
+          return this.buildUserObjectFromProviders(authObj.$getAuth());
         }
       };
   }]);

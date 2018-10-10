@@ -126,7 +126,7 @@ module.exports = function(app, config) {
               return res.send(204);
             }
 
-            res.status(200).json({ user: middleware.userToJSON(result.user, req.params.uid), notes: result.notes });
+            res.status(200).json(_.extend(middleware.userToJSON(result.user, req.params.uid), { notes: result.notes }));
           });
         } else {
           res.send(400);

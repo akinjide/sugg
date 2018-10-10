@@ -17,6 +17,11 @@
             if (err) {
               Notification.notify('error', Response.error['auth.login']);
             } else {
+              if (!data.is_active) {
+                Authentication.logout();
+                return Notification.notify('error', Response.error['auth.deactivated']);
+              }
+
               Settings.find(data.$id)
                 .then(function(response) {
                   if ((response && !response.created) || data.is_new) {

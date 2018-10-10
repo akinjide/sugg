@@ -40,10 +40,17 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
 
 
 div.main-content
-  .card.card-content(ng-mouseleave="Colors = false")
+  .card.card-content(
+    ng-mouseleave="Colors = false"
+    ng-class="vm.editorWidthClass"
+  )
     div
-      .toolbar.card.no-mr(ng-click="vm.show = true")
-        input.sugg-input(type="text" ng-model="vm.note.title" placeholder="Take a note ...")
+      .toolbar.card.no-mr(ng-class="vm.editorWidthClass" ng-click="vm.show = true")
+        input.sugg-input(
+          type="text"
+          ng-model="vm.note.title"
+          placeholder="Take a note ..."
+        )
 
       .toolbar.no-pd(style="height: auto; max-height: 600px;"
         ng-show="vm.show"
@@ -55,6 +62,7 @@ div.main-content
             angular-trix
             ng-model="vm.note.content"
             ng-model-options="{ updateOn: 'blur' }"
+            ng-class="vm.editorWidthClass"
             spellcheck="false"
             trix-initialize="vm.trixInitialize(e, editor);"
             trix-change="vm.trixChange(e, editor);"
@@ -65,7 +73,7 @@ div.main-content
             trix-attachment-add="vm.AttachmentAdd(e, editor);"
             trix-attachment-remove="vm.trixAttachmentRemove(e, editor);"
             prevent-trix-file-accept="false"
-            placeholder="That's title above, add more here. . ."
+            placeholder="That's title above, add more note here. . ."
           )
 
         lx-select(style="padding: 1em 1.4em 0;"
@@ -95,6 +103,16 @@ div.main-content
       )
 
     .controls(ng-show="vm.show")
+      lx-button.mr10(
+        lx-type="icon"
+        lx-color="black"
+        title="Change Width"
+        ng-click="vm.ChangeEditorWidth()"
+        class="--is-desktop"
+        ng-class="vm.editorWidthClass"
+      )
+        i.mdi(class="mdi-arrow-{{ vm.editorWidthClass == 'expand-editor' ? 'collapse' : 'expand' }}")
+
       lx-button.mr10(
         lx-type="icon"
         lx-color="black"
@@ -135,8 +153,8 @@ div.main-content
     div.sugg-note-status(ng-if="Note.is_shared_with")
       span
         a(
-          title="Shared 'Private' by {{ Note.sharer.name }} at {{ Note.props.shared_at | date : 'MMM d, h:mm a' }}"
-        ) {{ Note.sharer.name | splitWord }} shared with you
+          title="Shared 'Private' by {{ Note.shared_by.name }} at {{ Note.props.shared_at | date : 'MMM d, h:mm a' }}"
+        ) {{ Note.shared_by.name | splitWord }} shared with you
 
     div.sugg-note-status(ng-if="(Note.metadata.share_with || Note.metadata.is_public) && !Note.is_shared_with")
       span

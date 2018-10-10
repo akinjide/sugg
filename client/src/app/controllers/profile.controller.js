@@ -10,6 +10,7 @@
       vm.currentUser = vm._main.currentUser;
     }
 
+    vm.IncludeEmail = IncludeEmail;
     vm.Deactivate = Deactivate;
     vm.Logout = Logout;
     vm.invalidEmail = 'Your ' + vm.currentUser.provider + ' account has no email.';
@@ -33,16 +34,25 @@
     /////////////////////
 
 
+    function IncludeEmail(uid, mail) {
+      User.addEmail(uid, mail)
+        .then(function() {
+          Notification.notify('simple', Response.success['auth.email.update']);
+        })
+        .catch(function() {
+          Notification.notify('error', Response.error['server.internal']);
+        });
+    }
+
     function Deactivate(uid) {
       User.remove(uid)
         .then(function() {
+          Logout();
           Notification.notify('simple', Response.warn['auth.deactivated']);
         })
         .catch(function() {
           Notification.notify('error', Response.error['server.internal']);
         });
-
-        $state.go('login');
     }
 
 

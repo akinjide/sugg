@@ -44,6 +44,7 @@
     vm.ShowTags = false;
     vm.shareLoading = true;
     vm.flags = featureFlag;
+    vm.editorWidthClass = 'collapse-editor';
     vm.isMobile = (window.innerWidth <= MAX_WIDTH_MOBILE);
 
     var defaultNote = {
@@ -76,6 +77,7 @@
     vm.transformNewTag = transformNewTag;
     vm.ShowTags = ShowTags;
     vm.RemoveTag = RemoveTag;
+    vm.ChangeEditorWidth = ChangeEditorWidth;
 
     if (vm.isLoggedIn) {
       vm.currentUser = vm._main.currentUser;
@@ -107,6 +109,19 @@
     cfpLoadingBar.start();
     activate();
 
+
+    function ChangeEditorWidth() {
+      switch (vm.editorWidthClass) {
+        case 'collapse-editor':
+          vm.editorWidthClass = 'expand-editor';
+          break;
+
+        case 'expand-editor':
+          vm.editorWidthClass = 'collapse-editor';
+          break;
+
+      }
+    }
 
     function activate() {
       var promises = [
@@ -261,35 +276,74 @@
             });
         }
       } else {
-          Notification.notify('error', Response.error['note.delete']);
+        Notification.notify('error', Response.error['note.delete']);
       }
     }
 
-    // TODO: remove shared when marked use Remove method maybe?
+    // TODO: allow delete user account and all notes attached.
     function RemoveMarked() {
       var uid = vm.currentUser.$id;
-      var promises = [];
 
-      for (var i = 0; i < vm.removeQueue.length; i++) {
-        promises.push(
-          Note.remove(
-            uid,
-            vm.removeQueue[i].note.metadata.note_id,
-            vm.removeQueue[i].note.metadata.$id
+      function QueuedRemove(callback) {
+        var outerPromises = [];
+        var innerPromises;
+
+        for (var i = 0; i < vm.removeQueue.length; i++) {
+          innerPromises = [];
+
+          if (vm.removeQueue[i].note.metadata && vm.removeQueue[i].note.metadata.share_with) {
+            var shareWithIds = _.keys(vm.removeQueue[i].note.metadata.share_with);
+
+            for (var j = 0; j < shareWithIds.length; j++) {
+              var shareWithMe = _.pick(vm.removeQueue[i].note.metadata.share_with, [shareWithIds[j]]);
+              var sharedWithMeId = shareWithMe[shareWithIds[j]].share_id;
+
+              innerPromises.push(
+                Note.removeShare(
+                  uid,
+                  vm.removeQueue[i].note.metadata.note_id,
+                  vm.removeQueue[i].note.metadata.$id,
+                  shareWithIds[j],
+                  sharedWithMeId
+                )
+              )
+            }
+          }
+
+          outerPromises.push(
+            Note.remove(
+              uid,
+              vm.removeQueue[i].note.metadata.note_id,
+              vm.removeQueue[i].note.metadata.$id
+            )
           )
-        )
+
+          var promises = $q.all(innerPromises);
+
+          if (vm.removeQueue.length == (i + 1)) {
+            promises
+              .then(function(data) {
+                callback(null, outerPromises);
+              })
+              .catch(function(error) {
+                Notification.notify('error', Response.error['note.delete']);
+              });
+          }
+        }
       }
 
-      $q.all(promises)
-        .then(function(data) {
-          vm.removeQueue = [];
-          Notification.notify('simple', Response.success['note.bulk.delete']);
-          Note.sync(uid);
-          Reload();
-        })
-        .catch(function(error) {
-          Notification.notify('error', Response.error['note.bulk.delete']);
-        });
+      QueuedRemove(function(error, promises) {
+        $q.all(promises)
+          .then(function(data) {
+            vm.removeQueue = [];
+            Notification.notify('simple', Response.success['note.bulk.delete']);
+            Note.sync(uid);
+            Reload();
+          })
+          .catch(function(error) {
+            Notification.notify('error', Response.error['note.bulk.delete']);
+          });
+      });
     }
 
 

@@ -13,10 +13,11 @@ angular
           'note.rename': 'Note renamed',
           'note.delete': 'Note deleted',
           'note.bulk.delete': 'Notes deleted',
-          'auth.logout': 'Successfully signed out'
+          'auth.logout': 'Successfully signed out',
+          'auth.email.update': 'Successfully added email'
         },
         error: {
-          'auth.deactivated': 'Login failed. This account has been deactivated. Contact Support.',
+          'auth.deactivated': 'Login failed. This account has been deactivated and scheduled for deletion. Contact Support.',
           'auth.login': 'Login failed. Try again',
           'auth.cancel': 'You cancelled authentication.',
           'auth.invalid': 'Invalid credentials',
@@ -37,7 +38,7 @@ angular
         warn: {
           'auth.required': 'Please Login And Try again',
           'copy.not_supported': 'Copy to clipboard not supported',
-          'auth.deactivated': 'Account deactivate successfully. :( Sad to see you leave'
+          'auth.deactivated': 'Account deactivate and scheduled for deletion successfully. :( Sad to see you leave',
         }
       };
   }]);
