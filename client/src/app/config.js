@@ -1,6 +1,6 @@
 angular
   .module('sugg.config')
-  .constant('version', '0.14')
+  .constant('version', '0.22')
   .constant('keys', {
     firebase: (function() {
       var hostname = window.location.host;

@@ -17,7 +17,7 @@
             if (err) {
               Notification.notify('error', Response.error['auth.login']);
             } else {
-              if (!data.is_active) {
+              if (data.is_active !== undefined && !data.is_active) {
                 Authentication.logout();
                 return Notification.notify('error', Response.error['auth.deactivated']);
               }

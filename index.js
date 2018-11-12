@@ -85,13 +85,15 @@ function run(appDir, rootRef) {
 
   app.sugg.keepAlive = keepAlive;
   function keepAlive() {
-    var PING_INTERVAL =  25 * 60 * 1000;
+    if (process.env.NODE_ENV != 'development') {
+      var PING_INTERVAL =  25 * 60 * 1000;
 
-    return setInterval(function() {
-      request('http://www.sugg.xyz/v1/ping', function(error, response, body) {
-        console.log('PING, %s=%s', PING_INTERVAL, body);
-      });
-    }, PING_INTERVAL);
+      return setInterval(function() {
+        request('http://www.sugg.xyz/v1/ping', function(error, response, body) {
+          console.log('PING, %s=%s', PING_INTERVAL, body);
+        });
+      }, PING_INTERVAL);
+    }
   }
 
   // Error handling catch 404 and forward to error handler
