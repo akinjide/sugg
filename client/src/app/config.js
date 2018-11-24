@@ -30,5 +30,6 @@ angular
       view: true,
     },
     share: true,
-    notification: true
+    notification: true,
+    maintenance: false
   });

@@ -192,11 +192,7 @@ div.main-content
       h5.text-muted
         strong.italic(
           title="Created {{ Note.metadata.created | date : 'MMM d, h:mm a' }}") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }}
-      p(ng-text-truncate="Note.content"
-        ng-tt-chars-threshold="755"
-        ng-tt-more-label="show more"
-        ng-tt-less-label="show less"
-      )
+      p(ng-bind-html="Note.content")
 
       .colors(ng-class="{ active: noteColors }" ng-mouseleave="noteColors = false")
         .color(
