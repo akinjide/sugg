@@ -109,6 +109,7 @@ div.main-content
         title="Change Width"
         ng-click="vm.ChangeEditorWidth()"
         class="--is-desktop"
+        ng-if="vm.flags.expand"
         ng-class="vm.editorWidthClass"
       )
         i.mdi(class="mdi-arrow-{{ vm.editorWidthClass == 'expand-editor' ? 'collapse' : 'expand' }}")
@@ -192,7 +193,8 @@ div.main-content
       h5.text-muted
         strong.italic(
           title="Created {{ Note.metadata.created | date : 'MMM d, h:mm a' }}") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }}
-      p(ng-bind-html="Note.content")
+      p(class="content" ng-if="!Note.metadata.share_with" ng-bind-html="Note.content | cut: true : 500 : vm.isMobile")
+      p(class="content mb10" ng-if="Note.metadata.share_with" ng-bind-html="Note.content")
 
       .colors(ng-class="{ active: noteColors }" ng-mouseleave="noteColors = false")
         .color(
