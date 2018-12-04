@@ -30,7 +30,6 @@ require('./directives/preloader.directive.js');
 require('./directives/slideToggle.directive.js');
 require('./directives/masonry.directive.js');
 require('./directives/contenteditable.directive.js');
-require('./directives/texttruncate.directive.js');
 
 require('./controllers/authentication.controller.js');
 require('./controllers/notes.controller.js');
@@ -42,6 +41,7 @@ require('./filters/word.filter.js');
 require('./filters/capitalize.filter.js');
 require('./filters/tag.filter.js');
 require('./filters/initials.filter.js');
+require('./filters/cut.filter.js');
 
 window.sugg = angular.module('sugg', [
   'angular-clipboard',

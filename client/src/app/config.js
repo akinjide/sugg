@@ -18,6 +18,7 @@ angular
   .constant('featureFlag', {
     tags: false,
     upload: false,
+    expand: false,
     social: {
       twitter: false,
       facebook: true,
