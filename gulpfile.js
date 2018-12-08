@@ -352,7 +352,7 @@ gulp.task('setup', $.shell.task([
   'npm install'
 ]));
 
-gulp.task('build', ['jade', 'sass', 'assets', 'compress', 'js'], function() {
+gulp.task('build', ['jade', 'sass', 'assets', 'compress'], function() {
   log('Building everything');
 
   var msg = {
