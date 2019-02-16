@@ -46,7 +46,10 @@ var paths = {
     root: config.src + 'styles/',
     combined_glob: config.src + 'styles/*.sass', // base dir only
     watcher_glob: config.src + 'styles/**/*.sass',
-    vendor_glob: config.src + 'styles/vendor/**/*.css'
+  },
+  css: {
+    // vendor_glob: config.src + 'styles/vendor/**/*.css',
+    vendor: config.src + 'styles/vendor.js'
   },
   jade: {
     root: config.src + 'index.jade',
@@ -57,7 +60,7 @@ var paths = {
   files: {
     video_glob: config.src + 'videos/**/*.' + config.extensions,
     image_glob: config.src + 'images/**/*.' + config.extensions,
-    font_glob: config.src + 'fonts/**/*.' + config.extensions
+    font_glob: 'client/public/lib/lumx/dist/fonts/*.' + config.extensions
   },
   reload_globs: [
     config.public + '**/*.html',
@@ -103,9 +106,11 @@ gulp.task('css-vendor-combined', function () {
   var out = config.public + 'styles';
   var filename = 'vendor.css';
 
-  return gulp.src(paths.sass.vendor_glob)
+  return gulp.src(require('./' + paths.css.vendor))
     .pipe($.concat(filename))
+    .pipe($.sourcemaps.init())
     .pipe($.cssnano())
+    .pipe($.sourcemaps.write('.'))
     .pipe($.rename({ suffix: '.min' }))
     .pipe($.cleanDest(out))
     .pipe(gulp.dest(out))
@@ -224,7 +229,7 @@ gulp.task('images', function() {
 });
 
 gulp.task('fonts', function() {
-  var out = config.public + 'fonts';
+  var out = config.public + 'styles/fonts';
 
   log('Copying fonts');
   return gulp.src(paths.files.font_glob)
