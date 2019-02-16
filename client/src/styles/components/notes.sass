@@ -1,13 +1,12 @@
-.col-masonry:hover > .sugg-checkbox,
-.col-masonry:hover .box-placeholder > .sugg-icons-container
-    :opacity 1
+.col-masonry:hover > .sugg-checkbox.--is-desktop
+  :opacity 1
 
 .box-placeholder
   :margin-bottom 12px
-  :padding 8px 12px
+  :padding 40px
   :position relative
-  :box-shadow 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12)
-  :border-radius 2px
+  :border 1px solid rgba(27, 31, 35, 0.1)
+  :border-radius 16px
   :background $white
   :color rgba(0, 0, 0, .87)
   :transition-duration .218s
@@ -15,11 +14,13 @@
   :transition-timing-function ease-in
 
   &:hover
-    :box-shadow 0 1px 3px 0 rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 2px 1px -1px rgba(0, 0, 0, .12)
+    :border 1px solid rgba(27, 31, 35, 0.1)
 
   & > p
     :font-family $slabFF
     :word-break break-all
+    :margin-top 20px
+    :margin-bottom 10px
 
   & > p ul,
   & > p ol
@@ -44,16 +45,24 @@
 
   h3
     :color rgba(0, 0, 0, .87)
-    :font-size 17px
+    :font-size 20px
     :word-break break-all
 
   h5
-    :color rgba(0, 0, 0, .54)
+    :margin-right 5px
+    :font-size 13px
+    :display inline-block
+    :border-radius 20px
+    :border 1px solid rgba(27,31,35,0.1)
+    :padding 8px 10px
+    :color #FFF
+    :background rgba(0, 0, 0, 0.7)
 
   .colors
     :bottom 40px
     :left 0
     :position absolute
+    :border-radius 14px
 
 .row-masonry
   :position relative
@@ -82,7 +91,7 @@
 .list
   :margin 0 auto
   :min-width 240px
-  :max-width 632px
+  :max-width 532px
   :width auto
 
 .brick
@@ -93,38 +102,46 @@
   :width auto
 
 .sugg-note-status
-  :position absolute
-  :right 10px
-  :top 10px
+  :margin 10px 5px 0 0
   :z-index 201
+  :display inline-block
+
+  span
+    :border-radius 20px
+    :border 1px solid rgba(27,31,35,0.1)
+    :padding 8px 10px
+    :margin 0
+    :color #FFF
+    :background rgba(0, 0, 0, 0.7)
+
+  span i
+    :font-size 16px
+    :position relative
+    :top 2px
 
   span a
-    :margin-left 4px
-    :padding 2px 5px
-    :font-size 12px
+    :margin-left 2px
+    :padding 2px 3px
     :font-weight 600
     :cursor pointer
-    :border 1px solid rgba(27, 31, 35, 0.1)
-    :border-radius 3px
-    :color #586069
-
-.sugg-icons-container
-  :opacity 0
-  :transition opacity .218s linear
+    :color #FFF
+    :font-size 13px
 
 .sugg-checkbox
   :position absolute
-  :opacity 0
-  :transition opacity .218s linear
   :z-index 999
-  :transform translate(-10px, -10px)
+  :transform translate(8px, 8px)
 
   &:hover
     :cursor pointer
 
-  &.selected
-    // :background #f3f3f3
+  &.selected,
+  &.selected.--is-desktop
     :opacity 1
+
+  &.--is-desktop
+    :opacity 0
+    :transition opacity .218s linear
 
   label
     :cursor pointer
@@ -139,13 +156,12 @@
       :-moz-osx-font-smoothing grayscale
       :width 24px
       :height 24px
-      :border 2px solid transparent
-      :box-shadow 0 1px 1px 1px rgba(0, 0, 0, .1)
+      :border 1px solid rgba(27, 31, 35, 0.1)
       :border-radius 100%
       :vertical-align middle
       :color #000
       :text-align center
-      :line-height 1.10em
+      :line-height 1.3em
       :transition transform 0.2s ease-in-out
       :position absolute
       :top 0
@@ -153,16 +169,19 @@
       :background-color $white
 
 input[type=checkbox]:checked + label:before
-  :background #6f6f6f
+  :background $black
   :color $white
   :text-align center
-  :line-height 1.2em
+  :line-height 1.3em
   :content "\F156"
   :font-size 17px
   :opacity 1
 
 input[type=checkbox]
   :visibility hidden
+
+.dialog.dialog--is-shown
+  :border-radius 16px
 
 .dialog__header
   .dialog__header__content
@@ -184,6 +203,10 @@ input[type=checkbox]
       :padding 10px 0 10px 25px
 
 .dialog__footer
+  h5
+    :position absolute
+    :left 20px
+
   h5 > span
     :font-weight lighter
 
