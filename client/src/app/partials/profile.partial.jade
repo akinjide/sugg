@@ -1,48 +1,50 @@
 div.profile-main(flex-container="row" flex-column="12" flex-align="center center")
 
-  div(flex-item="1")
-    div.profile-img-container
-      span(ng-if="!vm.currentUser.image_url" style="font-size: 80px; padding: 8px 25px; box-shadow: 0 0 0 1px rgba(31,53,78,0.11), 0 2px 5px rgba(0,0,0,0.05);") {{ vm.currentUser.name | initials }}
-      img(
-        ng-if="vm.currentUser.image_url"
-        ng-src="{{ vm.currentUser.image_url }}"
-        alt="{{ vm.currentUser.name }} Profile Picture"
-        lx-ripple
-        title="{{ vm.currentUser.name }}")
+  div(class="p+")
+    div.card
+      div(flex-container="row")
+        div(class="card__img card__img--left --is-desktop")
+          span(ng-if="!vm.currentUser.image") {{ vm.currentUser.name | initials }}
+          img(
+            ng-if="vm.currentUser.image"
+            ng-src="{{ vm.currentUser.image }}"
+            alt="{{ vm.currentUser.name }} Profile Picture"
+            lx-ripple
+            title="{{ vm.currentUser.name }}")
 
-  div.profile-details(flex-item="3")
-    div(class="p+")
-      h1 {{ vm.currentUser.name }}
+        div(flex-item flex-container="column" style="font-size: 16px")
+          div(flex-item)
+            div(class="p+")
+              lx-text-field(lx-label="Display name" ng-disabled="true")
+                input(type="text" ng-model="vm.currentUser.name")
 
-      div.p10(ng-if="vm.currentUser.email")
-        h3 {{ vm.currentUser.email }}
-        span
-          em email allows private sharing on sugg.
+              lx-text-field(lx-label="Email" ng-disabled="vm.currentUser.email")
+                input(type="email" ng-model="vm.currentUser.email")
 
-      div.p10(ng-if="!vm.currentUser.email")
-        h3 {{ vm.invalidEmail }}
-        span
-          em private sharing on sugg is disabled. :(
+              div(flex-container="row" flex-gutter="24" class="pt")
+                span.p10(class="fs-body-2 tc-black-2 display-block") Joined
+                  strong  {{ vm.currentUser.created | date : "MMM d, yyyy 'at' h:mm a"}}
 
-      div(class="pt")
-        span Joined
-          strong  {{ vm.currentUser.created | date : "MMM d, yyyy 'at' h:mm a"}}
+                span.p10(class="fs-body-2 tc-black-2 display-block") Last Seen
+                  strong(ng-if="vm.currentUser.updated")  {{ vm.currentUser.updated | date : "MMM d, yyyy 'at' h:mm a"}}
+                  strong(ng-if="!vm.currentUser.updated")  Today
 
-        br
+          div.text-right(class="card__actions")
+            span.pr
+              lx-button(
+                lx-color="black"
+                lx-type="flat"
+                ng-click="vm.Logout()") Sign Out
 
-        span Last Seen
-          strong(ng-if="vm.currentUser.updated")  {{ vm.currentUser.updated | date : "MMM d, yyyy 'at' h:mm a"}}
-          strong(ng-if="!vm.currentUser.updated")  Today
+            span.pr
+              lx-button(
+                ng-if="!vm.currentUser.email"
+                lx-color="blue"
+                lx-type="flat"
+                ng-click="vm.IncludeEmail(vm.currentUser.$id, vm.currentUser.email)") Update
 
-      div(class="pt+")
-        span.pr(class="--is-desktop")
-          lx-button.br20(
-            lx-color="red"
-            lx-type="raised"
-            ng-click="vm.Deactivate(vm.currentUser.$id)") Deactivate Account
-
-        span.pr
-          lx-button.br20(
-            lx-color="white"
-            lx-type="raised"
-            ng-click="vm.Logout()") Sign Out
+            span.pr(class="--is-desktop")
+              lx-button(
+                lx-color="red"
+                lx-type="flat"
+                ng-click="vm.Deactivate(vm.currentUser.$id)") Deactivate Account

@@ -21,19 +21,15 @@
           | you can sign up via your social network
         ul
           each social_network in ['facebook', 'twitter', 'google']
-            li(ng-if="vm.flags['#{social_network}']")
+            li(ng-if="vm.flags.login.social['#{social_network}']")
               button(
                 class="btn btn--m btn--blue btn--raised #{social_network}"
                 lx-ripple
                 title="#{social_network}"
-                ng-click="vm.Login('#{social_network}')")
+                ng-click="vm.Login('#{social_network}.com')")
 
                 span.icon
-                  if social_network === 'google'
-                    i(class="fa fa-#{social_network}-plus")
-                    p #{social_network}
-                  else
-                    i(class="fa fa-#{social_network}")
-                    p #{social_network}
+                  i(class="mdi mdi-#{social_network}")
+                  p #{social_network}
 
       a(ui-sref="legal" style="font-size: 14px; text-decoration: underline;") Privacy Policy

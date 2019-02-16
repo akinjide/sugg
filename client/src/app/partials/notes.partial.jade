@@ -38,7 +38,6 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
       )
         i.mdi.mdi-delete
 
-
 div.main-content
   .card.card-content(
     ng-mouseleave="Colors = false"
@@ -69,15 +68,15 @@ div.main-content
             trix-selection-change="vm.trixSelectionChange(e, editor);"
             trix-focus="vm.trixFocus(e, editor);"
             trix-blur="vm.trixBlur(e, editor);"
-            trix-file-accept="vm.trixFileAccept(e, editor);"
-            trix-attachment-add="vm.AttachmentAdd(e, editor);"
-            trix-attachment-remove="vm.trixAttachmentRemove(e, editor);"
+            trix-file-accept="vm.fileAccept(e, editor);"
+            trix-attachment-add="vm.uploadDrop(e, editor);"
+            trix-attachment-remove="vm.removeUpload(e, editor);"
             prevent-trix-file-accept="false"
             placeholder="That's title above, add more note here. . ."
           )
 
         lx-select(style="padding: 1em 1.4em 0;"
-          ng-if="vm.initTags && vm.flags.tags"
+          ng-if="vm.initTags && vm.flags.note.tags"
           ng-model="vm.note.tags"
           lx-choices="vm.Tags"
           lx-display-filter="true"
@@ -109,7 +108,7 @@ div.main-content
         title="Change Width"
         ng-click="vm.ChangeEditorWidth()"
         class="--is-desktop"
-        ng-if="vm.flags.expand"
+        ng-if="vm.flags.note.expand"
         ng-class="vm.editorWidthClass"
       )
         i.mdi(class="mdi-arrow-{{ vm.editorWidthClass == 'expand-editor' ? 'collapse' : 'expand' }}")
@@ -126,8 +125,8 @@ div.main-content
         lx-type="icon"
         lx-color="black"
         title="Add Image"
-        ng-if="vm.flags.upload"
-        disabled
+        ng-if="vm.flags.note.upload"
+        ngf-select="vm.uploadPick($file)"
       )
         i.mdi.mdi-image
 
@@ -135,7 +134,7 @@ div.main-content
         lx-type="icon"
         lx-color="black"
         title="Add Tag"
-        ng-if="vm.flags.tags"
+        ng-if="vm.flags.note.tags"
         ng-click="vm.initTags = !vm.initTags"
       )
         i.mdi.mdi-label
@@ -150,27 +149,12 @@ div.main-content
 
 
 .sugg-notes.row-masonry(class="{{ vm.View }}")
-  div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy:'-metadata.updated' | filter: vm.Search")
-    div.sugg-note-status(ng-if="Note.is_shared_with")
-      span
-        a(
-          title="Shared 'Private' by {{ Note.shared_by.name }} at {{ Note.props.shared_at | date : 'MMM d, h:mm a' }}"
-        ) {{ Note.shared_by.name | splitWord }} shared with you
+  div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy: ['metadata.is_pin', '-metadata.updated'] | filter: vm.Search")
 
-    div.sugg-note-status(ng-if="(Note.metadata.share_with || Note.metadata.is_public) && !Note.is_shared_with")
-      span
-        a(ng-if="Note.metadata.share_with"
-          title="Shared 'Private'"
-          ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, true)"
-        ) Only specific people can view
-
-      span
-        a(ng-if="Note.metadata.is_public"
-          title="Shared 'Public'"
-          ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, false)"
-        ) Anyone with link can view
-
-    .sugg-checkbox(class="{{ (vm.isMarked && Note.Selected) ?'selected' :'' }}" ng-if="!Note.is_shared_with")
+    .sugg-checkbox(class="{{ (vm.isMarked && Note.Selected) ? 'selected' : '' }}"
+      ng-if="!Note.is_shared_with"
+      ng-class="{ '--is-desktop': !vm.isMobile }"
+    )
       input(
         type="checkbox"
         class="checkbox"
@@ -185,16 +169,47 @@ div.main-content
       class="{{ Note.settings.color }}"
       ng-class="{ pt40: (Note.is_shared_with || Note.metadata.is_public || Note.metadata.share_with) && vm.isMobile }"
       ng-mouseleave="noteColors = false"
-      ng-dblclick="!Note.is_shared_with && vm.Edit(Note, false)"
     )
 
-      h3.text-muted
-        strong(ng-bind-html="Note.metadata.title")
-      h5.text-muted
-        strong.italic(
-          title="Created {{ Note.metadata.created | date : 'MMM d, h:mm a' }}") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }}
-      p(class="content" ng-if="!Note.metadata.share_with" ng-bind-html="Note.content | cut: true : 500 : vm.isMobile")
-      p(class="content mb10" ng-if="Note.metadata.share_with" ng-bind-html="Note.content")
+      h3.text-muted(
+        ng-click="!Note.is_shared_with && vm.Edit(Note, false)"
+        style="cursor: pointer")
+        strong(ng-bind-html="Note.metadata.title || 'Untitled'")
+
+      div
+        h5
+          strong(
+            title="Created {{ Note.metadata.created | date : 'MMM d, h:mm a' }}") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }}
+
+        div.sugg-note-status(ng-if="Note.is_shared_with")
+          span(style="background: rgba(33, 150, 243, 0.80);")
+            i.mdi(class="mdi-account-multiple")
+            a(title="Shared 'Private' by {{ Note.shared_by.name }} at {{ Note.props.shared_at | date : 'MMM d, h:mm a' }}"
+            ) {{ Note.shared_by.name | splitWord }} shared with you
+
+        div.sugg-note-status(ng-if="(Note.metadata.share_with || Note.metadata.is_public) && !Note.is_shared_with")
+          span(ng-if="Note.metadata.share_with" style="background: rgba(33, 150, 243, 0.80);")
+            i.mdi(class="mdi-lock")
+            a(title="Shared 'Private'"
+              ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, true)"
+            ) Only specific people can view
+
+          span(ng-if="Note.metadata.is_public" style="background: rgba(244, 96, 82, 0.80)")
+            i.mdi(class="mdi-lock-open")
+            a(title="Shared 'Public'"
+              ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, false)"
+            ) Anyone with link can view
+
+        div.sugg-note-status(ng-if="Note.metadata.is_pin")
+          span
+            i.mdi(class="mdi-pin")
+            a(title="Note pinned") Pinned
+
+      p(class="content" ng-if="!Note.metadata.share_with || !Note.is_shared_with"
+        ng-bind-html="Note.content | cut: true : 500 : vm.isMobile"
+        ng-click="!Note.is_shared_with && vm.Edit(Note, false)"
+        style="cursor: pointer")
+      p(class="content mb10" ng-if="Note.metadata.share_with && Note.is_shared_with" ng-bind-html="Note.content")
 
       .colors(ng-class="{ active: noteColors }" ng-mouseleave="noteColors = false")
         .color(
@@ -204,7 +219,7 @@ div.main-content
           title="{{ noteColor | capitalize : true }}"
         )
 
-      div(class="mt+" style="flex-wrap: wrap; display: flex;" ng-if="vm.flags.tags")
+      div(class="mt+" style="flex-wrap: wrap; display: flex;" ng-if="vm.flags.note.tags")
         div(
           style="display: inline-block; margin: 6px 6px 0 0; background-color: rgba(0,0,0,0.08); border-radius: 2px; position: relative;"
           ng-repeat="tag in Note.metadata.tags")
@@ -214,6 +229,15 @@ div.main-content
       .sugg-icons-container(ng-hide="Note.is_shared_with")
 
         div(class="--is-mobile" flex-container="row" flex-align="flex-start center" style="margin-top: 20px; display: none;")
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="{{ (Note.metadata.is_pin || Note.settings.is_pin) ? 'Unpin' : 'Pin' }} note"
+            ng-click="vm.ChangeNotePin(Note.metadata.note_id, Note.metadata.$id, Note.settings.is_pin)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-{{ (Note.metadata.is_pin || Note.settings.is_pin) ? 'pin-off' : 'pin' }}")
+
           lx-button.mr8(
             lx-type="icon"
             lx-color="black"
@@ -261,42 +285,6 @@ div.main-content
           )
             i.mdi(class="mdi-pencil")
 
-        div(class="mt8 --is-desktop" flex-container="row" flex-align="flex-start center")
-          lx-button.mr8(
-            lx-type="icon"
-            lx-color="black"
-            title="Change color"
-            ng-click="noteColors =! noteColors"
-          )
-            i.mdi.mdi-palette
-
-          lx-button.mr8(
-            lx-type="icon"
-            lx-color="black"
-            title="{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'Disable' : 'Enable' }} Share"
-            ng-click="vm.ShareNote(Note)"
-          )
-            i.mdi(class="mdi-account-multiple-{{ (Note.metadata.is_public || Note.metadata.share_with) ? 'minus' : 'plus' }}")
-
-          lx-dropdown(lx-position="left" lx-over-toggle="true" lx-width="140")
-            lx-dropdown-toggle
-              lx-button(
-                lx-color="black"
-                lx-type="icon"
-                title="More"
-              )
-                i.mdi.mdi-dots-vertical
-
-            lx-dropdown-menu
-              ul
-                li(ng-hide="vm.CopyNotSupported"): a.dropdown-link(ng-click="vm.Copy(Note.content)") Copy to Clipboard
-                li: a.dropdown-link.add-tag(ng-click="vm.ShowTags(Note, Note.metadata.tags)" ng-if="vm.flags.tags") Add Tag
-                li: a.dropdown-link(ng-if="Note.metadata.share_with" ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, true)") Get shareable link
-                li: a.dropdown-link(ng-if="Note.metadata.is_public" ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, false)") Get shareable link
-                li: a.dropdown-link(ng-click="vm.MakeCopy(Note)") Make a Copy
-                li: a.dropdown-link(ng-click="vm.Edit(Note, false)") Edit note
-                li: a.dropdown-link(ng-click="vm.Remove(Note, Note.metadata.note_id, Note.metadata.$id)") Delete note
-
 
 lx-dialog(id="{{ vm.dialogShareId }}" lx-size="m" class="multi-share")
   lx-dialog-header(style="padding: 0 12px;")
@@ -321,11 +309,11 @@ lx-dialog(id="{{ vm.dialogShareId }}" lx-size="m" class="multi-share")
         li.list-row
           div.list-row__primary
             lx-button(lx-type="icon" lx-size="l" lx-color="white")
-              span(ng-if="!vm.Owner.image_url" style="font-weight: 600; font-weight: 600; font-size: 28px; background: #fff; color: #3c4859; display: block; text-align: center;") {{ vm.Owner.name | initials }}
+              span(ng-if="!vm.Owner.image" style="font-weight: 600; font-weight: 600; font-size: 28px; background: #fff; color: #3c4859; display: block; text-align: center;") {{ vm.Owner.name | initials }}
               img.img-round(
                 title="{{ vm.Owner.name }}"
-                ng-if="vm.Owner.image_url"
-                ng-src="{{ vm.Owner.image_url }}"
+                ng-if="vm.Owner.image"
+                ng-src="{{ vm.Owner.image }}"
                 alt="{{ vm.Owner.name }} Picture"
               )
 
@@ -340,11 +328,11 @@ lx-dialog(id="{{ vm.dialogShareId }}" lx-size="m" class="multi-share")
             div.chip.chip--is-contact.chip--is-deletable.mr(
               ng-click="vm.RemoveShareWithUser(shared_with, vm.currentNote)")
               div.chip__contact
-                span(ng-if="!shared_with.image_url" style="font-weight: 600; font-weight: 600; font-size: 28px; background: #fff; color: #3c4859; display: block; text-align: center;") {{ shared_with.name | initials }}
+                span(ng-if="!shared_with.image" style="font-weight: 600; font-weight: 600; font-size: 28px; background: #fff; color: #3c4859; display: block; text-align: center;") {{ shared_with.name | initials }}
                 img.img-round(
                   alt="{{ shared_with.name }} Picture"
-                  ng-if="shared_with.image_url"
-                  ng-src="{{ shared_with.image_url }}"
+                  ng-if="shared_with.image"
+                  ng-src="{{ shared_with.image }}"
                   title="{{ shared_with.name }}"
                 )
 
@@ -379,7 +367,11 @@ lx-dialog(id="{{ vm.dialogShareId }}" lx-size="m" class="multi-share")
     ) Done
 
 
-lx-dialog(id="{{ vm.dialogEditId }}" lx-size="m" class="{{ vm.editNote.settings.color }}")
+lx-dialog(id="{{ vm.dialogEditId }}"
+  lx-size="m"
+  class="{{ vm.editNote.settings.color }}"
+  ng-mouseleave="editNoteColors = false")
+
   lx-dialog-header
     div.toolbar(class="{{ vm.editNote.settings.color }} dialog__header__content")
       h2(class="tc-black-1")
@@ -397,19 +389,94 @@ lx-dialog(id="{{ vm.dialogEditId }}" lx-size="m" class="{{ vm.editNote.settings.
         ng-model-options="{ updateOn: 'blur' }"
         spellcheck="false"
         trix-initialize="vm.initializeEdit(e, editor);"
-        prevent-trix-file-accept = "true"
+        trix-change="vm.trixChange(e, editor);"
+        trix-selection-change="vm.trixSelectionChange(e, editor);"
+        trix-focus="vm.trixFocus(e, editor);"
+        trix-blur="vm.trixBlur(e, editor);"
+        trix-file-accept="vm.fileAccept(e, editor);"
+        trix-attachment-add="vm.uploadDrop(e, editor);"
+        trix-attachment-remove="vm.removeUpload(e, editor);"
+        prevent-trix-file-accept="false"
         class="tc-black-1 dialog__body__content {{ vm.editNote.settings.color }}"
       )
 
   lx-dialog-footer(class="{{ vm.editNote.settings.color }}")
-    h5.left.m10(class="tc-black-1")
+    h5.left.mt15(class="tc-black-1")
       span.italic(
         title="Created {{ vm.editNote.metadata.created | date : 'MMM d, h:mm a' }}") Edited {{ vm.editNote.metadata.updated | date : 'MMM d, h:mm a' }}
+
+
+    .colors(ng-class="{ active: editNoteColors }" ng-mouseleave="editNoteColors = false" style="bottom: 40px; left: 110px; position: absolute;")
+      .color(
+        ng-repeat="noteColor in vm.NoteColors"
+        class="{{ noteColor }} color-{{ $index }} {{ ((vm.editNote.settings.color == noteColor) == true) ?'active' :'' }}"
+        ng-click="vm.ChangeNoteColor(vm.editNote.metadata.note_id, vm.editNote.metadata.$id, noteColor); vm.editNote.settings.color = noteColor"
+        title="{{ noteColor | capitalize : true }}"
+      )
+
+    .sugg-icons-container(ng-hide="vm.editNote.is_shared_with")
+
+      div(class="--is-desktop" flex-container="row" flex-align="flex-start center")
+        lx-button(
+          lx-type="icon"
+          lx-color="black"
+          lx-size="l"
+          title="{{ (vm.editNote.metadata.is_pin || vm.editNote.settings.is_pin) ? 'Unpin' : 'Pin' }} note"
+          ng-click="vm.ChangeNotePin(vm.editNote.metadata.note_id, vm.editNote.metadata.$id, vm.editNote.settings.is_pin)"
+        )
+          i.mdi(class="mdi-{{ (vm.editNote.metadata.is_pin || vm.editNote.settings.is_pin) ? 'pin-off' : 'pin' }}")
+
+        lx-button(
+          lx-type="icon"
+          lx-color="black"
+          lx-size="l"
+          title="Change color"
+          ng-click="editNoteColors =! editNoteColors"
+        )
+          i.mdi.mdi-palette
+
+        lx-button(
+          lx-type="icon"
+          lx-color="black"
+          lx-size="l"
+          title="Add Image"
+          ng-if="vm.flags.note.upload"
+          ngf-select="vm.uploadPick($file, '.dialog__body__content')"
+        )
+          i.mdi.mdi-image
+
+        lx-button(
+          lx-type="icon"
+          lx-color="black"
+          lx-size="l"
+          title="{{ (vm.editNote.metadata.is_public || vm.editNote.metadata.share_with) ? 'Disable' : 'Enable' }} Share"
+          ng-click="vm.ShareNote(vm.editNote)"
+        )
+          i.mdi(class="mdi-account-multiple-{{ (vm.editNote.metadata.is_public || vm.editNote.metadata.share_with) ? 'minus' : 'plus' }}")
+
+        lx-dropdown(lx-position="left" lx-over-toggle="true" lx-width="140" lx-effect="none")
+          lx-dropdown-toggle
+            lx-button(
+              lx-color="black"
+              lx-type="icon"
+              lx-size="l"
+              title="More"
+            )
+              i.mdi.mdi-dots-vertical
+
+          lx-dropdown-menu
+            ul
+              li(ng-hide="vm.CopyNotSupported"): a.dropdown-link(ng-click="vm.Copy(vm.editNote.content)") Copy to Clipboard
+              li: a.dropdown-link.add-tag(ng-click="vm.ShowTags(vm.editNote, vm.editNote.metadata.tags)" ng-if="vm.flags.note.tags") Add Tag
+              li: a.dropdown-link(ng-if="vm.editNote.metadata.share_with" ng-click="vm.CopyShareLink(vm.editNote.$id, vm.editNote.metadata.$id, true)") Get shareable link
+              li: a.dropdown-link(ng-if="vm.editNote.metadata.is_public" ng-click="vm.CopyShareLink(vm.editNote.$id, vm.editNote.metadata.$id, false)") Get shareable link
+              li: a.dropdown-link(ng-click="vm.MakeCopy(vm.editNote)") Make a Copy
+              li: a.dropdown-link(ng-click="vm.Remove(vm.editNote, vm.editNote.metadata.note_id, vm.editNote.metadata.$id)") Delete note
 
     lx-button(
       lx-color="black"
       lx-type="flat"
-      lx-size="s"
+      lx-size="m"
       lx-dialog-close
       title="Save Note"
       ng-click="vm.Edit(vm.editNote, true, vm.edited)"
