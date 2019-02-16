@@ -4,39 +4,41 @@ angular
   .module('sugg.services')
   .factory('Settings', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
     function(Refs, $q, $firebaseArray, $firebaseObject) {
-      var time = Firebase.ServerValue.TIMESTAMP;
-
       return {
         add: function(uid, options) {
           var deferred = $q.defer();
+          var time = firebase.database.ServerValue.TIMESTAMP;
           var newOptions = {};
           var userSettings = $firebaseObject(Refs.settings.child(uid));
 
-          userSettings.$loaded().then(function() {
-            if (userSettings.id === undefined) {
+          userSettings
+            .$loaded()
+            .then(function() {
+              if (userSettings.id === undefined) {
+                newOptions = options;
+                newOptions.created = time;
+                newOptions.updated = time;
 
-              newOptions = options;
-              newOptions.created = time;
-              newOptions.updated = time;
+                userSettings
+                  .$ref()
+                  .set(newOptions);
+              } else {
+                // this.update(userSettings.$id, options);
+              }
 
-              userSettings.$ref().set(newOptions);
-            } else {
-              // this.update(userSettings.$id, options);
-            }
-
-            deferred.resolve(userSettings);
-          }.bind(this)).catch(function(error) {
-            deferred.reject(error);
-          });
+              deferred.resolve(userSettings);
+            }.bind(this))
+            .catch(deferred.reject);
 
           return deferred.promise;
         },
 
         update: function(uid, options) {
           var deferred = $q.defer();
-          var data = $firebaseObject(Refs.settings.child(uid));
+          var time = firebase.database.ServerValue.TIMESTAMP;
 
-          data.$loaded()
+          $firebaseObject(Refs.settings.child(uid))
+            .$loaded()
             .then(function(settings) {
               if (options.default_layout) {
                 settings.default_layout = options.default_layout;
@@ -47,29 +49,21 @@ angular
               }
 
               settings.updated = time;
-              settings.$save().then(function(ref) {
-                deferred.resolve(ref);
-              })
-              .catch(function(error) {
-                deferred.reject(error);
-              });
+              return settings.$save()
             })
-            .catch(function(error) {
-              deferred.reject(error);
-            });
+            .then(deferred.resolve)
+            .catch(deferred.reject);
+
+          return deferred.promise;
         },
 
         find: function(uid) {
           var deferred = $q.defer();
-          var data = $firebaseObject(Refs.settings.child(uid));
 
-          data.$loaded()
-            .then(function(settings) {
-              deferred.resolve(settings);
-            })
-            .catch(function(error) {
-              deferred.reject(error);
-            });
+          $firebaseObject(Refs.settings.child(uid))
+            .$loaded()
+            .then(deferred.resolve)
+            .catch(deferred.reject);
 
           return deferred.promise;
         }

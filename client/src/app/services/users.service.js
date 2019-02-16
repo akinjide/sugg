@@ -4,48 +4,52 @@ angular
   .module('sugg.services')
   .factory('User', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
     function(Refs, $q, $firebaseArray, $firebaseObject) {
-      var time = Firebase.ServerValue.TIMESTAMP;
       var user;
 
       return {
-        create: function(authData, cb) {
+        create: function(authData, callback) {
           var newUser = {};
           user = $firebaseObject(Refs.users.child(authData.uid));
 
-          user.$loaded().then(function() {
-            if (user.id === undefined) {
-              if (authData.email) {
-                newUser.email = authData.email;
+          user
+            .$loaded()
+            .then(function() {
+              if (user.id === undefined) {
+                if (authData.email) {
+                  newUser.email = authData.email;
+                }
+
+                newUser.token  = authData.token;
+                newUser.created = authData.created;
+                newUser.image = authData.image;
+                newUser.name = authData.name;
+                newUser.id = authData.id;
+                newUser.is_active = authData.is_active;
+                newUser.is_new = authData.is_new;
+                newUser.suspended = authData.suspended;
+                newUser.provider = authData.provider;
+
+                // save user to firebase collection under the user node
+                user
+                  .$ref()
+                  .set(newUser);
+              } else {
+                return this.update(authData, callback);
               }
 
-              newUser.access_token  = authData.access_token;
-              newUser.created = authData.created;
-              newUser.image_url = authData.image_URL;
-              newUser.name = authData.name;
-              newUser.id = authData.id;
-              newUser.is_active = authData.is_active;
-              newUser.is_new = authData.is_new;
-              newUser.suspended = authData.suspended;
-              newUser.provider = authData.provider;
-
-              // save user to firebase collection under the user node
-              user.$ref().set(newUser);
-            } else {
-              this.update(authData);
-            }
-
-            // ...and we return the user when done
-            return cb(null, user);
-          }.bind(this)).catch(function(error) {
-            cb(error);
-          });
+              // ...and we return the user when done
+              return callback(null, user);
+            }.bind(this))
+            .catch(function(error) {
+              callback(error);
+            });
         },
 
-        update: function(authData) {
-          // update user access token
+        update: function(authData, callback) {
+          // update user information
           if (authData.provider) {
-            user.access_token = authData.access_token;
-            user.image_url = authData.image_URL;
+            user.token = authData.token;
+            user.image = authData.image;
             user.updated = authData.created;
             user.is_new = false;
 
@@ -54,93 +58,67 @@ angular
             }
           }
 
-          user.$save().then(function(ref) {
-            if (ref.key() === user.$id) {
-              // console.info(ref.key() + ' updated');
-            }
-          });
+          user
+            .$save()
+            .then(function(ref) {
+              if (ref.key === user.$id) {
+                callback(null, user);
+              }
+            })
+            .catch(callback);
         },
 
         remove: function(uid) {
           var deferred = $q.defer();
-          var user = $firebaseObject(Refs.users.child(uid));
+          var time = firebase.database.ServerValue.TIMESTAMP;
 
-          user.$loaded().then(function() {
-            user.is_active = false;
-            user.suspended = time;
+          $firebaseObject(Refs.users.child(uid))
+            .$loaded()
+            .then(function() {
+              user.is_active = false;
+              user.suspended = time;
 
-            user.$save().then(function(ref) {
-              if (ref.key() === user.$id) {
-                deferred.resolve({
-                  id: ref.key(),
-                  message: 'user deleted locally and database'
-                });
-              }
+              return user.$save();
             })
-            .catch(function(error) {
-              deferred.reject(error);
-            });
-          })
-          .catch(function(error) {
-            deferred.reject(error);
-          });
+            .then(deferred.resolve)
+            .catch(deferred.reject);
 
           return deferred.promise;
         },
 
         all: function() {
           var deferred = $q.defer();
-          var data = $firebaseArray(Refs.users);
 
-          data.$loaded()
-            .then(function(users) {
-              deferred.resolve(users);
-            })
-            .catch(function(error) {
-              deferred.reject(error);
-            });
+          $firebaseArray(Refs.users)
+            .$loaded()
+            .then(deferred.resolve)
+            .catch(deferred.reject);
 
           return deferred.promise;
         },
 
         find: function(uid) {
           var deferred = $q.defer();
-          var data = $firebaseObject(Refs.users.child(uid));
 
-          data.$loaded()
-            .then(function(user) {
-              deferred.resolve(user);
-            })
-            .catch(function(error) {
-              deferred.reject(error);
-            });
+          $firebaseObject(Refs.users.child(uid))
+            .$loaded()
+            .then(deferred.resolve)
+            .catch(deferred.reject);
 
           return deferred.promise;
         },
 
         addEmail: function(uid, email) {
           var deferred = $q.defer();
-          var data = $firebaseObject(Refs.users.child(uid));
 
-          data.$loaded()
+          $firebaseObject(Refs.users.child(uid))
+            .$loaded()
             .then(function(user) {
               user.email = email;
-
-              user.$save().then(function(ref) {
-                if (ref.key() === user.$id) {
-                  deferred.resolve({
-                    id: ref.key(),
-                    message: 'user email added'
-                  });
-                }
-              })
-              .catch(function(error) {
-                deferred.reject(error);
-              });
+              return user.$save();
             })
-            .catch(function(error) {
-              deferred.reject(error);
-            });
+            .then(deferred.resolve)
+            .catch(deferred.reject);
 
           return deferred.promise;
         }

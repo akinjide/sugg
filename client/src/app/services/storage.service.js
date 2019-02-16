@@ -4,8 +4,6 @@ angular
   .module('sugg.services')
   .factory('Storage', ['Refs', '$q', '$firebaseStorage',
     function(Refs, $q, $firebaseStorage) {
-      var time = firebase.database.ServerValue.TIMESTAMP;
-
       return {
         add: function(uid, file, filename, metadata) {
           var deferred = $q.defer();
