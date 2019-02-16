@@ -1,5 +1,4 @@
-"use strict";
-
+'use strict';
 
 /**
   * firebaseURL, run, config and application routes
@@ -23,6 +22,7 @@ require('./services/users.service.js');
 require('./services/settings.service.js');
 require('./services/response.service.js');
 require('./services/tags.service.js');
+require('./services/storage.service.js');
 
 require('./directives/dragnote.directive.js');
 require('./directives/pagetitle.directive.js');
@@ -48,6 +48,7 @@ window.sugg = angular.module('sugg', [
   'angular-loading-bar',
   'angularTrix',
   'lumx',
+  'ngFileUpload',
   'ngAnimate',
   'ngSanitize',
   'ui.bootstrap',
@@ -64,7 +65,7 @@ sugg
     function($rootScope, $transitions, $location, Notification, Authentication, Response) {
       $transitions.onError({}, function(trans) {
         var $state = trans.router.stateService;
-        // We can catch the error thrown when the $requireAuth promise is rejected
+        // We can catch the error thrown when the $requireSignIn promise is rejected
         // and redirect the user back to the home page
         if (trans.error().detail === 'AUTH_REQUIRED') {
           Notification.notify('error', Response.warn['auth.required']);
@@ -87,6 +88,7 @@ sugg
         var requireLogin = trans.to().data.requireLogin;
         var isLoggedIn = Authentication.isLoggedIn();
         var loggedin = Authentication.authenticatedUser();
+
         if (requireLogin && isLoggedIn) {
           $rootScope.isLoggedIn = isLoggedIn;
           $rootScope.$stateParams = trans.to();
@@ -101,8 +103,9 @@ sugg
         }
       });
   }])
-  .config(['$stateProvider', '$urlRouterProvider', '$locationProvider', '$logProvider', '$provide', 'cfpLoadingBarProvider',
-    function($stateProvider, $urlRouterProvider, $locationProvider, $logProvider, $provide, cfpLoadingBarProvider) {
+  .config(['$stateProvider', '$urlRouterProvider', '$locationProvider', '$logProvider', '$provide', 'cfpLoadingBarProvider', 'SUGG_KEYS',
+    function($stateProvider, $urlRouterProvider, $locationProvider, $logProvider, $provide, cfpLoadingBarProvider, SUGG_KEYS) {
+      firebase.initializeApp(JSON.parse(window.atob(SUGG_KEYS.f.join(''))));
 
       // comment to disable dev logging in the app
       $logProvider.debugEnabled && $logProvider.debugEnabled(true);
@@ -142,7 +145,7 @@ sugg
              * @example
              *     throw { message: 'error message we added' };
              */
-            $window.open('http://stackoverflow.com/search?q=[js] + ' + errorData.exception.message);
+            // $window.open('http://stackoverflow.com/search?q=[js] + ' + errorData.exception.message);
          };
       }]);
 
@@ -196,18 +199,13 @@ sugg
                 return $state.go('404');
               }
 
-              var promises = [
+              return $q.all([
                 Note.findNote(params.note_id),
                 Note.findMetadata(params.uid, params.meta_id)
-              ];
-
-              return $q.all(promises)
-                .then(function(response) {
-                  return response;
-                })
-                .catch(function() {
-                  $state.go('404');
-                });
+              ])
+              .catch(function() {
+                $state.go('404');
+              });
             }]
           }
         })
@@ -230,55 +228,42 @@ sugg
             requireLogin: true
           },
           resolve: {
-            // controller will not be loaded until $requireAuth resolves
-            // Auth refers to our $firebaseAuth wrapper above
-            'currentAuth': ['$firebaseAuth', 'Refs', function($firebaseAuth, Refs) {
-              // $requireAuth returns a promise so the resolve waits for it to complete
+            // controller will not be loaded until $requireSignIn resolves
+            'currentAuth': ['$firebaseAuth', function($firebaseAuth) {
+              // $requireSignIn returns a promise so the resolve waits for it to complete
               // If the promise is rejected, it will throw a $stateChangeError (see above)
-              var Auth = $firebaseAuth(Refs.root);
-              return Auth.$requireAuth();
+              return $firebaseAuth().$requireSignIn();
             }],
             'isLoggedIn': ['Authentication', function(Authentication) {
               return Authentication.isLoggedIn();
             }],
-            'sharedWithMe': ['User', 'Authentication', 'Note', '$q', function(User, Authentication, Note, $q) {
-              var deferred = $q.defer();
+            'sharedWithMe': ['User', 'Authentication', 'Note', '$q', 'currentAuth', function(User, Authentication, Note, $q, currentAuth) {
               var user = Authentication.authenticatedUser();
-              var shares = user && user.shared_with_me && Object.keys(user.shared_with_me).length;
+              var shares = user && user.shared_with_me && Object.keys(user.shared_with_me);
 
-              if (shares) {
-                var step = 0;
-                var cached = [];
+              if (shares && shares.length > 0) {
+                return $q.all(shares.map(function(shareId) {
+                  var share = user.shared_with_me[shareId];
 
-                _.each(user.shared_with_me, function(share, key) {
-                  $q.all([
+                  return $q.all([
                     Note.findNote(share.note_id),
                     Note.findMetadata(share.shared_by, share.metadata_id),
                     User.find(share.shared_by)
                   ])
                   .then(function(response) {
                     var note = response[0];
-                    note['metadata'] = response[1];
-                    note['props'] = share;
-                    note['shared_by'] = response[2];
-                    note['is_shared_with'] = true;
 
-                    cached.push(note);
-                  })
-                  .catch(function(error) {
-                    cached.push({});
+                    note.metadata = response[1];
+                    note.props = share;
+                    note.shared_by = response[2];
+                    note.is_shared_with = true;
+
+                    return note;
                   });
-
-                  step++;
-                  if (step === shares) {
-                    deferred.resolve(cached);
-                  }
-                });
-              } else {
-                deferred.resolve([]);
+                }));
               }
 
-              return deferred.promise;
+              return $q.resolve([]);
             }]
           }
       })
@@ -301,9 +286,8 @@ sugg
           requireLogin: true
         },
         resolve: {
-          'currentAuth': ['$firebaseAuth', 'Refs', function($firebaseAuth, Refs) {
-            var Auth = $firebaseAuth(Refs.root);
-            return Auth.$requireAuth();
+          'currentAuth': ['$firebaseAuth', function($firebaseAuth) {
+            return $firebaseAuth().$requireSignIn();
           }],
           'isLoggedIn': ['Authentication', function(Authentication) {
             return Authentication.isLoggedIn();
