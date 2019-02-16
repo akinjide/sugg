@@ -5,15 +5,11 @@ mixin link(type, rel, href)
     link(type=type, rel=rel, href=href)
 
 - var default_base = 'styles/'
-- var lib_base = 'lib/'
 - var type = 'text/css'
 - var rel = 'stylesheet'
 
 +link('', 'shortcut icon', '/favicon.ico')
 +link('', rel, href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,700|Roboto:400,500,700')
-+link(type, rel, lib_base + 'lumx/dist/lumx.css')
-+link(type, rel, lib_base + 'trix/dist/trix.css')
-+link(type, rel, lib_base + 'angular-loading-bar/build/loading-bar.min.css')
 +link(type, rel, default_base + 'vendor.min.css')
 +link(type, rel, default_base + 'application.css')
 +link(type, rel, default_base + 'lib.css')
