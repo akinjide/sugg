@@ -12,7 +12,6 @@
           var payload = Authentication.buildUserObjectFromProviders(authData, provider);
 
           User.create(payload, function (err, data) {
-            console.log(data);
             $localStorage.cachedUser = data;
 
             if (err) {

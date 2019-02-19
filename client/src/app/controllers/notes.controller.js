@@ -176,7 +176,6 @@
             Reload();
           })
           .catch(function(error) {
-            console.log(error);
             Notification.notify('error', Response.error['note.create']);
           });
       } else {
