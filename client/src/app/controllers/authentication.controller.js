@@ -1,17 +1,18 @@
 (function() {
   "use strict";
 
-  function AuthenticationController ($q, $state, $localStorage, Authentication, Notification, User, Settings, Response, featureFlag) {
+  function AuthenticationController ($q, $state, $localStorage, Authentication, Notification, User, Settings, Response, SUGG_FEATURE_FLAG) {
     var vm = this;
     vm.Login = Login;
-    vm.flags = featureFlag.social;
+    vm.flags = SUGG_FEATURE_FLAG;
 
     function Login(provider) {
       Authentication.login(provider, function(err, authData) {
         if (!err) {
-          var payload = Authentication.buildUserObjectFromProviders(authData);
+          var payload = Authentication.buildUserObjectFromProviders(authData, provider);
 
           User.create(payload, function (err, data) {
+            console.log(data);
             $localStorage.cachedUser = data;
 
             if (err) {
@@ -69,5 +70,5 @@
     .module('sugg.controllers')
     .controller('AuthenticationController', AuthenticationController);
 
-  AuthenticationController.$inject = ['$q', '$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings', 'Response', 'featureFlag'];
+  AuthenticationController.$inject = ['$q', '$state', '$localStorage', 'Authentication', 'Notification', 'User', 'Settings', 'Response', 'SUGG_FEATURE_FLAG'];
 })();

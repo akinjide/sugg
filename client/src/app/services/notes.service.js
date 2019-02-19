@@ -68,12 +68,33 @@ angular
           return deferred.promise;
         },
 
-        all: function(uid) {
+        all: function(uid, pinOnly) {
           var deferred = $q.defer();
+          var self = this;
 
           $firebaseArray(Refs.users.child(uid).child('metadata'))
             .$loaded()
             .then(function(metadata) {
+              if (pinOnly) {
+                var pinOnlyMetadata = metadata.filter(function(data) {
+                  if (data.is_pin) {
+                    return data;
+                  }
+                });
+
+                return $q.all(
+                  pinOnlyMetadata.map(function(data) {
+                    return self.findNote(data.note_id);
+                  })
+                )
+                .then(function(notes) {
+                  return {
+                    'metadata': pinOnlyMetadata,
+                    'notes': notes
+                  };
+                });
+              }
+
               return $firebaseArray(Refs.notes)
                 .$loaded()
                 .then(function(notes) {
@@ -87,14 +108,24 @@ angular
             .then(function(data) {
               if (data && data.notes && data.metadata) {
                 if (data.notes.length > 0 && data.metadata.length > 0) {
-                  return data.metadata.map(function(metadata, key) {
+                  return data.metadata.reduce(function(every, metadata) {
                     var note = _.find(data.notes, { $id: metadata.note_id });
 
                     note.metadata = metadata;
                     note.Selected = false;
 
-                    return note;
-                  });
+                    if (metadata.is_pin) {
+                      if (pinOnly) {
+                        every.push(note);
+                      }
+                    }
+
+                    if (!metadata.is_pin) {
+                      every.push(note);
+                    }
+
+                    return every;
+                  }, []);
                 }
               }
 

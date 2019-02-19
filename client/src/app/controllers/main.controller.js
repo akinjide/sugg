@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  function MainController ($rootScope, $q, $state, $window, $localStorage, Authentication, Notification, User, Response, Settings, featureFlag) {
+  function MainController ($rootScope, $q, $state, $window, $localStorage, Authentication, Notification, User, Response, Settings, SUGG_FEATURE_FLAG) {
     var vm = this;
 
     vm.isLoggedIn = Authentication.isLoggedIn();
@@ -15,7 +15,7 @@
     vm.Logout = Logout;
     vm.changeView = changeView;
     vm.searchFilterChange = searchFilterChange;
-    vm.flags = featureFlag;
+    vm.flags = SUGG_FEATURE_FLAG;
 
     /////////////////////
 
@@ -72,5 +72,5 @@
     .module('sugg.controllers')
     .controller('MainController', MainController);
 
-  MainController.$inject = ['$rootScope', '$q', '$state', '$window', '$localStorage', 'Authentication', 'Notification', 'User', 'Response', 'Settings', 'featureFlag'];
+  MainController.$inject = ['$rootScope', '$q', '$state', '$window', '$localStorage', 'Authentication', 'Notification', 'User', 'Response', 'Settings', 'SUGG_FEATURE_FLAG'];
 })();

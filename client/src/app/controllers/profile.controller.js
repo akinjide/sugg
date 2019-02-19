@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  function ProfileController ($q, $state, $controller, Authentication, Notification, User, Response) {
+  function ProfileController ($q, $state, $controller, Authentication, Notification, User, Response, currentAuth) {
     var vm = this;
 
     vm._main = $controller('MainController', {});
@@ -13,7 +13,6 @@
     vm.IncludeEmail = IncludeEmail;
     vm.Deactivate = Deactivate;
     vm.Logout = Logout;
-    vm.invalidEmail = 'Your ' + vm.currentUser.provider + ' account has no email.';
 
     /////////////////////
 
@@ -34,6 +33,9 @@
     /////////////////////
 
 
+    // Use three-way binding
+    // https://github.com/firebase/angularfire/blob/master/docs/quickstart.md#5-add-three-way-object-bindings
+    // https://github.com/firebase/angularfire/blob/master/docs/guide/synchronized-objects.md#meta-fields-on-the-object
     function IncludeEmail(uid, mail) {
       User.addEmail(uid, mail)
         .then(function() {
@@ -67,5 +69,5 @@
     .module('sugg.controllers')
     .controller('ProfileController', ProfileController);
 
-  ProfileController.$inject = ['$q', '$state', '$controller', 'Authentication', 'Notification', 'User', 'Response'];
+  ProfileController.$inject = ['$q', '$state', '$controller', 'Authentication', 'Notification', 'User', 'Response', 'currentAuth'];
 })();
