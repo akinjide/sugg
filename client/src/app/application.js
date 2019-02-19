@@ -264,6 +264,16 @@ sugg
               }
 
               return $q.resolve([]);
+            }],
+            'pinned': ['Authentication', 'Note', '$q', 'currentAuth', function(Authentication, Note, $q, currentAuth) {
+              var user = Authentication.authenticatedUser();
+              var uid = user && user.$id;
+
+              if (uid) {
+                return Note.all(uid, true);
+              }
+
+              return $q.resolve([]);
             }]
           }
       })
