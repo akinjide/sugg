@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Tag, User, sharedWithMe, featureFlag) {
+  function NotesController ($location, $q, $state, $controller, $timeout, cfpLoadingBar, Upload, $scope, $localStorage, LxDialogService, clipboard, Note, Notification, Settings, Response, Tag, User, Storage, sharedWithMe, SUGG_FEATURE_FLAG, SUGG_COMMON, currentAuth, pinned) {
     var vm = this;
     var cachedUsers = [];
     var MAX_WIDTH_MOBILE = 480;
@@ -13,29 +13,10 @@
       vm.currentUser = vm._main.currentUser;
     }
 
-    vm.NoteColors = [
-      'white',
-      'blue',
-      'red',
-      'orange',
-      'yellow',
-      'blueberry',
-      'pink',
-      'brown',
-      'grey',
-      'teal',
-      'green',
-      'lavender',
-      'thistle',
-      'pigeon',
-      'tangerine',
-      'sage',
-      'tomato',
-      'grape',
-    ];
-    vm.dialogEditId = 'dialog-edit' + Math.floor((Math.random() * 6) + 1);
-    vm.dialogShareId = 'dialog-share' + Math.floor((Math.random() * 6) + 1);
-    vm.dialogTagId = 'dialog-tag' + Math.floor((Math.random() * 6) + 1);
+    vm.NoteColors = SUGG_COMMON.COLORS;
+    vm.dialogEditId = 'dialog-edit-' + (Math.random() * 100);
+    vm.dialogShareId = 'dialog-share-' + (Math.random() * 100);
+    vm.dialogTagId = 'dialog-tag-' + (Math.random() * 100);
     vm.removeQueue = [];
     vm.tagChoices = [];
     vm.currentNote = null;
@@ -43,7 +24,7 @@
     vm.Owner = null;
     vm.ShowTags = false;
     vm.shareLoading = true;
-    vm.flags = featureFlag;
+    vm.flags = SUGG_FEATURE_FLAG;
     vm.editorWidthClass = 'collapse-editor';
     vm.isMobile = (window.innerWidth <= MAX_WIDTH_MOBILE);
 
@@ -61,12 +42,12 @@
     vm.RemoveMarked = RemoveMarked;
     vm.Create = Create;
     vm.ChangeNoteColor = ChangeNoteColor;
+    vm.ChangeNotePin = ChangeNotePin;
     vm.ColorMarkedNote = ColorMarkedNote;
     vm.Copy = Copy;
     vm.Edit = Edit;
     vm.MarkNote = MarkNote;
     vm.ClearMarked = ClearMarked;
-    vm.AttachmentAdd = AttachmentAdd;
     vm.CopyShareLink = CopyShareLink;
     vm.ShareNote = ShareNote;
     vm.findShareWithUser = findShareWithUser;
@@ -78,6 +59,10 @@
     vm.ShowTags = ShowTags;
     vm.RemoveTag = RemoveTag;
     vm.ChangeEditorWidth = ChangeEditorWidth;
+    vm.fileAccept = fileAccept;
+    vm.uploadDrop = uploadDrop;
+    vm.uploadPick = uploadPick;
+    vm.removeUpload = removeUpload;
 
     if (vm.isLoggedIn) {
       vm.currentUser = vm._main.currentUser;
@@ -89,18 +74,24 @@
       ///////////////////////
       // WATCHERS
       //////////////////////
-      $scope.$on('handleBroadcast', function(e) {
+      $scope.$on('handleBroadcast', function(event) {
         if (Note.syncedNotes) {
           vm.Notes = _.concat(Note.syncedNotes, sharedWithMe);
         }
       });
 
-      $scope.$on('filterSearch', function(e, args) {
+      $scope.$on('filterSearch', function(events, params) {
         vm.Search = '';
 
-        if (args.text) {
-          vm.Search = args.text;
+        if (params.text) {
+          vm.Search = params.text;
         }
+      });
+
+      $scope.$on('lx-dialog__close-end', function(event, id, canceled, params) {
+        vm.dialogEditId = 'dialog-edit-' + (Math.random() * 100);
+        vm.dialogShareId = 'dialog-share-' + (Math.random() * 100);
+        vm.dialogTagId = 'dialog-tag-' + (Math.random() * 100);
       });
     }
 
@@ -138,6 +129,7 @@
           cfpLoadingBar.complete();
           vm.note.settings.color = userSettings.default_note_color;
           vm.View = userSettings.default_layout || $localStorage.view || 'list';
+          vm.PinnedNotes = pinned;
           vm.Tags = tags.map(function(tag) {
             return {
               'tag_id': tag.$id,
@@ -184,6 +176,7 @@
             Reload();
           })
           .catch(function(error) {
+            console.log(error);
             Notification.notify('error', Response.error['note.create']);
           });
       } else {
@@ -197,6 +190,23 @@
 
       Note.edit(uid, noteId, metadataId, {
         color: color
+      })
+      .then(function(data) {
+        Note.sync(uid);
+        Reload();
+      })
+      .catch(function(error) {
+        Notification.notify('error', Response.error['note.update']);
+      });
+    }
+
+
+    function ChangeNotePin(noteId, metadataId, pinned) {
+      var uid = vm.currentUser.$id;
+
+      Note.edit(uid, noteId, metadataId, {
+        pin: !pinned,
+        type: 'pin'
       })
       .then(function(data) {
         Note.sync(uid);
@@ -238,10 +248,11 @@
     function Remove(note, noteId, metadataId) {
       var uid = vm.currentUser.$id;
       var promises = [];
-      var shareWithIds = _.keys(note.metadata.share_with);
 
       if (uid && noteId && metadataId) {
         if (note.metadata && note.metadata.share_with) {
+          var shareWithIds = Object.keys(note.metadata.share_with);
+
           for (var i = 0; i < shareWithIds.length; i++) {
             promises.push(
               RemoveShareWithUser(
@@ -292,7 +303,7 @@
           innerPromises = [];
 
           if (vm.removeQueue[i].note.metadata && vm.removeQueue[i].note.metadata.share_with) {
-            var shareWithIds = _.keys(vm.removeQueue[i].note.metadata.share_with);
+            var shareWithIds = Object.keys(vm.removeQueue[i].note.metadata.share_with);
 
             for (var j = 0; j < shareWithIds.length; j++) {
               var shareWithMe = _.pick(vm.removeQueue[i].note.metadata.share_with, [shareWithIds[j]]);
@@ -397,7 +408,7 @@
 
         return (function() {
           vm.initializeEdit = function(e, editor) {
-            editor.setSelectedRange([0, previousNote.content.length]);
+            editor.setSelectedRange([0, 9999999]);
             editor.insertHTML(previousNote.content || '');
           };
         })();
@@ -471,27 +482,27 @@
     function ShareNote(note) {
       vm.currentNote = note;
       var uid = vm.currentUser.$id;
-      var promises = [
-        User.find(uid),
-        Note.allShare(uid, note.metadata.$id),
-        User.all()
-      ];
 
       function filterFunc(users) {
         return users.map(function(user) {
           return {
             email: user.email,
             name: user.name,
-            image_url: user.image_url,
+            image: user.image,
             uid: user.$id
           }
         });
       }
 
-      $q.all(promises).then(function(responses) {
-        vm.Owner = responses[0];
-        vm.ShareWith = filterFunc(responses[1]);
-        cachedUsers = filterFunc(responses[2]).filter(function(user) {
+      $q.all([
+        User.find(uid),
+        Note.allShare(uid, note.metadata.$id),
+        User.all()
+      ])
+      .then(function(response) {
+        vm.Owner = response[0];
+        vm.ShareWith = filterFunc(response[1]);
+        cachedUsers = filterFunc(response[2]).filter(function(user) {
           return user.uid != uid;
         });
         vm.shareLoading = false;
@@ -658,73 +669,106 @@
 //        });
     }
 
-//     var events = ['trixInitialize', 'trixChange', 'trixSelectionChange', 'trixFocus', 'trixBlur', 'trixFileAccept', 'trixAttachmentAdd', 'trixAttachmentRemove'];
-//
-//     for (var i = 0; i < events.length; i++) {
-//       vm[events[i]] = function(e) {
-//         console.log(e.type)
-//         document.getElementById(e.type).className = 'active';
-//         $timeout(function() {
-//             document.getElementById(e.type).className = '';
-//         }, 500);
-//
-//         console.info('Event type:', e.type, vm.trix, vm.noteTitle);
-//       }
-//     };
+    // var events = ['trixInitialize', 'trixChange', 'trixSelectionChange', 'trixFocus', 'trixBlur', 'trixFileAccept', 'trixAttachmentAdd', 'trixAttachmentRemove'];
 
-    function AttachmentAdd(event) {
-        var attachment = event.attachment;
+    // for (var i = 0; i < events.length; i++) {
+    //   vm[events[i]] = function(e) {
+    //     console.info('Event type:', e.type, e);
+    //   }
+    // };
 
-        document.getElementById('trix-attachment-add').className = 'active';
-        $timeout(function() {
-          document.getElementById('trix-attachment-add').className = '';
-        }, 500);
+    function fileAccept(event) {
+      if (event.file && (event.file.size > SUGG_COMMON.MAX_FILE_SIZE)) {
+        event.preventDefault();
+        Notification.notify('error', 'File too large.');
+      }
 
-        if (attachment.file) {
-          return uploadAttachment(attachment);
-        }
+      if (event.file && !(/^image/.test(event.file.type))) {
+        event.preventDefault();
+        Notification.notify('error', 'Images only.');
+      }
     }
 
-    function createStorageKey(file) {
-      var date, day, time;
-      date = new Date();
-      day = date.toISOString().slice(0, 10);
-      time = date.getTime();
-      return "tmp/" + day + "/" + time + "-" + file.name;
+    function uploadPick(file, className) {
+      var element = "trix-editor";
+
+      if (className) {
+        element = "trix-editor" + className;
+      }
+
+      document.querySelector(element).editor.insertFile(file);
+    };
+
+    function uploadDrop(event) {
+      var attachment = event.attachment;
+
+      if (attachment.file) {
+        return uploadAttachment(attachment);
+      }
+    }
+
+    function removeUpload(event) {
+      console.log(event, 'line 682');
+      var attachment = event.attachment;
+      var uid = vm.currentUser.$id;
+
+      if (attachment.file) {
+        var file = attachment.file;
+
+      }
+
+      Storage
+        .remove(uid, file.name)
+        .then(function(snapshot) {
+          console.log(snapshot);
+        })
+        .catch(function(error) {
+          // TODO: show error;
+          console.log(error);
+        });
     }
 
     function uploadAttachment(attachment) {
-      var host = "https://d13txem1unpe48.cloudfront.net/";
+      console.log(attachment, 'line 697');
+      var uid = vm.currentUser.$id;
       var file = attachment.file;
-      var key = createStorageKey(file);
-      var form = new FormData;
-      var xhr = new XMLHttpRequest;
 
-      form.append("key", key);
-      form.append("Content-Type", file.type);
-      form.append("file", file);
-      xhr.open("POST", host, true);
+      Storage
+        .add(uid, file, file.name, {
+          contentType: file.type,
+          customMetadata: {
+            owner: uid
+          }
+        })
+        .then(
+          storageCallback,
+          null,
+          progressCallback
+        )
+        .then(function(snapshot) {
+          const url = snapshot[0];
 
-      xhr.upload.onprogress = function(event) {
-        var progress;
-        progress = event.loaded / event.total * 100;
-        return attachment.setUploadProgress(progress);
-      }
-
-      xhr.onload = function() {
-        var href, url;
-
-        if (xhr.status === 204) {
-          url = href = host + key;
-
-          return attachment.setAttributes({
+          successCallback({
             url: url,
-            href: href
+            href: url + "&content-disposition=attachment"
           });
-        }
+        })
+        .catch(function(error) {
+          // TODO: show error;
+          console.error(error);
+        });
+
+      function progressCallback(progress) {
+        attachment.setUploadProgress(progress);
       }
 
-      return xhr.send(form);
+      function successCallback(attributes) {
+        attachment.setAttributes(attributes);
+      }
+
+      function storageCallback(snapshot) {
+        return Storage.get(uid, file.name);
+      }
     }
   }
 
@@ -732,5 +776,5 @@
     .module('sugg.controllers')
     .controller('NotesController', NotesController);
 
-  NotesController.$inject = ['$location', '$q', '$state', '$controller', '$timeout', 'cfpLoadingBar', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Response', 'Tag', 'User', 'sharedWithMe', 'featureFlag'];
+  NotesController.$inject = ['$location', '$q', '$state', '$controller', '$timeout', 'cfpLoadingBar', 'Upload', '$scope', '$localStorage', 'LxDialogService', 'clipboard', 'Note', 'Notification', 'Settings', 'Response', 'Tag', 'User', 'Storage', 'sharedWithMe', 'SUGG_FEATURE_FLAG', 'SUGG_COMMON', 'currentAuth', 'pinned'];
 })();
