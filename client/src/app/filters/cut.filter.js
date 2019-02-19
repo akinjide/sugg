@@ -4,15 +4,15 @@ angular
   .module('sugg.filters')
   .filter('cut', [function() {
     return function(value, wordwise, max, isMobile, tail) {
-      var message = 'Edit to view more';
+      var message = '';
 
       if (!value) {
         return '';
       }
 
-      if (!isMobile) {
-        message = 'Double click to view more';
-      }
+      // if (isMobile) {
+      //   message = 'Edit to view more';
+      // }
 
       max = parseInt(max, 10);
       if (!max) return value;
@@ -33,6 +33,6 @@ angular
           }
       }
 
-      return value + (tail || '<span class="show-more">' + message + '</span>');
+      return value + (tail || (message ? '<span class="show-more">' + message + '</span>' : ''));
     };
   }]);

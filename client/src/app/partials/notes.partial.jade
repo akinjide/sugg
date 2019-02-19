@@ -38,6 +38,19 @@ div.selected-notes-options(ng-show="vm.removeQueue.length" ng-mouseleave="multiN
       )
         i.mdi.mdi-delete
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 div.main-content
   .card.card-content(
     ng-mouseleave="Colors = false"
@@ -148,8 +161,159 @@ div.main-content
       ) Done
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 .sugg-notes.row-masonry(class="{{ vm.View }}")
-  div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy: ['metadata.is_pin', '-metadata.updated'] | filter: vm.Search")
+
+  div.col-masonry(style="position: relative;" ng-repeat="PinnedNote in vm.PinnedNotes | orderBy: '-metadata.updated' | filter: vm.Search")
+
+    .sugg-checkbox(class="{{ (vm.isMarked && PinnedNote.Selected) ? 'selected' : '' }}"
+      ng-if="!PinnedNote.is_shared_with"
+      ng-class="{ '--is-desktop': !vm.isMobile }"
+    )
+      input(
+        type="checkbox"
+        class="checkbox"
+        name="checkbox"
+        ng-model="PinnedNote.Selected"
+        id="{{ PinnedNote.metadata.note_id }}"
+        ng-change="vm.MarkNote(PinnedNote, PinnedNote.Selected); vm.isMarked = true"
+      )
+      label.label--checkbox(for="{{ PinnedNote.metadata.note_id }}")
+
+    .box-placeholder.m0(
+      class="{{ PinnedNote.settings.color }}"
+      ng-class="{ pt40: (PinnedNote.is_shared_with || PinnedNote.metadata.is_public || PinnedNote.metadata.share_with) && vm.isMobile }"
+      ng-mouseleave="noteColors = false"
+    )
+
+      h3.text-muted(
+        ng-click="!PinnedNote.is_shared_with && vm.Edit(PinnedNote, false)"
+        style="cursor: pointer")
+        strong(ng-bind-html="PinnedNote.metadata.title || 'Untitled'")
+
+      div
+        h5
+          strong(
+            title="Created {{ PinnedNote.metadata.created | date : 'MMM d, h:mm a' }}") Edited {{ PinnedNote.metadata.updated | date : 'MMM d, h:mm a' }}
+
+        div.sugg-note-status(ng-if="PinnedNote.is_shared_with")
+          span(style="background: rgba(33, 150, 243, 0.80);")
+            i.mdi(class="mdi-account-multiple")
+            a(title="Shared 'Private' by {{ PinnedNote.shared_by.name }} at {{ PinnedNote.props.shared_at | date : 'MMM d, h:mm a' }}"
+            ) {{ PinnedNote.shared_by.name | splitWord }} shared with you
+
+        div.sugg-note-status(ng-if="(PinnedNote.metadata.share_with || PinnedNote.metadata.is_public) && !PinnedNote.is_shared_with")
+          span(ng-if="PinnedNote.metadata.share_with" style="background: rgba(33, 150, 243, 0.80);")
+            i.mdi(class="mdi-account-multiple")
+            a(title="Private to only specific people."
+              ng-click="vm.CopyShareLink(PinnedNote.$id, PinnedNote.metadata.$id, true)"
+            ) Only specific people can view
+
+          span(ng-if="PinnedNote.metadata.is_public" style="background: rgba(244, 96, 82, 0.80)")
+            i.mdi(class="mdi-account-multiple")
+            a(title="Anyone who has the link can access. No sign-in required."
+              ng-click="vm.CopyShareLink(PinnedNote.$id, PinnedNote.metadata.$id, false)"
+            ) Anyone can view
+
+        div.sugg-note-status(ng-if="PinnedNote.metadata.is_pin")
+          span
+            i.mdi(class="mdi-pin")
+            a(title="Note pinned") Pinned
+
+      p(class="content" ng-if="!PinnedNote.metadata.share_with || !PinnedNote.is_shared_with"
+        ng-bind-html="PinnedNote.content | cut: true : 500 : vm.isMobile"
+        ng-click="!PinnedNote.is_shared_with && vm.Edit(PinnedNote, false)"
+        style="cursor: pointer")
+      p(class="content mb10" ng-if="PinnedNote.metadata.share_with && PinnedNote.is_shared_with" ng-bind-html="PinnedNote.content")
+
+      .colors(ng-class="{ active: noteColors }" ng-mouseleave="noteColors = false")
+        .color(
+          ng-repeat="noteColor in vm.NoteColors"
+          class="{{ noteColor }} color-{{ $index }} {{ ((PinnedNote.settings.color == noteColor) == true) ?'active' :'' }}"
+          ng-click="vm.ChangeNoteColor(PinnedNote.metadata.note_id, PinnedNote.metadata.$id, noteColor); PinnedNote.settings.color = noteColor"
+          title="{{ noteColor | capitalize : true }}"
+        )
+
+      div(class="mt+" style="flex-wrap: wrap; display: flex;" ng-if="vm.flags.note.tags")
+        div(
+          style="display: inline-block; margin: 6px 6px 0 0; background-color: rgba(0,0,0,0.08); border-radius: 2px; position: relative;"
+          ng-repeat="tag in PinnedNote.metadata.tags")
+          div(style="display: inline-block; align-items: center; padding: 5px 8px; text-align: left;")
+            span(style="font-size: 11px; padding: 1px;") {{ tag | tagIt }}
+
+      .sugg-icons-container(ng-hide="PinnedNote.is_shared_with")
+
+        div(class="--is-mobile" flex-container="row" flex-align="flex-start center" style="margin-top: 20px; display: none;")
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="{{ (PinnedNote.metadata.is_pin || PinnedNote.settings.is_pin) ? 'Unpin' : 'Pin' }} note"
+            ng-click="vm.ChangeNotePin(PinnedNote.metadata.note_id, PinnedNote.metadata.$id, PinnedNote.settings.is_pin)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-{{ (PinnedNote.metadata.is_pin || PinnedNote.settings.is_pin) ? 'pin-off' : 'pin' }}")
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="Change color"
+            ng-click="noteColors =! noteColors"
+            lx-size="l"
+          )
+            i.mdi.mdi-palette
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="{{ (PinnedNote.metadata.is_public || PinnedNote.metadata.share_with) ? 'Disable' : 'Enable' }} Share"
+            ng-click="vm.ShareNote(PinnedNote)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-account-multiple-{{ (PinnedNote.metadata.is_public || PinnedNote.metadata.share_with) ? 'minus' : 'plus' }}")
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="Get shareable link"
+            ng-if="PinnedNote.metadata.share_with"
+            ng-click="vm.CopyShareLink(PinnedNote.$id, PinnedNote.metadata.$id, true)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-link")
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="Get shareable link"
+            ng-if="PinnedNote.metadata.is_public"
+            ng-click="vm.CopyShareLink(PinnedNote.$id, PinnedNote.metadata.$id, false)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-link")
+
+          lx-button.mr8(
+            lx-type="icon"
+            lx-color="black"
+            title="Edit note"
+            ng-click="vm.Edit(PinnedNote, false)"
+            lx-size="l"
+          )
+            i.mdi(class="mdi-pencil")
+
+
+
+  div.col-masonry(style="position: relative;" ng-repeat="Note in vm.Notes | orderBy: '-metadata.updated' | filter: vm.Search")
 
     .sugg-checkbox(class="{{ (vm.isMarked && Note.Selected) ? 'selected' : '' }}"
       ng-if="!Note.is_shared_with"
@@ -189,16 +353,16 @@ div.main-content
 
         div.sugg-note-status(ng-if="(Note.metadata.share_with || Note.metadata.is_public) && !Note.is_shared_with")
           span(ng-if="Note.metadata.share_with" style="background: rgba(33, 150, 243, 0.80);")
-            i.mdi(class="mdi-lock")
-            a(title="Shared 'Private'"
+            i.mdi(class="mdi-account-multiple")
+            a(title="Private to only specific people."
               ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, true)"
             ) Only specific people can view
 
           span(ng-if="Note.metadata.is_public" style="background: rgba(244, 96, 82, 0.80)")
-            i.mdi(class="mdi-lock-open")
-            a(title="Shared 'Public'"
+            i.mdi(class="mdi-account-multiple")
+            a(title="Anyone who has the link can access. No sign-in required."
               ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, false)"
-            ) Anyone with link can view
+            ) Anyone can view
 
         div.sugg-note-status(ng-if="Note.metadata.is_pin")
           span
@@ -286,12 +450,24 @@ div.main-content
             i.mdi(class="mdi-pencil")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 lx-dialog(id="{{ vm.dialogShareId }}" lx-size="m" class="multi-share")
   lx-dialog-header(style="padding: 0 12px;")
     div.toolbar(class="dialog__header__content" style="padding: 12px 0;" flex-container="row")
       div(flex-item)
         h2(class="tc-black-1")
-          strong Share
+          strong Share with others
 
   lx-dialog-content
     lx-progress(lx-color="grey" lx-type="circular" lx-diameter="75" ng-if="vm.shareLoading")
@@ -365,6 +541,18 @@ lx-dialog(id="{{ vm.dialogShareId }}" lx-size="m" class="multi-share")
       title="Done Sharing"
       ng-click="vm.ShareWithUser(vm.addUser, vm.currentNote)"
     ) Done
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 lx-dialog(id="{{ vm.dialogEditId }}"
@@ -481,6 +669,18 @@ lx-dialog(id="{{ vm.dialogEditId }}"
       title="Save Note"
       ng-click="vm.Edit(vm.editNote, true, vm.edited)"
     ) Done
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 lx-dialog(id="{{ vm.dialogTagId }}" lx-size="m")
