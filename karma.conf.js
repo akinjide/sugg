@@ -1,7 +1,7 @@
 // Karma configuration
 // Generated on Thu Jul 27 2017 15:56:59 GMT+0100 (WAT)
 
-module.exports = function(config) {
+module.exports = function (config) {
   config.set({
     basePath: '',
     frameworks: ['jasmine', 'browserify'],

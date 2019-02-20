@@ -1,34 +1,28 @@
-var gulp  = require('gulp');
-var browserify = require('browserify');
-var argv = require('yargs').argv;
-var Karma = require('karma').Server;
-var $ = require('gulp-load-plugins')({lazy: true});
-var source = require('vinyl-source-stream');
-var path = require('path');
+var gulp = require('gulp')
+var browserify = require('browserify')
+var argv = require('yargs').argv
+var Karma = require('karma').Server
+var $ = require('gulp-load-plugins')({ lazy: true })
+var source = require('vinyl-source-stream')
+var path = require('path')
 
 /**
  * List the available gulp tasks
  */
-gulp.task('help', $.taskListing);
-gulp.task('default', ['help']);
+gulp.task('help', $.taskListing)
+gulp.task('default', ['help'])
 
 var config = {
   packages: [
-    path.resolve(__dirname, 'package.json'),
-//     './bower.json'
+    path.resolve(__dirname, 'package.json')
   ],
   nodeModules: 'node_modules',
-//   bower: {
-//     json: require('./bower.json'),
-//     directory: './client/public/lib',
-//     ignorePath: '../..'
-//   },
   src: 'client/src/',
   public: 'client/public/',
   browserReloadDelay: 1000,
   extensions: '{jpg,jpeg,gif,png,swf,flv,eot,svg,ttf,woff,woff2,otf,ico,htc,pdf,mp4,ogv,webm}',
   defaultPort: process.env.PORT || '1338'
-};
+}
 
 var paths = {
   root: __dirname,
@@ -45,10 +39,9 @@ var paths = {
   sass: {
     root: config.src + 'styles/',
     combined_glob: config.src + 'styles/*.sass', // base dir only
-    watcher_glob: config.src + 'styles/**/*.sass',
+    watcher_glob: config.src + 'styles/**/*.sass'
   },
   css: {
-    // vendor_glob: config.src + 'styles/vendor/**/*.css',
     vendor: config.src + 'styles/vendor.js'
   },
   jade: {
@@ -68,9 +61,9 @@ var paths = {
     config.public + 'images/**/*.' + config.extensions
   ],
   index: config.public + 'index.html'
-};
+}
 
-var autoprefixer_options = {
+var autoprefixerOptions = {
   browsers: [
     '> 1%',
     'last 2 versions',
@@ -83,28 +76,28 @@ var autoprefixer_options = {
     'IE 11'
   ],
   cascade: false
-};
+}
 
 // compile sass
-gulp.task('sass', ['sass-combined', 'css-vendor-combined']);
+gulp.task('sass', ['sass-combined', 'css-vendor-combined'])
 
-gulp.task('sass-combined', function() {
-  var out = config.public + 'styles';
+gulp.task('sass-combined', function () {
+  var out = config.public + 'styles'
 
-  log('Compiling Sass --> CSS');
+  log('Compiling Sass --> CSS')
   return gulp.src(paths.sass.combined_glob)
     .pipe($.sourcemaps.init())
     .pipe($.sass({ outputStyle: 'compressed' }))
-    .pipe($.autoprefixer(autoprefixer_options))
+    .pipe($.autoprefixer(autoprefixerOptions))
     .pipe($.sourcemaps.write('.'))
     .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out));
-});
+    .pipe(gulp.dest(out))
+})
 
 // compile vendor lib
 gulp.task('css-vendor-combined', function () {
-  var out = config.public + 'styles';
-  var filename = 'vendor.css';
+  var out = config.public + 'styles'
+  var filename = 'vendor.css'
 
   return gulp.src(require('./' + paths.css.vendor))
     .pipe($.concat(filename))
@@ -116,13 +109,12 @@ gulp.task('css-vendor-combined', function () {
     .pipe(gulp.dest(out))
 })
 
-
 // compile jade
-gulp.task('jade', ['jade-partials-glob', 'jade-root', 'jade-four0four']);
+gulp.task('jade', ['jade-partials-glob', 'jade-root', 'jade-four0four'])
 
-gulp.task('jade-partials-glob', function() {
-  log('Compiling Jade --> HTML');
-  var out = config.public + 'views';
+gulp.task('jade-partials-glob', function () {
+  log('Compiling Jade --> HTML')
+  var out = config.public + 'views'
 
   return gulp.src(paths.jade.partials_glob)
     .pipe($.cleanDest(out))
@@ -131,132 +123,128 @@ gulp.task('jade-partials-glob', function() {
       collapseWhitespace: true,
       removeComments: true
     }))
-    .pipe(gulp.dest(out));
-});
+    .pipe(gulp.dest(out))
+})
 
-gulp.task('jade-root', function() {
+gulp.task('jade-root', function () {
   return gulp.src(paths.jade.root)
     .pipe($.jade())
-    .pipe(gulp.dest(config.public));
-});
+    .pipe(gulp.dest(config.public))
+})
 
-gulp.task('jade-four0four', function() {
+gulp.task('jade-four0four', function () {
   return gulp.src(paths.jade.four0four)
     .pipe($.jade())
-    .pipe(gulp.dest(config.public));
-});
-
+    .pipe(gulp.dest(config.public))
+})
 
 // compile javascripts
 gulp.task('js', ['js-controllers-glob', 'js-directives-glob', 'js-services-glob', 'js-filters-glob'])
 
-gulp.task('js-controllers-glob', function() {
-  log('Compressing and copying controllers');
-  var filename = 'controllers.js';
+gulp.task('js-controllers-glob', function () {
+  log('Compressing and copying controllers')
+  var filename = 'controllers.js'
 
   return gulp.src(paths.js.controllers_glob)
     .pipe($.concat(filename))
     .pipe($.rename({ suffix: '.min' }))
     .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
     .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'));
-});
+    .pipe(gulp.dest(config.public + 'scripts'))
+})
 
-gulp.task('js-directives-glob', function() {
-  log('Compressing and copying directives');
-  var filename = 'directives.js';
+gulp.task('js-directives-glob', function () {
+  log('Compressing and copying directives')
+  var filename = 'directives.js'
 
   return gulp.src(paths.js.directives_glob)
     .pipe($.concat(filename))
     .pipe($.rename({ suffix: '.min' }))
     .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
     .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'));
-});
+    .pipe(gulp.dest(config.public + 'scripts'))
+})
 
-gulp.task('js-services-glob', function() {
-  log('Compressing and copying services');
-  var filename = 'services.js';
+gulp.task('js-services-glob', function () {
+  log('Compressing and copying services')
+  var filename = 'services.js'
 
   return gulp.src(paths.js.services_glob)
     .pipe($.concat(filename))
     .pipe($.rename({ suffix: '.min' }))
     .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
     .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'));
-});
+    .pipe(gulp.dest(config.public + 'scripts'))
+})
 
-gulp.task('js-filters-glob', function() {
-  log('Compressing and copying filters');
-  var filename = 'filters.js';
+gulp.task('js-filters-glob', function () {
+  log('Compressing and copying filters')
+  var filename = 'filters.js'
 
   return gulp.src(paths.js.filters_glob)
     .pipe($.concat(filename))
     .pipe($.rename({ suffix: '.min' }))
     .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
     .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'));
-});
+    .pipe(gulp.dest(config.public + 'scripts'))
+})
 
-gulp.task('js-vendor-combined', function() {
-  log('Compressing and copying third party scripts');
-  var filename = 'vendor.js';
+gulp.task('js-vendor-combined', function () {
+  log('Compressing and copying third party scripts')
+  var filename = 'vendor.js'
 
   return gulp.src(require('./' + paths.js.bower))
     .pipe($.concat(filename))
     .pipe($.rename({ suffix: '.min' }))
-//    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
-//    .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'));
-});
-
+    .pipe(gulp.dest(config.public + 'scripts'))
+})
 
 // copy assets
-gulp.task('assets', ['images', 'fonts', 'videos']);
+gulp.task('assets', ['images', 'fonts', 'videos'])
 
-gulp.task('images', function() {
-  var out = config.public + 'images';
+gulp.task('images', function () {
+  var out = config.public + 'images'
 
-  log('Compressing and copying images');
+  log('Compressing and copying images')
   return gulp.src(paths.files.image_glob)
     .pipe($.cleanDest(out))
     .pipe($.cache($.imagemin({
-      optimizationLevel : 3,
-      progressive : true,
-      interlaced : true
+      optimizationLevel: 3,
+      progressive: true,
+      interlaced: true
     })))
-    .pipe(gulp.dest(out));
-});
+    .pipe(gulp.dest(out))
+})
 
-gulp.task('fonts', function() {
-  var out = config.public + 'styles/fonts';
+gulp.task('fonts', function () {
+  var out = config.public + 'styles/fonts'
 
-  log('Copying fonts');
+  log('Copying fonts')
   return gulp.src(paths.files.font_glob)
     .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out));
-});
+    .pipe(gulp.dest(out))
+})
 
-gulp.task('videos', function() {
-  var out = config.public + 'videos';
+gulp.task('videos', function () {
+  var out = config.public + 'videos'
 
-  log('Copying videos');
+  log('Copying videos')
   return gulp.src(paths.files.video_glob)
     .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out));
-});
+    .pipe(gulp.dest(out))
+})
 
-gulp.task('lib', function() {
-  var out = config.public + 'lib';
+gulp.task('lib', function () {
+  var out = config.public + 'lib'
 
-  log('Copying lib');
+  log('Copying lib')
   return gulp.src('node_modules/@bower_components/**/**')
     .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out));
-});
+    .pipe(gulp.dest(out))
+})
 
 // nodemon server
-gulp.task('nodemon', function() {
+gulp.task('nodemon', function () {
   var nodeOptions = {
     script: './bin/www',
     delayTime: 1,
@@ -265,135 +253,120 @@ gulp.task('nodemon', function() {
     },
     watch: ['./routes', './index.js', './config', paths.js.watcher_glob, paths.jade.watcher_glob, paths.sass.watcher_glob],
     tasks: ['build']
-  };
+  }
 
   $.nodemon(nodeOptions)
-    .on('restart', function(ev) {
-      log('*** nodemon restarted');
-      log('files changed:\n' + ev);
+    .on('restart', function (ev) {
+      log('*** nodemon restarted')
+      log('files changed:\n' + ev)
     })
-    .on('start', function() {
-      log('*** nodemon started');
+    .on('start', function () {
+      log('*** nodemon started')
     })
-    .on('crash', function() {
-      log('*** nodemon crashed: script crashed for some reason');
+    .on('crash', function () {
+      log('*** nodemon crashed: script crashed for some reason')
     })
     .on('exit', function () {
-      log('*** nodemon exited cleanly');
-    });
-});
+      log('*** nodemon exited cleanly')
+    })
+})
 
 // linters
-gulp.task('vet', function() {
-  log('Analyzing source with JSHint');
+gulp.task('vet', function () {
+  log('Analyzing source with JSHint')
 
   return gulp.src(paths.js.watcher_glob)
     .pipe($.jshint())
-    .pipe($.jshint.reporter('jshint-stylish', {verbose: true}))
-    .pipe($.jshint.reporter('fail'));
-});
+    .pipe($.jshint.reporter('jshint-stylish', { verbose: true }))
+    .pipe($.jshint.reporter('fail'))
+})
 
-gulp.task('watch:vet', function() { gulp.watch(paths.js.watcher_glob,  ['vet']); });
+gulp.task('watch:vet', function () { gulp.watch(paths.js.watcher_glob, ['vet']) })
 
 gulp.task('nsp', function (cb) {
   $.nsp({
     package: config.packages[0],
     stopOnError: false
-  }, cb);
-});
+  }, cb)
+})
 
-gulp.task('browserify', function() {
-  log('Bundling main script');
-  var b = browserify();
-  b.add(paths.js.root);
+gulp.task('browserify', function () {
+  log('Bundling main script')
+  var b = browserify()
+  b.add(paths.js.root)
 
   return b.bundle()
     .on('success', $.util.log.bind($.util, 'Browserify Rebundled'))
     .on('error', $.util.log.bind($.util, 'Browserify Error: in browserify gulp task'))
     .pipe(source('index.js'))
     .pipe($.cleanDest(config.public + 'scripts'))
-    .pipe(gulp.dest(config.public + 'scripts'));
-});
+    .pipe(gulp.dest(config.public + 'scripts'))
+})
 
 gulp.task('compress', ['browserify'], function () {
   return gulp.src(config.public + 'scripts/index.js')
-      .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
-      .pipe($.if(argv.development, $.empty(), $.uglify()))
-      .pipe(gulp.dest(config.public + 'scripts'));
-});
+    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
+    .pipe($.if(argv.development, $.empty(), $.uglify()))
+    .pipe(gulp.dest(config.public + 'scripts'))
+})
 
-// gulp.task('bower', function() {
-//   log('Installing Dependencies');
-//   return $.bower()
-//     .pipe(gulp.dest(config.public + 'lib/'))
-// });
-
-gulp.task('test:client', function(done) {
+gulp.task('test:client', function (done) {
   var server = new Karma({
     configFile: paths.root + '/karma.conf.js',
     singleRun: false,
     watch: true
-  }, done);
+  }, done)
 
-  server.start();
-});
+  server.start()
+})
 
-gulp.task('test:server', function() {
+gulp.task('test:server', function () {
   return gulp.src('./tests/server/*.spec.js')
     .pipe($.jasmine({
       showColors: true,
       verbose: true
     }))
-    .once('end', function() {
-      process.exit(1);
+    .once('end', function () {
+      process.exit(1)
     })
     .once('end', function () {
-      process.exit();
-    });
-});
+      process.exit()
+    })
+})
 
 gulp.task('setup', $.shell.task([
 //   'bower install',
   'npm install'
-]));
+]))
 
-gulp.task('build', ['jade', 'sass', 'assets', 'compress'], function() {
-  log('Building everything');
+gulp.task('build', ['jade', 'sass', 'assets', 'compress'], function () {
+  log('Building everything')
 
   var msg = {
     title: 'gulp build',
     subtitle: 'Deployed to the public folder',
     message: 'Running `gulp`'
-  };
+  }
 
-  log(msg);
-});
+  log(msg)
+})
 
-gulp.task('production', ['build', 'lib', 'js-vendor-combined']);
-gulp.task('serve', ['build', 'js-vendor-combined', 'nodemon']);
-gulp.task('test', ['test:client', 'test:server']);
-
-/**
- * When files change, log it
- * @param  {Object} event - event that fired
- */
-function changeEvent(event) {
-    var srcPattern = new RegExp('/.*(?=/' + 'client/' + ')/');
-    log('File ' + event.path.replace(srcPattern, '') + ' ' + event.type);
-}
+gulp.task('production', ['build', 'lib', 'js-vendor-combined'])
+gulp.task('serve', ['build', 'js-vendor-combined', 'nodemon'])
+gulp.task('test', ['test:client', 'test:server'])
 
 /**
  * Log a message or series of messages using chalk's blue color.
  * Can pass in a string, object or array.
  */
-function log(msg) {
-    if (typeof(msg) === 'object') {
-        for (var item in msg) {
-            if (msg.hasOwnProperty(item)) {
-                $.util.log($.util.colors.blue(msg[item]));
-            }
-        }
-    } else {
-        $.util.log($.util.colors.blue(msg));
+function log (msg) {
+  if (typeof (msg) === 'object') {
+    for (var item in msg) {
+      if (msg.hasOwnProperty(item)) {
+        $.util.log($.util.colors.blue(msg[item]))
+      }
     }
+  } else {
+    $.util.log($.util.colors.blue(msg))
+  }
 }
