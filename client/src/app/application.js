@@ -64,7 +64,7 @@ sugg
         // We can catch the error thrown when the $requireSignIn promise is rejected
         // and redirect the user back to the home page
         if (trans.error().detail === 'AUTH_REQUIRED') {
-          Notification.notify('error', Response.warn['auth.required'])
+          Notification.notify('error', Response.auth['auth/login-required'])
           $state.go('login')
         }
       })
@@ -77,7 +77,7 @@ sugg
         if (isLoggedIn && (loggedin && !loggedin.is_active)) {
           Authentication.logout()
           $state.go('login')
-          Notification.notify('error', Response.error['auth.deactivated'])
+          Notification.notify('error', Response.auth['auth/account-deactivated-already-scheduled'])
         }
       })
 
@@ -129,7 +129,7 @@ sugg
         function extendExceptionHandler ($delegate, $window, exceptionHandler) {
           return function (exception, cause) {
             var appErrorPrefix = exceptionHandler.config.appErrorPrefix || ''
-            var errorData = { exception: exception, cause: cause }
+            // var errorData = { exception: exception, cause: cause }
 
             exception.message = appErrorPrefix + exception.message
             $delegate(exception, cause)
@@ -143,7 +143,7 @@ sugg
              * @example
              *     throw { message: 'error message we added' }
              */
-            console.log(errorData)
+            // console.log(exception, cause)
             // $window.open('http://stackoverflow.com/search?q=[js] + ' + errorData.exception.message)
           }
         }

@@ -561,7 +561,7 @@ lx-dialog(id="{{ vm.dialogEditId }}"
   ng-mouseleave="editNoteColors = false")
 
   lx-dialog-header
-    div.toolbar(class="{{ vm.editNote.settings.color }} dialog__header__content")
+    div.toolbar(style="cursor: text;" class="{{ vm.editNote.settings.color }} dialog__header__content")
       h2(class="tc-black-1")
         strong(
           ng-bind-html="vm.editNote.metadata.title || 'Untitled'"
