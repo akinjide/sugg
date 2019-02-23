@@ -4,8 +4,7 @@ var app = require('../index');
 var cluster = require('cluster');
 var http = require('http');
 var debug = require('debug')('sugg:server');
-var env = process.env.NODE_ENV || 'development';
-var config = require('../config/config')[env];
+var config = require('../config/config');
 
 var port = normalizePort(process.env.PORT || config.port);
 app.set('port', port);
