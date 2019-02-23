@@ -81,9 +81,9 @@ div.main-content
             trix-selection-change="vm.trixSelectionChange(e, editor);"
             trix-focus="vm.trixFocus(e, editor);"
             trix-blur="vm.trixBlur(e, editor);"
-            trix-file-accept="vm.fileAccept(e, editor);"
-            trix-attachment-add="vm.uploadDrop(e, editor);"
-            trix-attachment-remove="vm.removeUpload(e, editor);"
+            trix-file-accept="vm.FileAccept(e, editor);"
+            trix-attachment-add="vm.UploadDrop(e, editor);"
+            trix-attachment-remove="vm.RemoveUpload(e, editor);"
             prevent-trix-file-accept="false"
             placeholder="That's title above, add more note here. . ."
           )
@@ -139,7 +139,7 @@ div.main-content
         lx-color="black"
         title="Add Image"
         ng-if="vm.flags.note.upload"
-        ngf-select="vm.uploadPick($file)"
+        ngf-select="vm.UploadPick($file)"
       )
         i.mdi.mdi-image
 
@@ -208,19 +208,19 @@ div.main-content
             title="Created {{ PinnedNote.metadata.created | date : 'MMM d, h:mm a' }}") Edited {{ PinnedNote.metadata.updated | date : 'MMM d, h:mm a' }}
 
         div.sugg-note-status(ng-if="PinnedNote.is_shared_with")
-          span(style="background: rgba(33, 150, 243, 0.80);")
+          span
             i.mdi(class="mdi-account-multiple")
             a(title="Shared 'Private' by {{ PinnedNote.shared_by.name }} at {{ PinnedNote.props.shared_at | date : 'MMM d, h:mm a' }}"
             ) {{ PinnedNote.shared_by.name | splitWord }} shared with you
 
         div.sugg-note-status(ng-if="(PinnedNote.metadata.share_with || PinnedNote.metadata.is_public) && !PinnedNote.is_shared_with")
-          span(ng-if="PinnedNote.metadata.share_with" style="background: rgba(33, 150, 243, 0.80);")
+          span(ng-if="PinnedNote.metadata.share_with")
             i.mdi(class="mdi-account-multiple")
             a(title="Private to only specific people."
               ng-click="vm.CopyShareLink(PinnedNote.$id, PinnedNote.metadata.$id, true)"
             ) Only specific people can view
 
-          span(ng-if="PinnedNote.metadata.is_public" style="background: rgba(244, 96, 82, 0.80)")
+          span(ng-if="PinnedNote.metadata.is_public")
             i.mdi(class="mdi-account-multiple")
             a(title="Anyone who has the link can access. No sign-in required."
               ng-click="vm.CopyShareLink(PinnedNote.$id, PinnedNote.metadata.$id, false)"
@@ -346,19 +346,19 @@ div.main-content
             title="Created {{ Note.metadata.created | date : 'MMM d, h:mm a' }}") Edited {{ Note.metadata.updated | date : 'MMM d, h:mm a' }}
 
         div.sugg-note-status(ng-if="Note.is_shared_with")
-          span(style="background: rgba(33, 150, 243, 0.80);")
+          span
             i.mdi(class="mdi-account-multiple")
             a(title="Shared 'Private' by {{ Note.shared_by.name }} at {{ Note.props.shared_at | date : 'MMM d, h:mm a' }}"
             ) {{ Note.shared_by.name | splitWord }} shared with you
 
         div.sugg-note-status(ng-if="(Note.metadata.share_with || Note.metadata.is_public) && !Note.is_shared_with")
-          span(ng-if="Note.metadata.share_with" style="background: rgba(33, 150, 243, 0.80);")
+          span(ng-if="Note.metadata.share_with")
             i.mdi(class="mdi-account-multiple")
             a(title="Private to only specific people."
               ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, true)"
             ) Only specific people can view
 
-          span(ng-if="Note.metadata.is_public" style="background: rgba(244, 96, 82, 0.80)")
+          span(ng-if="Note.metadata.is_public")
             i.mdi(class="mdi-account-multiple")
             a(title="Anyone who has the link can access. No sign-in required."
               ng-click="vm.CopyShareLink(Note.$id, Note.metadata.$id, false)"
@@ -581,9 +581,9 @@ lx-dialog(id="{{ vm.dialogEditId }}"
         trix-selection-change="vm.trixSelectionChange(e, editor);"
         trix-focus="vm.trixFocus(e, editor);"
         trix-blur="vm.trixBlur(e, editor);"
-        trix-file-accept="vm.fileAccept(e, editor);"
-        trix-attachment-add="vm.uploadDrop(e, editor);"
-        trix-attachment-remove="vm.removeUpload(e, editor);"
+        trix-file-accept="vm.FileAccept(e, editor);"
+        trix-attachment-add="vm.UploadDrop(e, editor);"
+        trix-attachment-remove="vm.RemoveUpload(e, editor);"
         prevent-trix-file-accept="false"
         class="tc-black-1 dialog__body__content {{ vm.editNote.settings.color }}"
       )
@@ -629,7 +629,7 @@ lx-dialog(id="{{ vm.dialogEditId }}"
           lx-size="l"
           title="Add Image"
           ng-if="vm.flags.note.upload"
-          ngf-select="vm.uploadPick($file, '.dialog__body__content')"
+          ngf-select="vm.UploadPick($file, '.dialog__body__content')"
         )
           i.mdi.mdi-image
 

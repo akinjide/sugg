@@ -21,11 +21,11 @@ div.profile-main(flex-container="row" flex-column="12" flex-align="center center
               lx-text-field(lx-label="Email" ng-disabled="vm.currentUser.email")
                 input(type="email" ng-model="vm.currentUser.email")
 
-              div(flex-container="row" flex-gutter="24" class="pt")
-                span.p10(class="fs-body-2 tc-black-2 display-block") Joined
+              div.pt.no-mr(flex-container="column" flex-gutter="24")
+                span(class="fs-body-2 tc-black-2 display-block") Joined
                   strong  {{ vm.currentUser.created | date : "MMM d, yyyy 'at' h:mm a"}}
 
-                span.p10(class="fs-body-2 tc-black-2 display-block") Last Seen
+                span(class="fs-body-2 tc-black-2 display-block") Last Seen
                   strong(ng-if="vm.currentUser.updated")  {{ vm.currentUser.updated | date : "MMM d, yyyy 'at' h:mm a"}}
                   strong(ng-if="!vm.currentUser.updated")  Today
 
