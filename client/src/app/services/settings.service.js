@@ -1,71 +1,73 @@
-"use strict";
+'use strict'
 
 angular
   .module('sugg.services')
   .factory('Settings', ['Refs', '$q', '$firebaseArray', '$firebaseObject',
-    function(Refs, $q, $firebaseArray, $firebaseObject) {
+    function (Refs, $q, $firebaseArray, $firebaseObject) {
       return {
-        add: function(uid, options) {
-          var deferred = $q.defer();
-          var time = firebase.database.ServerValue.TIMESTAMP;
-          var newOptions = {};
-          var userSettings = $firebaseObject(Refs.settings.child(uid));
+        add: function (uid, options) {
+          var deferred = $q.defer()
+          var time = firebase.database.ServerValue.TIMESTAMP
+          var newOptions = {}
+          var userSettings = $firebaseObject(Refs.settings.child(uid))
 
           userSettings
             .$loaded()
-            .then(function() {
+            .then(function () {
               if (userSettings.id === undefined) {
-                newOptions = options;
-                newOptions.created = time;
-                newOptions.updated = time;
+                newOptions = options
+                newOptions.created = time
+                newOptions.updated = time
 
                 userSettings
                   .$ref()
-                  .set(newOptions);
+                  .set(newOptions)
               } else {
-                // this.update(userSettings.$id, options);
+                // this.update(userSettings.$id, options)
               }
 
-              deferred.resolve(userSettings);
-            }.bind(this))
-            .catch(deferred.reject);
+              deferred.resolve(userSettings)
+            })
+            .catch(deferred.reject)
 
-          return deferred.promise;
+          return deferred.promise
         },
 
-        update: function(uid, options) {
-          var deferred = $q.defer();
-          var time = firebase.database.ServerValue.TIMESTAMP;
+        update: function (uid, options) {
+          var deferred = $q.defer()
+          var time = firebase.database.ServerValue.TIMESTAMP
 
           $firebaseObject(Refs.settings.child(uid))
             .$loaded()
-            .then(function(settings) {
+            .then(function (settings) {
               if (options.default_layout) {
-                settings.default_layout = options.default_layout;
+                settings.default_layout = options.default_layout
               }
 
               if (options.default_note_color) {
-                settings.default_note_color = options.default_note_color;
+                settings.default_note_color = options.default_note_color
               }
 
-              settings.updated = time;
+              settings.updated = time
+
               return settings.$save()
             })
             .then(deferred.resolve)
-            .catch(deferred.reject);
+            .catch(deferred.reject)
 
-          return deferred.promise;
+          return deferred.promise
         },
 
-        find: function(uid) {
-          var deferred = $q.defer();
+        find: function (uid) {
+          var deferred = $q.defer()
 
           $firebaseObject(Refs.settings.child(uid))
             .$loaded()
             .then(deferred.resolve)
-            .catch(deferred.reject);
+            .catch(deferred.reject)
 
-          return deferred.promise;
+          return deferred.promise
         }
-      };
-  }]);
+      }
+    }
+  ])

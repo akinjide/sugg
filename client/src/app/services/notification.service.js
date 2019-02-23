@@ -1,9 +1,9 @@
-"use strict";
+'use strict'
 
 angular
   .module('sugg.services')
   .factory('Notification', ['LxNotificationService', 'SUGG_FEATURE_FLAG',
-    function(LxNotificationService, SUGG_FEATURE_FLAG) {
+    function (LxNotificationService, SUGG_FEATURE_FLAG) {
       return {
         /**
           * type: notification type.
@@ -12,66 +12,67 @@ angular
           * sticky: true if notification show stay.
           * color: add color to icon.
           */
-        notify: function(type, message, icon, sticky, color) {
-          if (!SUGG_FEATURE_FLAG.core.notification) return;
+        notify: function (type, message, icon, sticky, color) {
+          if (!SUGG_FEATURE_FLAG.core.notification) return
 
-          if (type === 'simple') {
-            LxNotificationService.notify(message);
-          }
-          else if (type === 'sticky') {
-            LxNotificationService.notify(message, icon, sticky);
-          }
-          else if (type === 'icon') {
-            LxNotificationService.notify(message, icon);
-          }
-          else if (type === 'color') {
-            LxNotificationService.notify(message, icon, sticky, color);
-          }
-          else if (type === 'info') {
-            LxNotificationService.info(message);
-          }
-          else if (type === 'success') {
-            LxNotificationService.success(message);
-          }
-          else if (type === 'warning') {
-            LxNotificationService.warning(message);
-          }
-          else if (type === 'error') {
-            LxNotificationService.error(message);
+          switch (type) {
+            case 'simple':
+              LxNotificationService.notify(message)
+              break
+
+            case 'sticky':
+              LxNotificationService.notify(message, icon, sticky)
+              break
+
+            case 'icon':
+              LxNotificationService.notify(message, icon)
+              break
+
+            case 'color':
+              LxNotificationService.notify(message, icon, sticky, color)
+              break
+
+            case 'info':
+            case 'success':
+            case 'warning':
+            case 'error':
+              LxNotificationService[type](message)
+              break
           }
         },
 
-        confirm: function(type, message, description, callback) {
+        confirm: function (type, message, description, callback) {
           if (type === 1) {
             LxNotificationService.confirm(message, description, {
               cancel: 'Disagree',
               ok: 'Agree'
-            }, function(answer) {
-              callback(answer);
-            });
+            }, function (answer) {
+              callback(answer)
+            })
           }
         },
 
-        alertBox: function(title, message, promptMessage, callbackMessage, callback) {
-          LxNotificationService.alert(title, message, promptMessage, function(answer) {
-              LxNotificationService.notify(callbackMessage);
-              callback(answer);
-          });
+        alertBox: function (title, message, promptMessage, callbackMessage, callback) {
+          LxNotificationService.alert(title, message, promptMessage, function (answer) {
+            LxNotificationService.notify(callbackMessage)
+            callback(answer)
+          })
         },
 
-        confirmBox: function(title, message, callback) {
+        confirmBox: function (title, message, callback) {
           LxNotificationService.confirm(title, message, {
             cancel: 'Disagree',
             ok: 'Agree'
-          }, function(answer) {
+          }, function (answer) {
             if (answer) {
-              LxNotificationService.success('Agree');
+              LxNotificationService.success('Agree')
             } else {
-              LxNotificationService.error('Disagree');
+              LxNotificationService.error('Disagree')
             }
 
-            callback(answer);
-          });
+            callback(answer)
+          })
         }
-      };
-  }]);
+      }
+    }
+  ])
