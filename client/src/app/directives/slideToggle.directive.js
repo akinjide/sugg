@@ -1,23 +1,23 @@
-"use strict";
+'use strict'
 
 angular
   .module('sugg.directives')
-  .directive('slideToggle', [function() {
+  .directive('slideToggle', [function () {
     return {
       restrict: 'A',
-      scope:{
+      scope: {
         isOpen: '=slideToggle' // 'data-slide-toggle' in our html
       },
-      link: function(scope, element, attr) {
-        var slideDuration = parseInt(attr.slideToggleDuration, 10) || 200;
+      link: function (scope, element, attr) {
+        var slideDuration = parseInt(attr.slideToggleDuration, 10) || 200
 
         // Watch for when the value bound to isOpen changes
         // When it changes trigger a slideToggle
-        scope.$watch('isOpen', function(newIsOpenVal, oldIsOpenVal) {
+        scope.$watch('isOpen', function (newIsOpenVal, oldIsOpenVal) {
           if (newIsOpenVal !== oldIsOpenVal) {
-            element.stop().slideToggle(slideDuration);
+            element.stop().slideToggle(slideDuration)
           }
-        });
+        })
       }
-    };
-  }]);
+    }
+  }])
