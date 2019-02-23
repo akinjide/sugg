@@ -1,100 +1,99 @@
-var path = require('path');
-var async = require('async');
-var express = require('express');
-var firebaseAuth = require('../bin/auth');
-var middleware = require('./middleware');
-var router = express.Router();
+var path = require('path')
+var async = require('async')
+var express = require('express')
+var firebaseAuth = require('../bin/auth')
+var middleware = require('./middleware')
+var router = express.Router()
 
-
-module.exports = function(app, config) {
+module.exports = function (app, config) {
   var suggStack = [
     middleware.allowAccess,
     middleware.addSugg
   ]
 
-  app.use('/v1', (function() {
-    router.get('/ping', function(req, res) {
-      res.send('PONG');
-    });
+  app.use('/v1', (function () {
+    router.get('/ping', function (req, res) {
+      res.send('PONG')
+    })
 
-    router.post('/auth/token', suggStack, function(req, res) {
-      var valid = _.every(['email', 'scope'], function(required) {
-        if (req.body[required]) return true;
-        return false;
-      });
+    router.post('/auth/token', suggStack, function (req, res) {
+      var valid = _.every(['email', 'scope'], function (required) {
+        if (req.body[required]) return true
+        return false
+      })
 
       if (!valid) {
-        return res.send(403);
+        return res.send(403)
       }
 
-      firebaseAuth.generateToken(req.body, function(error, token) {
-        if (error) return res.send(500);
-        res.status(200).json(token);
-      });
-    });
+      firebaseAuth.generateToken(req.body, function (error, token) {
+        if (error) return res.send(500)
+        res.status(200).json(token)
+      })
+    })
 
     var httpBearerStack = suggStack.concat([
       middleware.bearer
-    ]);
+    ])
 
     router.route('/users')
-      .get(httpBearerStack, function(req, res) {
-        var ref = req.sugg.ref;
+      .get(httpBearerStack, function (req, res) {
+        var ref = req.sugg.ref
 
-        ref.child('users').once('value', function(snap) {
-          var users = snap.val();
-          var result = [];
+        ref.child('users').once('value', function (snap) {
+          var users = snap.val()
+          var result = []
 
           if (users) {
             async.each(
               _.keys(users),
-              function(id, callback) {
+              function (id, callback) {
                 result.push(
                   middleware.userToJSON(users[id], id)
-                );
-                callback();
-              }, function(error) {
-                if (error) return res.send(500);
-                res.status(200).json(result);
+                )
+                callback()
+              }, function (error) {
+                if (error) return res.send(500)
+                res.status(200).json(result)
               }
-            );
+            )
           } else {
-            res.status(200).json(result);
+            res.status(200).json(result)
           }
-        });
+        })
       })
-      .post(httpBearerStack, function(req, res) {
-        res.send(501);
+      .post(httpBearerStack, function (req, res) {
+        res.send(501)
       })
-      .put(httpBearerStack, function(req, res) {
-        res.send(501);
-      });
+      .put(httpBearerStack, function (req, res) {
+        res.send(501)
+      })
 
     router.route('/users/:uid')
-      .get(httpBearerStack, function(req, res) {
-        var ref = req.sugg.ref;
+      .get(httpBearerStack, function (req, res) {
+        var ref = req.sugg.ref
 
         if (req.params.uid) {
           async.waterfall([
-            function(callback) {
+            function (callback) {
               ref.child('users').child(req.params.uid)
-                .once('value', function(snap) {
-                  var user = snap.val();
+                .once('value', function (snap) {
+                  var user = snap.val()
 
-                  if (!user) return callback(user);
-                  callback(null, user);
-                }, function(error) {
-                  callback(error);
-                });
+                  if (!user) return callback(user)
+                  callback(null, user)
+                }, function (error) {
+                  callback(error)
+                })
             },
-            function(user, callback) {
-              var notes = [];
-              var step = 0;
+            function (user, callback) {
+              var notes = []
+              var step = 0
 
-              _.each(user.metadata, function(metadata, key) {
+              _.each(user.metadata, function (metadata, key) {
                 ref.child('notes').child(metadata.note_id)
-                  .once('value', function(snap) {
-                    var note = snap.val();
+                  .once('value', function (snap) {
+                    var note = snap.val()
 
                     if (note) {
                       notes.push({
@@ -104,64 +103,64 @@ module.exports = function(app, config) {
                         created: metadata.created,
                         note_id: metadata.note_id,
                         title: metadata.title,
-                        updated: metadata.updated,
+                        updated: metadata.updated
                       })
                     }
 
-                    step++;
+                    step++
 
-                    if (_.keys(user.metadata).length == step) {
+                    if (_.keys(user.metadata).length === step) {
                       callback(null, {
                         user: user,
                         notes: notes
-                      });
+                      })
                     }
-                  }, function(error) {
-                    callback(error);
-                  });
-              });
+                  }, function (error) {
+                    callback(error)
+                  })
+              })
             }
-          ], function(error, result) {
+          ], function (error, result) {
             if (error) {
-              return res.send(204);
+              return res.send(204)
             }
 
-            res.status(200).json(_.extend(middleware.userToJSON(result.user, req.params.uid), { notes: result.notes }));
-          });
+            res.status(200).json(_.extend(middleware.userToJSON(result.user, req.params.uid), { notes: result.notes }))
+          })
         } else {
-          res.send(400);
+          res.send(400)
         }
       })
-      .post(httpBearerStack, function(req, res) {
-        res.send(501);
+      .post(httpBearerStack, function (req, res) {
+        res.send(501)
       })
-      .put(httpBearerStack, function(req, res) {
-        res.send(501);
-      });
+      .put(httpBearerStack, function (req, res) {
+        res.send(501)
+      })
 
     router.route('/notes')
-      .get(httpBearerStack, function(req, res) {
-        var ref = req.sugg.ref;
+      .get(httpBearerStack, function (req, res) {
+        var ref = req.sugg.ref
 
-        ref.child('notes').once('value', function(snap) {
-          res.status(200).json(snap.val());
-        });
+        ref.child('notes').once('value', function (snap) {
+          res.status(200).json(snap.val())
+        })
       })
-      .post(httpBearerStack, function(req, res) {
-        res.send(501);
+      .post(httpBearerStack, function (req, res) {
+        res.send(501)
       })
-      .put(httpBearerStack, function(req, res) {
-        res.send(501);
-      });
+      .put(httpBearerStack, function (req, res) {
+        res.send(501)
+      })
 
-    router.all('/*', function(req, res, next) {
-      middleware.send404(req, res, 'API endpoint not found');
-    });
+    router.all('/*', function (req, res, next) {
+      middleware.send404(req, res, 'API endpoint not found')
+    })
 
     return router
-  }()));
+  }()))
 
-  app.get('*', function(req, res) {
+  app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, '../client/public/index.html'))
-  });
-};
+  })
+}

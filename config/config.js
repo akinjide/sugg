@@ -1,34 +1,42 @@
-'use strict';
+'use strict'
 
-function load(variable) {
-  return (process.env[variable] === undefined)
-    ? new Error(variable + 'is required')
-    : process.env[variable]
+function load (variable) {
+  if (!process.env[variable]) {
+    return null
+  }
+
+  return process.env[variable]
 }
 
-module.exports = {
+var configurations = {
   test: {
     firebase: {
-      rootRefUrl: "",
-      serverUID: "sugg-test",
-      secretKey: ""
+      rootRefUrl: '',
+      serverUID: 'sugg-test',
+      secretKey: ''
     },
+    appLock: false,
     port: 1336
   },
   development: {
-    firebase : {
-      rootRefUrl: load('fb_uri'),
-      serverUID: "sugg-dev" || load('server_uid'),
-      secretKey: load('secret_key')
+    firebase: {
+      rootRefUrl: load('SUGG_FIREBASE_URI'),
+      serverUID: load('SUGG_SERVER_UID'),
+      secretKey: load('SUGG_SECRET_KEY')
     },
-    port: 1338
+    appLock: load('SUGG_API_LOCK') || false,
+    port: load('PORT') || 1338
   },
   production: {
     firebase: {
-      rootRefUrl: load('fb_uri'),
-      serverUID: load('server_uid'),
-      secretKey: load('secret_key')
+      rootRefUrl: load('SUGG_FIREBASE_URI'),
+      serverUID: load('SUGG_SERVER_UID'),
+      secretKey: load('SUGG_SECRET_KEY')
     },
-    port: load('PORT') || 1338
+    appLock: load('SUGG_API_LOCK'),
+    PING_INTERVAL: 25 * 60 * 1000,
+    port: load('PORT')
   }
-};
+}
+
+module.exports = configurations[process.env.NODE_ENV || 'development']

@@ -1,45 +1,45 @@
-var firebaseAuth = require('../bin/auth');
+var firebaseAuth = require('../bin/auth')
+var config = require('./config')
 
-exports.allowAccess = function(req, res, next) {
-  if (!process.env.lock) {
-    return next();
+exports.allowAccess = function (req, res, next) {
+  if (!config.appLock) {
+    return next()
   }
 
-  return res.send(403);
+  return res.send(403)
 }
 
-exports.addSugg = function(req, res, next) {
-  req.sugg = req.sugg || {};
-  res.sugg = res.sugg || {};
-  next();
+exports.addSugg = function (req, res, next) {
+  req.sugg = req.sugg || {}
+  res.sugg = res.sugg || {}
+  next()
 }
 
-exports.bearer = function(req, res, next)  {
+exports.bearer = function (req, res, next) {
   if (req.headers && req.headers.authorization) {
-    var token = req.headers.authorization.split(' ')[1];
+    var token = req.headers.authorization.split(' ')[1]
 
-    firebaseAuth.authWithCustomToken(token, function(error, data, rootRef) {
-      if (error) return res.send(422);
-      req.sugg.ref = rootRef;
-      next();
-    });
+    firebaseAuth.authWithCustomToken(token, function (error, data, rootRef) {
+      if (error) return res.send(422)
+      req.sugg.ref = rootRef
+      next()
+    })
   } else {
-    return res.send(403);
+    return res.send(403)
   }
 }
 
-exports.hasAuthorization = function(role) {
-  return function(req, res, next) {
+exports.hasAuthorization = function (role) {
+  return function (req, res, next) {
     if (_.intersection(req.user.roles, role).length) {
-      return next();
+      return next()
     } else {
-      return res.send(403);
+      return res.send(403)
     }
-  };
-};
+  }
+}
 
-
-exports.userToJSON = function(user, uid) {
+exports.userToJSON = function (user, uid) {
   return {
     uid: uid,
     id: user.id,
@@ -50,14 +50,14 @@ exports.userToJSON = function(user, uid) {
       first: user.first,
       last: user.last
     }
-  };
+  }
 }
 
-exports.send404 = function(req, res, description) {
+exports.send404 = function (req, res, description) {
   res.status(404).send({
     status: 404,
     message: 'Not Found',
     description: description,
     url: req.url
-  }).end();
+  }).end()
 }
