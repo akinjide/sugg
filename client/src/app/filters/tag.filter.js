@@ -1,28 +1,29 @@
-"use strict";
+'use strict'
 
 angular
   .module('sugg.filters')
-  .filter('tagIt', ['Tag', function(Tag) {
-    var title = null;
-    var cache = {};
+  .filter('tagIt', ['Tag', function (Tag) {
+    var title = null
+    var cache = {}
 
-    getTitle.$stateful = true;
+    getTitle.$stateful = true
 
-    function filterFunc(title) {
+    function filterFunc (title) {
       return title
     }
 
     function getTitle (input) {
-      if (title == null) {
-        Tag.find(input).then(function(data) {
-
-          title = data.title;
-          cache[input] = title;
-        });
+      if (title === null) {
+        Tag
+          .find(input)
+          .then(function (data) {
+            title = data.title
+            cache[input] = title
+          })
       } else {
-        return filterFunc(cache[input]);
+        return filterFunc(cache[input])
       }
-    };
+    }
 
-    return getTitle;
-  }]);
+    return getTitle
+  }])
