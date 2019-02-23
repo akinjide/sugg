@@ -271,25 +271,6 @@ gulp.task('nodemon', function () {
     })
 })
 
-// linters
-gulp.task('vet', function () {
-  log('Analyzing source with JSHint')
-
-  return gulp.src(paths.js.watcher_glob)
-    .pipe($.jshint())
-    .pipe($.jshint.reporter('jshint-stylish', { verbose: true }))
-    .pipe($.jshint.reporter('fail'))
-})
-
-gulp.task('watch:vet', function () { gulp.watch(paths.js.watcher_glob, ['vet']) })
-
-gulp.task('nsp', function (cb) {
-  $.nsp({
-    package: config.packages[0],
-    stopOnError: false
-  }, cb)
-})
-
 gulp.task('browserify', function () {
   log('Bundling main script')
   var b = browserify()
@@ -310,32 +291,7 @@ gulp.task('compress', ['browserify'], function () {
     .pipe(gulp.dest(config.public + 'scripts'))
 })
 
-gulp.task('test:client', function (done) {
-  var server = new Karma({
-    configFile: paths.root + '/karma.conf.js',
-    singleRun: false,
-    watch: true
-  }, done)
-
-  server.start()
-})
-
-gulp.task('test:server', function () {
-  return gulp.src('./tests/server/*.spec.js')
-    .pipe($.jasmine({
-      showColors: true,
-      verbose: true
-    }))
-    .once('end', function () {
-      process.exit(1)
-    })
-    .once('end', function () {
-      process.exit()
-    })
-})
-
 gulp.task('setup', $.shell.task([
-//   'bower install',
   'npm install'
 ]))
 
@@ -353,7 +309,6 @@ gulp.task('build', ['jade', 'sass', 'assets', 'compress'], function () {
 
 gulp.task('production', ['build', 'lib', 'js-vendor-combined'])
 gulp.task('serve', ['build', 'js-vendor-combined', 'nodemon'])
-gulp.task('test', ['test:client', 'test:server'])
 
 /**
  * Log a message or series of messages using chalk's blue color.
