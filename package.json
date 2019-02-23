@@ -9,7 +9,7 @@
     "postinstall_x": "node -e \"try { require('fs').symlinkSync(require('path').resolve('node_modules/@bower_components'), 'client/public/lib', 'junction') } catch (e) { }\"",
     "heroku-prebuild": "",
     "heroku-postbuild": "gulp production",
-    "serve:local": "secret_key=$SUGG_KEY fb_uri=$SUGG_URI gulp serve"
+    "serve:local": "SUGG_SECRET_KEY=$SUGG_SECRET_KEY SUGG_FIREBASE_URI=$SUGG_FIREBASE_URI gulp serve"
   },
   "author": "Akinjide Bankole <r@akinjide.me>",
   "dependencies": {
@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "browserify": "^16.2.3",
-    "gulp": "^4.0.0",
+    "gulp": "3.9.0",
     "gulp-autoprefixer": "^3.1.0",
     "gulp-cache": "^0.4.2",
     "gulp-clean-dest": "^0.1.1",
