@@ -7,7 +7,6 @@
     "start": "node ./bin/www",
     "test": "npm run lint",
     "postinstall_x": "node -e \"try { require('fs').symlinkSync(require('path').resolve('node_modules/@bower_components'), 'client/public/lib', 'junction') } catch (e) { }\"",
-    "heroku-prebuild": "",
     "heroku-postbuild": "gulp production",
     "serve:local": "SUGG_SECRET_KEY=$SUGG_SECRET_KEY SUGG_FIREBASE_URI=$SUGG_FIREBASE_URI gulp serve"
   },
