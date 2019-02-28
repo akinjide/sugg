@@ -43,11 +43,11 @@ var paths = {
   css: {
     vendor: config.src + 'styles/vendor.js'
   },
-  pug: {
-    root: config.src + 'index.pug',
-    watcher_glob: config.src + '**/*.pug',
-    partials_glob: config.src + 'app/partials/*.pug',
-    four0four: config.src + '404.pug'
+  jade: {
+    root: config.src + 'index.jade',
+    watcher_glob: config.src + '**/*.jade',
+    partials_glob: config.src + 'app/partials/*.jade',
+    four0four: config.src + '404.jade'
   },
   files: {
     video_glob: config.src + 'videos/**/*.' + config.extensions,
@@ -108,16 +108,16 @@ gulp.task('css-vendor-combined', function () {
     .pipe(gulp.dest(out))
 })
 
-// compile pug
-gulp.task('pug', ['pug-partials-glob', 'pug-root', 'pug-four0four'])
+// compile jade
+gulp.task('jade', ['jade-partials-glob', 'jade-root', 'jade-four0four'])
 
-gulp.task('pug-partials-glob', function () {
-  log('Compiling pug --> HTML')
+gulp.task('jade-partials-glob', function () {
+  log('Compiling jade --> HTML')
   var out = config.public + 'views'
 
-  return gulp.src(paths.pug.partials_glob)
+  return gulp.src(paths.jade.partials_glob)
     .pipe($.cleanDest(out))
-    .pipe($.pug())
+    .pipe($.jade())
     .pipe($.htmlmin({
       collapseWhitespace: true,
       removeComments: true
@@ -125,15 +125,15 @@ gulp.task('pug-partials-glob', function () {
     .pipe(gulp.dest(out))
 })
 
-gulp.task('pug-root', function () {
-  return gulp.src(paths.pug.root)
-    .pipe($.pug())
+gulp.task('jade-root', function () {
+  return gulp.src(paths.jade.root)
+    .pipe($.jade())
     .pipe(gulp.dest(config.public))
 })
 
-gulp.task('pug-four0four', function () {
-  return gulp.src(paths.pug.four0four)
-    .pipe($.pug())
+gulp.task('jade-four0four', function () {
+  return gulp.src(paths.jade.four0four)
+    .pipe($.jade())
     .pipe(gulp.dest(config.public))
 })
 
@@ -250,7 +250,7 @@ gulp.task('nodemon', function () {
     env: {
       'NODE_ENV': 'development'
     },
-    watch: ['./routes', './index.js', './config', paths.js.watcher_glob, paths.pug.watcher_glob, paths.sass.watcher_glob],
+    watch: ['./routes', './index.js', './config', paths.js.watcher_glob, paths.jade.watcher_glob, paths.sass.watcher_glob],
     tasks: ['build']
   }
 
@@ -294,7 +294,7 @@ gulp.task('setup', $.shell.task([
   'npm install'
 ]))
 
-gulp.task('build', ['pug', 'sass', 'assets', 'compress'], function () {
+gulp.task('build', ['jade', 'sass', 'assets', 'compress'], function () {
   log('Building everything')
 
   var msg = {
