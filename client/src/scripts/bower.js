@@ -13,7 +13,7 @@ module.exports = [
   base + 'angularfire/dist/angularfire.js',
   base + 'angular-ui-router/release/angular-ui-router.js',
   base + 'angular-bootstrap/ui-bootstrap.js',
-  base + 'moment/min/moment.js',
+  base + 'moment/min/moment.min.js',
   base + 'lodash/dist/lodash.js',
   base + 'ngstorage/ngStorage.js',
   base + 'trix/dist/trix.js',
