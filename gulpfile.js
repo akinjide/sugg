@@ -1,26 +1,18 @@
-var gulp = require('gulp')
+var G = require('gulp')
 var browserify = require('browserify')
 var argv = require('yargs').argv
-var $ = require('gulp-load-plugins')({ lazy: true })
 var source = require('vinyl-source-stream')
 var path = require('path')
+var cssnano = require('cssnano')
 
-/**
- * List the available gulp tasks
- */
-gulp.task('help', $.taskListing)
-gulp.task('default', ['help'])
-
+var $ = {}
 var config = {
-  packages: [
-    path.resolve(__dirname, 'package.json')
-  ],
-  nodeModules: 'node_modules',
+  pkgs: {
+    node: path.resolve(__dirname, 'package.json')
+  },
   src: 'client/src/',
   public: 'client/public/',
-  browserReloadDelay: 1000,
-  extensions: '{jpg,jpeg,gif,png,swf,flv,eot,svg,ttf,woff,woff2,otf,ico,htc,pdf,mp4,ogv,webm}',
-  defaultPort: process.env.PORT || '1338'
+  extensions: '{jpg,jpeg,gif,png,swf,flv,eot,svg,ttf,woff,woff2,otf,ico,htc,pdf,mp4,ogv,webm}'
 }
 
 var paths = {
@@ -77,181 +69,209 @@ var autoprefixerOptions = {
   cascade: false
 }
 
+var pkg = require(config.pkgs.node)
+
+for (var dependencies in pkg.devDependencies) {
+  if (/^gulp-/.test(dependencies)) {
+    var name = dependencies.split('gulp-')[1].split('-').join('')
+    $[name] = require(dependencies)
+  }
+}
+
 // compile sass
-gulp.task('sass', ['sass-combined', 'css-vendor-combined'])
+var sass = G.series(
+  function sassCombined () {
+    log('Compiling Sass --> CSS')
 
-gulp.task('sass-combined', function () {
-  var out = config.public + 'styles'
+    return G.src(paths.sass.combined_glob)
+      .pipe($.sourcemaps.init())
+      .pipe($.sass({
+        outputStyle: 'compressed'
+      }))
+      .pipe($.autoprefixer(autoprefixerOptions))
+      .pipe($.sourcemaps.write('.'))
+      .pipe($.rename({
+        suffix: '.min'
+      }))
+      .pipe($.cleandest(config.public + 'styles'))
+      .pipe(G.dest(config.public + 'styles'))
+  },
+  function cssVendorCombined () {
+    log('Compiling Vendor lib --> CSS')
 
-  log('Compiling Sass --> CSS')
-  return gulp.src(paths.sass.combined_glob)
-    .pipe($.sourcemaps.init())
-    .pipe($.sass({ outputStyle: 'compressed' }))
-    .pipe($.autoprefixer(autoprefixerOptions))
-    .pipe($.sourcemaps.write('.'))
-    .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out))
-})
-
-// compile vendor lib
-gulp.task('css-vendor-combined', function () {
-  var out = config.public + 'styles'
-  var filename = 'vendor.css'
-
-  return gulp.src(require('./' + paths.css.vendor))
-    .pipe($.concat(filename))
-    .pipe($.sourcemaps.init())
-    .pipe($.cssnano())
-    .pipe($.sourcemaps.write('.'))
-    .pipe($.rename({ suffix: '.min' }))
-    .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out))
-})
+    return G.src(require('./' + paths.css.vendor))
+      .pipe($.concat('vendor.css'))
+      .pipe($.sourcemaps.init())
+      .pipe($.postcss([
+        cssnano()
+      ]))
+      .pipe($.sourcemaps.write('.'))
+      .pipe($.rename({
+        suffix: '.min'
+      }))
+      .pipe($.cleandest(config.public + 'styles'))
+      .pipe(G.dest(config.public + 'styles'))
+  }
+)
 
 // compile jade
-gulp.task('jade', ['jade-partials-glob', 'jade-root', 'jade-four0four'])
+var jade = G.series(
+  function jadePartials () {
+    log('Compiling Jade --> HTML')
 
-gulp.task('jade-partials-glob', function () {
-  log('Compiling jade --> HTML')
-  var out = config.public + 'views'
-
-  return gulp.src(paths.jade.partials_glob)
-    .pipe($.cleanDest(out))
-    .pipe($.jade())
-    .pipe($.htmlmin({
-      collapseWhitespace: true,
-      removeComments: true
-    }))
-    .pipe(gulp.dest(out))
-})
-
-gulp.task('jade-root', function () {
-  return gulp.src(paths.jade.root)
-    .pipe($.jade())
-    .pipe(gulp.dest(config.public))
-})
-
-gulp.task('jade-four0four', function () {
-  return gulp.src(paths.jade.four0four)
-    .pipe($.jade())
-    .pipe(gulp.dest(config.public))
-})
+    return G.src(paths.jade.partials_glob)
+      .pipe($.cleandest(config.public + 'views'))
+      .pipe($.jade())
+      .pipe($.htmlmin({
+        collapseWhitespace: true,
+        removeComments: true
+      }))
+      .pipe(G.dest(config.public + 'views'))
+  },
+  G.parallel(
+    function jadeRoot () {
+      return G.src(paths.jade.root)
+        .pipe($.jade())
+        .pipe(G.dest(config.public))
+    },
+    function jadeFour0Four () {
+      return G.src(paths.jade.four0four)
+        .pipe($.jade())
+        .pipe(G.dest(config.public))
+    }
+  )
+)
 
 // compile javascripts
-gulp.task('js', ['js-controllers-glob', 'js-directives-glob', 'js-services-glob', 'js-filters-glob'])
+var javascripts = G.series(
+  function javascriptVendorCombined () {
+    log('Compressing and copying third party scripts')
 
-gulp.task('js-controllers-glob', function () {
-  log('Compressing and copying controllers')
-  var filename = 'controllers.js'
+    return G.src(require('./' + paths.js.bower))
+      .pipe($.concat('vendor.js'))
+      .pipe($.rename({
+        suffix: '.min'
+      }))
+      .pipe(G.dest(config.public + 'scripts'))
+  },
+  G.parallel(
+    function javascriptController () {
+      log('Compressing and copying controllers')
 
-  return gulp.src(paths.js.controllers_glob)
-    .pipe($.concat(filename))
-    .pipe($.rename({ suffix: '.min' }))
-    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
-    .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'))
-})
+      return G.src(paths.js.controllers_glob)
+        .pipe($.concat('controllers.js'))
+        .pipe($.rename({
+          suffix: '.min'
+        }))
+        .pipe($.if(argv.development, $.empty(), $.ngannotate()))
+        .pipe($.if(argv.development, $.empty(), $.uglify()))
+        .pipe(G.dest(config.public + 'scripts'))
+    },
+    function javascriptDirectives () {
+      log('Compressing and copying directives')
 
-gulp.task('js-directives-glob', function () {
-  log('Compressing and copying directives')
-  var filename = 'directives.js'
+      return G.src(paths.js.directives_glob)
+        .pipe($.concat('directives.js'))
+        .pipe($.rename({ suffix: '.min' }))
+        .pipe($.if(argv.development, $.empty(), $.ngannotate()))
+        .pipe($.if(argv.development, $.empty(), $.uglify()))
+        .pipe(G.dest(config.public + 'scripts'))
+    },
+    function javascriptServices () {
+      log('Compressing and copying services')
 
-  return gulp.src(paths.js.directives_glob)
-    .pipe($.concat(filename))
-    .pipe($.rename({ suffix: '.min' }))
-    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
-    .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'))
-})
+      return G.src(paths.js.services_glob)
+        .pipe($.concat('services.js'))
+        .pipe($.rename({ suffix: '.min' }))
+        .pipe($.if(argv.development, $.empty(), $.ngannotate()))
+        .pipe($.if(argv.development, $.empty(), $.uglify()))
+        .pipe(G.dest(config.public + 'scripts'))
+    },
+    function javascriptFilters () {
+      log('Compressing and copying filters')
 
-gulp.task('js-services-glob', function () {
-  log('Compressing and copying services')
-  var filename = 'services.js'
-
-  return gulp.src(paths.js.services_glob)
-    .pipe($.concat(filename))
-    .pipe($.rename({ suffix: '.min' }))
-    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
-    .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'))
-})
-
-gulp.task('js-filters-glob', function () {
-  log('Compressing and copying filters')
-  var filename = 'filters.js'
-
-  return gulp.src(paths.js.filters_glob)
-    .pipe($.concat(filename))
-    .pipe($.rename({ suffix: '.min' }))
-    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
-    .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'))
-})
-
-gulp.task('js-vendor-combined', function () {
-  log('Compressing and copying third party scripts')
-  var filename = 'vendor.js'
-
-  return gulp.src(require('./' + paths.js.bower))
-    .pipe($.concat(filename))
-    .pipe($.rename({ suffix: '.min' }))
-    .pipe(gulp.dest(config.public + 'scripts'))
-})
+      return G.src(paths.js.filters_glob)
+        .pipe($.concat('filters.js'))
+        .pipe($.rename({
+          suffix: '.min'
+        }))
+        .pipe($.if(argv.development, $.empty(), $.ngannotate()))
+        .pipe($.if(argv.development, $.empty(), $.uglify()))
+        .pipe(G.dest(config.public + 'scripts'))
+    }
+  )
+)
 
 // copy assets
-gulp.task('assets', ['images', 'fonts', 'videos'])
+var assets = G.parallel(
+  function fonts () {
+    log('Copying fonts')
 
-gulp.task('images', function () {
-  var out = config.public + 'images'
+    return G.src(paths.files.font_glob)
+      .pipe($.cleandest(config.public + 'styles/fonts'))
+      .pipe(G.dest(config.public + 'styles/fonts'))
+  },
+  function images () {
+    log('Compressing and copying images')
 
-  log('Compressing and copying images')
-  return gulp.src(paths.files.image_glob)
-    .pipe($.cleanDest(out))
-    .pipe($.cache($.imagemin({
-      optimizationLevel: 3,
-      progressive: true,
-      interlaced: true
-    })))
-    .pipe(gulp.dest(out))
-})
+    return G.src(paths.files.image_glob)
+      .pipe($.cleandest(config.public + 'images'))
+      .pipe($.cache($.imagemin({
+        optimizationLevel: 3,
+        progressive: true,
+        interlaced: true
+      })))
+      .pipe(G.dest(config.public + 'images'))
+  },
+  function videos () {
+    log('Copying videos')
 
-gulp.task('fonts', function () {
-  var out = config.public + 'styles/fonts'
+    return G.src(paths.files.video_glob)
+      .pipe($.cleandest(config.public + 'videos'))
+      .pipe(G.dest(config.public + 'videos'))
+  },
+  function lib () {
+    log('Copying lib')
 
-  log('Copying fonts')
-  return gulp.src(paths.files.font_glob)
-    .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out))
-})
+    return G.src('node_modules/@bower_components/**/**')
+      .pipe($.cleandest(config.public + 'lib'))
+      .pipe(G.dest(config.public + 'lib'))
+  }
+)
 
-gulp.task('videos', function () {
-  var out = config.public + 'videos'
+var compress = G.series(
+  function bundle () {
+    var b = browserify()
+    log('Bundling main script')
 
-  log('Copying videos')
-  return gulp.src(paths.files.video_glob)
-    .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out))
-})
+    b.add(paths.js.root)
 
-gulp.task('lib', function () {
-  var out = config.public + 'lib'
-
-  log('Copying lib')
-  return gulp.src('node_modules/@bower_components/**/**')
-    .pipe($.cleanDest(out))
-    .pipe(gulp.dest(out))
-})
+    return b.bundle()
+      .on('success', $.util.log.bind($.util, 'Browserify Rebundled'))
+      .on('error', $.util.log.bind($.util, 'Browserify Error: in browserify gulp task'))
+      .pipe(source('index.js'))
+      .pipe($.cleandest(config.public + 'scripts'))
+      .pipe(G.dest(config.public + 'scripts'))
+  },
+  function compression () {
+    return G.src(config.public + 'scripts/index.js')
+      .pipe($.if(argv.development, $.empty(), $.ngannotate()))
+      .pipe($.if(argv.development, $.empty(), $.uglify()))
+      .pipe(G.dest(config.public + 'scripts'))
+  }
+)
 
 // nodemon server
-gulp.task('nodemon', function () {
+function nodemon (callback) {
   var nodeOptions = {
     script: './bin/www',
     delayTime: 1,
     env: {
       'NODE_ENV': 'development'
     },
-    watch: ['./routes', './index.js', './config', paths.js.watcher_glob, paths.jade.watcher_glob, paths.sass.watcher_glob],
-    tasks: ['build']
+    watch: 'client/src', // switch to gulp watch
+    tasks: ['build'],
+    done: callback
   }
 
   $.nodemon(nodeOptions)
@@ -268,46 +288,67 @@ gulp.task('nodemon', function () {
     .on('exit', function () {
       log('*** nodemon exited cleanly')
     })
-})
+}
 
-gulp.task('browserify', function () {
-  log('Bundling main script')
-  var b = browserify()
-  b.add(paths.js.root)
+G.task('sass', sass)
+G.task('jade', jade)
+G.task('javascripts', javascripts)
+G.task('assets', assets)
+G.task('nodemon', nodemon)
+G.task('compress', compress)
 
-  return b.bundle()
-    .on('success', $.util.log.bind($.util, 'Browserify Rebundled'))
-    .on('error', $.util.log.bind($.util, 'Browserify Error: in browserify gulp task'))
-    .pipe(source('index.js'))
-    .pipe($.cleanDest(config.public + 'scripts'))
-    .pipe(gulp.dest(config.public + 'scripts'))
-})
+var build = G.series(
+  assets,
+  jade,
+  sass,
+  javascripts,
+  compress,
+  function build (callback) {
+    log('Building everything')
+    log({
+      title: 'gulp build',
+      subtitle: 'Deployed to the public folder',
+      message: 'Running `gulp`'
+    })
 
-gulp.task('compress', ['browserify'], function () {
-  return gulp.src(config.public + 'scripts/index.js')
-    .pipe($.if(argv.development, $.empty(), $.ngAnnotate()))
-    .pipe($.if(argv.development, $.empty(), $.uglify()))
-    .pipe(gulp.dest(config.public + 'scripts'))
-})
-
-gulp.task('setup', $.shell.task([
-  'npm install'
-]))
-
-gulp.task('build', ['jade', 'sass', 'assets', 'compress'], function () {
-  log('Building everything')
-
-  var msg = {
-    title: 'gulp build',
-    subtitle: 'Deployed to the public folder',
-    message: 'Running `gulp`'
+    callback()
   }
+)
 
-  log(msg)
-})
+var serve = G.series(
+  build,
+  nodemon,
+  function serve (callback) {
+    log('Serving *')
+    log({
+      title: 'gulp serve',
+      subtitle: 'Serving public folder',
+      message: 'Running `gulp`'
+    })
 
-gulp.task('production', ['build', 'lib', 'js-vendor-combined'])
-gulp.task('serve', ['build', 'js-vendor-combined', 'nodemon'])
+    callback()
+  }
+)
+
+var production = G.series(
+  build,
+  function (callback) {
+    log('Building everything')
+    log({
+      title: 'gulp production',
+      subtitle: 'Deployed to the public folder',
+      message: 'Running `gulp`'
+    })
+
+    callback()
+  }
+)
+
+// G.watch('client/src/**/*', { events: 'all', delay: 2000 }, build)
+
+exports.production = production
+exports.serve = serve
+exports.build = build
 
 /**
  * Log a message or series of messages using chalk's blue color.
