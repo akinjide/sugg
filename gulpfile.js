@@ -203,40 +203,42 @@ var javascripts = G.series(
 )
 
 // copy assets
-var assets = G.parallel(
-  function fonts () {
-    log('Copying fonts')
-
-    return G.src(paths.files.font_glob)
-      .pipe($.cleandest(config.public + 'styles/fonts'))
-      .pipe(G.dest(config.public + 'styles/fonts'))
-  },
-  function images () {
-    log('Compressing and copying images')
-
-    return G.src(paths.files.image_glob)
-      .pipe($.cleandest(config.public + 'images'))
-      .pipe($.cache($.imagemin({
-        optimizationLevel: 3,
-        progressive: true,
-        interlaced: true
-      })))
-      .pipe(G.dest(config.public + 'images'))
-  },
-  function videos () {
-    log('Copying videos')
-
-    return G.src(paths.files.video_glob)
-      .pipe($.cleandest(config.public + 'videos'))
-      .pipe(G.dest(config.public + 'videos'))
-  },
+var assets = G.series(
   function lib () {
     log('Copying lib')
 
     return G.src('node_modules/@bower_components/**/**')
       .pipe($.cleandest(config.public + 'lib'))
       .pipe(G.dest(config.public + 'lib'))
-  }
+  },
+  G.parallel(
+    function images () {
+      log('Compressing and copying images')
+
+      return G.src(paths.files.image_glob)
+        .pipe($.cleandest(config.public + 'images'))
+        .pipe($.cache($.imagemin({
+          optimizationLevel: 3,
+          progressive: true,
+          interlaced: true
+        })))
+        .pipe(G.dest(config.public + 'images'))
+    },
+    function videos () {
+      log('Copying videos')
+
+      return G.src(paths.files.video_glob)
+        .pipe($.cleandest(config.public + 'videos'))
+        .pipe(G.dest(config.public + 'videos'))
+    },
+    function fonts () {
+      log('Copying fonts')
+
+      return G.src(paths.files.font_glob)
+        .pipe($.cleandest(config.public + 'styles/fonts'))
+        .pipe(G.dest(config.public + 'styles/fonts'))
+    }
+  )
 )
 
 var compress = G.series(

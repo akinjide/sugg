@@ -19,7 +19,7 @@
             } else {
               if (data.is_active !== undefined && !data.is_active) {
                 Authentication.logout()
-                return Notification.notify('error', Response.error['auth.deactivated'])
+                return Notification.notify('error', Response.auth['auth/account-deactivated-already-scheduled'])
               }
 
               Settings.find(data.$id)
@@ -41,7 +41,7 @@
                   $state.go('notes')
                 })
                 .catch(function () {
-                  Notification.notify('error', Response.error['auth.unknown'])
+                  Notification.notify('error', Response.auth['auth/unknown-error'])
                   Authentication.logout()
                 })
             }
