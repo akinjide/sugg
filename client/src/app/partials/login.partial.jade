@@ -1,0 +1,35 @@
+.login-wrap
+  video(autoplay loop muted playsinline webkit-playsinline poster="../images/background.jpg")
+    - var link = "../videos/background"
+
+    each media_type in ['mp4', 'webm', 'ogv']
+      source(src=link + ".#{media_type}" type="video/#{media_type}")
+
+  .overlay
+    a(href="/")
+      span.logo su
+        em(style="font-weight: 100;") gg.
+    h4
+      | simple. create. note it.
+    div.sugg__login(
+      class="mt++"
+      flex-container="column"
+      flex-align="center center")
+
+      div(class="login-social-link")
+        h4.signin
+          | you can sign up via your social network
+        ul
+          each social_network in ['facebook', 'twitter', 'google']
+            li(ng-if="vm.flags.login.social['#{social_network}']")
+              button(
+                class="btn btn--m btn--blue btn--raised #{social_network}"
+                lx-ripple
+                title="#{social_network}"
+                ng-click="vm.Login('#{social_network}.com')")
+
+                span.icon
+                  i(class="mdi mdi-#{social_network}")
+                  p #{social_network}
+
+      a(ui-sref="legal" style="font-size: 14px; text-decoration: underline;") Privacy Policy

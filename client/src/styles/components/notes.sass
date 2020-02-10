@@ -1,0 +1,249 @@
+.col-masonry:hover > .sugg-checkbox.--is-desktop
+  :opacity 1
+
+.box-placeholder
+  :margin-bottom 12px
+  :padding 40px
+  :position relative
+  :border 1px solid rgba(27, 31, 35, 0.1)
+  :border-radius 16px
+  :background $white
+  :color rgba(0, 0, 0, .87)
+  :transition-duration .218s
+  :transition-property box-shadow, opacity, border
+  :transition-timing-function ease-in
+
+  &:hover
+    :border 1px solid rgba(27, 31, 35, 0.1)
+
+  & > p
+    :font-family $slabFF
+    :word-break break-all
+    :margin-top 20px
+    :margin-bottom 10px
+
+  & > p ul,
+  & > p ol
+    :padding 10px 0 10px 25px
+
+
+  & > p img
+    :margin 2px
+
+  & > p blockquote
+    :min-height 1em
+    :padding 0.5em
+    :background-color #fafafa
+    :border-left 0.2em solid #dbdbdb
+    :font italic 12px
+    :line-height 1.5em
+
+  &.selected
+    :box-shadow 0 0 0 4px #6f6f6f
+    :border-radius 2px
+    :border 0
+
+  h3
+    :color rgba(0, 0, 0, .87)
+    :font-size 20px
+    :word-break break-all
+
+  h5
+    :margin-right 5px
+    :font-size 13px
+    :display inline-block
+    :border-radius 20px
+    :border 1px solid rgba(27,31,35,0.1)
+    :padding 8px 10px
+    :color #FFF
+    :background rgba(0, 0, 0, 0.7)
+
+  .colors
+    :bottom 40px
+    :left 0
+    :position absolute
+    :border-radius 14px
+
+.row-masonry
+  :position relative
+  :margin 0
+  :padding 0
+  :width 100%
+
+.row-masonry > .col-masonry
+  :display inline-block
+  :width 100%
+  :min-height 1em
+  :margin-bottom 15px
+  :user-select none
+
+  img
+    :padding 2px;
+    :line-height 1.52857143
+    :background-color $white
+    :border 1px solid $white
+    :border-radius 2px
+    :transition all .2s ease-in-out
+    :display inline-block
+    :max-width 100%
+    :height auto
+
+.list
+  :margin 0 auto
+  :min-width 240px
+  :max-width 532px
+  :width auto
+
+.brick
+  :margin 0 auto
+  :min-width 240px
+  :max-width 632px
+  :column-count 2
+  :width auto
+
+.sugg-note-status
+  :margin 2px 5px 0 0
+  :padding 8px 0
+  :z-index 201
+  :display inline-block
+
+  span
+    :border-radius 20px
+    :border 1px solid rgba(27,31,35,0.1)
+    :padding 8px 10px
+    :margin 0
+    :color #FFF
+    :background rgba(0, 0, 0, 0.7)
+
+  span i
+    :font-size 16px
+    :position relative
+    :top 2px
+
+  span a
+    :margin-left 2px
+    :padding 2px 3px
+    :font-weight 600
+    :cursor pointer
+    :color #FFF
+    :font-size 13px
+
+.sugg-checkbox
+  :position absolute
+  :z-index 999
+  :transform translate(8px, 8px)
+
+  &:hover
+    :cursor pointer
+
+  &.selected,
+  &.selected.--is-desktop
+    :opacity 1
+
+  &.--is-desktop
+    :opacity 0
+    :transition opacity .218s linear
+
+  label
+    :cursor pointer
+
+    &:before
+      :content "\F12C"
+      :display inline-block
+      :font-family "Material Design Icons"
+      :font-size 18px;
+      :text-rendering auto
+      :-webkit-font-smoothing antialiased
+      :-moz-osx-font-smoothing grayscale
+      :width 24px
+      :height 24px
+      :border 1px solid rgba(27, 31, 35, 0.1)
+      :border-radius 100%
+      :vertical-align middle
+      :color #000
+      :text-align center
+      :line-height 1.3em
+      :transition transform 0.2s ease-in-out
+      :position absolute
+      :top 0
+      :left 0
+      :background-color $white
+
+input[type=checkbox]:checked + label:before
+  :background $black
+  :color $white
+  :text-align center
+  :line-height 1.3em
+  :content "\F156"
+  :font-size 17px
+  :opacity 1
+
+input[type=checkbox]
+  :visibility hidden
+
+.dialog.dialog--is-shown
+  :border-radius 16px
+
+.dialog__header
+  .dialog__header__content
+    :border-bottom 1px solid rgba(0, 0, 0, .12)
+    :height auto
+    :word-break break-all
+    h2 > strong
+      :outline none
+
+.dialog__scrollable
+  .dialog__body__content
+    :padding 16px
+    :outline none
+    :word-break break-all
+    ul
+      :padding 10px 0 10px 25px
+
+    ol
+      :padding 10px 0 10px 25px
+
+.dialog__footer
+  h5
+    :position absolute
+    :left 20px
+
+  h5 > span
+    :font-weight lighter
+
+.fs-title
+  :color #000
+
+.selected-notes-options
+  :height 80px
+  :width 100%
+  :background $white
+  :z-index 1001
+  :position fixed
+  :left 0
+  :transform translateY(-20px)
+  :transition opacity .218s ease-in, transform .218s ease-in
+
+.toolbar.selected-notes-toolbar
+  :padding-top 30px
+  :max-width 800px
+  :margin 0 auto
+  :position relative
+
+.dropdown-link
+  :padding 0 16px
+  :font-size .875rem
+  :height 34px !important
+
+.show-more
+  :font-weight 600
+  :font-size 88%
+  :display block
+  :margin 10px
+  :right 0
+  :bottom 2px
+  :position absolute
+  :padding 6px
+  :border 1px solid rgba(27,31,35,0.1)
+  :border-radius 3px
+  :color #586069

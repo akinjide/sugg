@@ -1,0 +1,29 @@
+{
+  "name": "sugg",
+  "author": "Akinjide Bankole <r@akinjide.me>",
+  "dependencies": {
+    "angular": "^1.6.5",
+    "firebase": "^2.4.1",
+    "angularfire": "^1.1.3",
+    "marked": "~0.3.5",
+    "angular-spinkit": "~0.3.3",
+    "mdi": "~1.2.65",
+    "angular-bootstrap": "^1.1.2",
+    "moment": "^2.12.0",
+    "angular-mocks": "^1.6.5",
+    "lodash": "^4.17.4",
+    "ngstorage": "^0.3.11",
+    "angular-trix": "^1.0.2",
+    "angular-sanitize": "1.6.5",
+    "angular-loading-bar": "^0.9.0",
+    "ng-file-upload": "^12.2.13",
+    "angular-animate": "1.6.5",
+    "angular-clipboard": "^1.6.0",
+    "angular-ui-router": "^1.0.15",
+    "lumx": "^1.7.42"
+  },
+  "resolutions": {
+    "angular": "1.6.5",
+    "mdi": "2.0.46"
+  }
+}

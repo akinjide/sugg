@@ -1,0 +1,128 @@
+.sugg_navcontainer
+  nav
+    :background-color $default
+    :position fixed
+    :width 100%
+    :max-height 77px
+    :height auto
+    :z-index 1000
+    :top 0
+
+    & > div
+      :display flex
+      :align-items center
+      :justify-content space-around
+      :padding 20px 40px
+
+    a
+      :text-decoration none
+
+      span.logo
+        :height auto
+        :padding 2px
+        :color #000000
+        :font-family inherit
+        :font-weight 500
+        :font-size 32px
+        :line-height 6px
+        :letter-spacing -3px
+
+    button
+      img
+        :width 90px
+        :height auto
+
+  .bgc
+    :background $white
+    :box-shadow 0px 0px 1px 1px rgba(0, 0, 0, 0.14), 0px 0px 2px 2px rgba(0, 0, 0, 0.098), 0px 0px 5px 1px rgba(0, 0, 0, 0.084)
+
+.sugg-search
+  :border 1px solid rgba(27, 31, 35, 0.2)
+  :min-width 125px
+  :width 215px
+  :height 28px
+  :font-size 13px
+  :border-radius 20px
+  :color $black
+  :cursor text
+  :font-weight 300
+
+  .search-filter
+    :height inherit
+
+    .search-filter__container
+      :padding 0 10px
+      :height inherit
+
+      .search-filter__button
+        :top 0
+        :left 0
+        :padding 7px
+        :position relative
+        :height 30px
+
+        & > .btn--icon.btn--black
+          :opacity 1
+          :line-height 0
+          :width 13px
+          :height 13px
+          :font-size 16px
+
+          .mdi
+            :line-height 0
+            :color $black
+
+      .search-filter__input
+        :padding 2px
+        :position absolute
+        :top 0
+        :left 38px
+
+        input
+          :height 20px
+          :color $black
+          :font-size 14px
+          :width 82%
+          :line-height 16px
+
+      .search-filter__clear
+        :top 0
+        :right 10px
+
+        & > .btn--icon.btn--black
+          :opacity 1
+          :line-height 0
+          :height 24px
+          :width 24px
+
+          .mdi
+            :line-height 0
+            :font-size 16px
+
+.sugg-profile-nav
+  button
+    :margin-left 15px
+
+
+#loading-bar
+  :position fixed
+  :top 0
+  :left 0
+  :right 0
+  :height 77px
+  :z-index 1000
+
+  .bar
+    :-webkit-transition width 350ms
+    :-moz-transition width 350ms
+    :-o-transition width 350ms
+    :transition width 350ms
+    :background rgba(219, 222, 224, 0.49)
+    :width 100%
+    :height 100%
+    :border-bottom-right-radius 1px
+    :border-top-right-radius 1px
+    :position absolute
+
+  .peg
+    :display none

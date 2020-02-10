@@ -1,0 +1,19 @@
+#!/bin/sh
+
+echo '@Running env and version check'
+env
+node --version
+npm --version
+
+echo '@Installing Dependencies'
+npm install gulp -g
+npm install -g pm2
+npm install gulp
+
+echo '@Running Gulp Production'
+gulp production
+
+echo '@Done...'
+echo '@Starting Web App...'
+# node ./bin/www
+pm2 start ./bin/www

@@ -1,0 +1,99 @@
+.sugg_navcontainer
+  nav.bgc(ng-cloak)
+    div
+      a(
+        href="/"
+        ng-if="vm.isNotePage"
+      )
+        span.logo su
+          em(style="font-weight: 100;") gg.
+
+      lx-button.mr8(
+        lx-type="icon"
+        lx-color="black"
+        title="Your Notes"
+        lx-size="l"
+        style="left: -20px;"
+        ng-if="!vm.isNotePage"
+      )
+        a(ui-sref="notes" style="color: #000;")
+          i.mdi(class="mdi-arrow-left")
+
+      .sugg-search
+        lx-search-filter
+          input(
+            type="text"
+            ng-model="vm.searchFilter.text"
+            placeholder="Search"
+            ng-change="vm.searchFilterChange(vm.searchFilter)"
+            ng-if="vm.flags.navigation.search"
+          )
+
+      .sugg-profile-nav
+
+        lx-button.change-view(
+          lx-type="icon"
+          lx-size="m"
+          lx-color="grey"
+          ng-click="vm.changeView(vm.View)"
+          title="Change view"
+          ng-if="vm.flags.navigation.layout"
+        )
+          i.mdi.mdi-view-agenda(ng-if="vm.View == 'brick'")
+          i.mdi.mdi-view-dashboard(ng-if="vm.View == 'list'")
+
+        lx-button(
+          lx-type="fab"
+          lx-size="m"
+          lx-color="white"
+          class="--is-mobile"
+          style="display: none;"
+          ng-if="vm.flags.navigation.profile.view"
+        )
+          a(ui-sref="profile({ name: vm.currentUser.name, uid: vm.currentUser.$id })")
+            span(ng-if="!vm.currentUser.image" style="font-weight: 600;") {{ vm.currentUser.name | initials }}
+            img(class="img-round"
+              ng-if="vm.currentUser.image"
+              ng-src="{{ vm.currentUser.image }}"
+              alt="{{ vm.currentUser.name }} Picture"
+              lx-ripple
+              title="{{ vm.currentUser.name }}")
+
+        lx-dropdown(class="--is-desktop" lx-position="right" lx-width="160" lx-offset="6" lx-effect="none")
+          lx-dropdown-toggle
+            lx-button(
+              lx-type="fab"
+              lx-size="m"
+              lx-color="white"
+            )
+
+              span(ng-if="!vm.currentUser.image" style="font-weight: 600;") {{ vm.currentUser.name | initials }}
+              img(class="img-round"
+                ng-if="vm.currentUser.image"
+                ng-src="{{ vm.currentUser.image }}"
+                alt="{{ vm.currentUser.name }} Picture"
+                lx-ripple
+                title="{{ vm.currentUser.name }}")
+          lx-dropdown-menu
+            ul
+              - var classes = ['dropdown-link', 'text']
+
+              li.dropdown-link.dropdown-link--is-header.text-flex-center.no-pd
+                span Signed in as <strong>{{ vm.currentUser.name | splitWord }}</strong>
+              li.dropdown-divider
+              li
+                a(
+                  class=classes
+                  ui-sref="profile({ name: vm.currentUser.name, uid: vm.currentUser.$id })"
+                  ng-if="vm.flags.navigation.profile.view"
+                )
+                  span Your Profile
+              li
+                a(class=classes ui-sref="notes")
+                  span Your Notes
+              li.dropdown-divider
+              li
+                a(class=classes ng-click="vm.Logout()")
+                  span Sign out
+
+div(ui-view="theView" class="view-connector")

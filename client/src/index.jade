@@ -1,0 +1,14 @@
+doctype html
+html(lang="en" ng-app="sugg" ng-strict-di)
+  head
+    base(href="/")
+    title(route-title)
+    include shared/header
+    include shared/head
+  body(ng-cloak)
+    div.preloader-overlay(preloader)
+      lx-progress(lx-color="white" lx-type="circular")
+
+    div#ui-view(ui-view)
+
+    include shared/foot
